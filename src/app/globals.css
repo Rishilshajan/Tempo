@@ -1,0 +1,198 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-figtree);
+  --font-mono: var(--font-geist-mono);
+  --font-heading: var(--font-figtree);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-brand: var(--brand);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  /* Tempo status tokens (Sage Focus) */
+  --color-urgent: var(--urgent);
+  --color-urgent-foreground: var(--urgent-foreground);
+  --color-medium: var(--medium);
+  --color-medium-foreground: var(--medium-foreground);
+  --color-ontrack: var(--ontrack);
+  --color-ontrack-foreground: var(--ontrack-foreground);
+  --color-rolledforward: var(--rolledforward);
+  --color-rolledforward-foreground: var(--rolledforward-foreground);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+/* ============================================================
+   Tempo — "Sage Focus" palette
+   Primary #4C9A78 · Secondary #7BC96F · Tertiary #5DB87E
+   Neutral #22312B · Background #F7F6F2 · Surface #FFFFFF
+   Urgent coral #F0705A · Medium amber #F2B24C · Rolled-fwd #7C87D6
+   ============================================================ */
+:root {
+  --radius: 0.75rem;
+
+  --background: #f7f6f2;       /* warm off-white (60%)  */
+  --foreground: #22312b;       /* deep slate-green text */
+
+  --card: #ffffff;
+  --card-foreground: #22312b;
+  --popover: #ffffff;
+  --popover-foreground: #22312b;
+
+  --brand: #4c9a78;            /* sage - logo & brand identity */
+  --primary: #11694a;          /* deeper green - buttons/active states (contrast) */
+  --primary-foreground: #ffffff;
+
+  --secondary: #e9f1ec;        /* soft sage surface */
+  --secondary-foreground: #22312b;
+
+  --muted: #eef0ea;
+  --muted-foreground: #6b7b72;
+
+  --accent: #7bc96f;           /* fresh lime (energizing 10%) */
+  --accent-foreground: #16241c;
+
+  --destructive: #f0705a;      /* warm coral = urgent */
+
+  --border: #e3e6dd;
+  --input: #e3e6dd;
+  --ring: #11694a;
+
+  /* status */
+  --urgent: #f0705a;              --urgent-foreground: #ffffff;
+  --medium: #f2b24c;              --medium-foreground: #3d2e0a;
+  --ontrack: #5db87e;             --ontrack-foreground: #ffffff;
+  --rolledforward: #7c87d6;       --rolledforward-foreground: #ffffff;
+
+  /* charts → status spectrum */
+  --chart-1: #4c9a78;
+  --chart-2: #5db87e;
+  --chart-3: #f2b24c;
+  --chart-4: #f0705a;
+  --chart-5: #7c87d6;
+
+  --sidebar: #f2f4ef;
+  --sidebar-foreground: #22312b;
+  --sidebar-primary: #11694a;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #e9f1ec;
+  --sidebar-accent-foreground: #22312b;
+  --sidebar-border: #e3e6dd;
+  --sidebar-ring: #11694a;
+}
+
+.dark {
+  --background: #161d19;
+  --foreground: #ecf1ee;
+
+  --card: #202b25;
+  --card-foreground: #ecf1ee;
+  --popover: #202b25;
+  --popover-foreground: #ecf1ee;
+
+  --brand: #5db87e;            /* sage - brand identity (dark) */
+  --primary: #4db488;          /* deeper green - buttons/active (dark) */
+  --primary-foreground: #06120c;
+
+  --secondary: #2a362f;
+  --secondary-foreground: #ecf1ee;
+
+  --muted: #2a362f;
+  --muted-foreground: #9db0a5;
+
+  --accent: #7bc96f;
+  --accent-foreground: #0e1511;
+
+  --destructive: #f0705a;
+
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: #5db87e;
+
+  --urgent: #f0705a;              --urgent-foreground: #1a0d0a;
+  --medium: #f2b24c;              --medium-foreground: #211802;
+  --ontrack: #5db87e;             --ontrack-foreground: #0e1511;
+  --rolledforward: #8f99de;       --rolledforward-foreground: #0e1016;
+
+  --chart-1: #5db87e;
+  --chart-2: #7bc96f;
+  --chart-3: #f2b24c;
+  --chart-4: #f0705a;
+  --chart-5: #8f99de;
+
+  --sidebar: #19211d;
+  --sidebar-foreground: #ecf1ee;
+  --sidebar-primary: #5db87e;
+  --sidebar-primary-foreground: #0e1511;
+  --sidebar-accent: #2a362f;
+  --sidebar-accent-foreground: #ecf1ee;
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-ring: #5db87e;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  html {
+    @apply font-sans;
+  }
+}
+
+/* Hide the native number-input spin buttons */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type="number"] {
+  appearance: textfield;
+}
+
+/* Subtle dot grid used behind the cold-start splash */
+.dot-grid {
+  background-image: radial-gradient(
+    color-mix(in srgb, var(--foreground) 12%, transparent) 1px,
+    transparent 1px
+  );
+  background-size: 22px 22px;
+}

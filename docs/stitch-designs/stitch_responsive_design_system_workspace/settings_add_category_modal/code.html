@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/><meta content="mobile_stack" name="shell-type"/><link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;600;700;800&amp;display=swap" rel="stylesheet"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { colors: { "on-primary": "#ffffff", "surface-dim": "#cdded5", "inverse-on-surface": "#e3f5eb", "on-secondary": "#ffffff", "status-medium": "#F2B24C", "on-secondary-container": "#257123", "status-rolled": "#7C87D6", "on-secondary-fixed-variant": "#005308", "secondary-fixed-dim": "#8ad97d", "tertiary": "#006a3a", "outline-variant": "#bec9c1", "primary-fixed": "#a3f3cc", "status-ontrack": "#5DB87E", "secondary-container": "#a3f394", "surface-container": "#e0f2e9", "secondary-fixed": "#a5f697", "text-muted": "#5B6B62", "primary-fixed-dim": "#88d6b1", "error": "#ba1a1a", "surface-container-lowest": "#ffffff", "tertiary-fixed-dim": "#7ed99c", "inverse-surface": "#24342d", "on-tertiary-fixed": "#00210e", "surface-tint": "#156b4d", "on-background": "#101e19", "code-bg": "#1F2B26", "outline": "#6f7a73", "primary-container": "#338262", "on-primary-fixed-variant": "#005138", "on-primary-fixed": "#002114", "error-container": "#ffdad6", "surface-bright": "#ecfef4", "on-tertiary-fixed-variant": "#00522c", "tertiary-fixed": "#99f6b7", "tertiary-container": "#258450", "code-text": "#E8EFE9", "surface": "#FFFFFF", "surface-container-low": "#e6f8ee", "on-surface-variant": "#3f4943", "surface-container-highest": "#d5e7dd", "on-surface": "#101e19", "on-primary-container": "#f5fff7", "primary": "#11694a", "status-urgent": "#F0705A", "border-subtle": "#E7E5DF", "bg-canvas": "#F7F6F2", "on-tertiary": "#ffffff", "on-secondary-fixed": "#002201", "table-header": "#EEF3F0", "surface-variant": "#d5e7dd", "secondary": "#206d1f", "on-error": "#ffffff", "inverse-primary": "#88d6b1", "background": "#ecfef4", "on-error-container": "#93000a", "on-tertiary-container": "#f6fff4", "surface-container-high": "#dbece3" }, borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" }, spacing: { "space-lg": "1.5rem", "gutter-lg": "1.5rem", "space-md": "1rem", "gutter": "1rem", "space-xl": "2.25rem", "space-xs": "0.25rem", "margin-md": "1.5rem", "space-sm": "0.5rem", "margin-lg": "2.5rem", "margin": "1.25rem" }, fontFamily: { "label-sm": ["Figtree"], "headline-lg": ["Figtree"], "body-lead": ["Figtree"], "body-sm": ["Figtree"], "headline-xl": ["Figtree"], "label-md": ["Figtree"], "headline-xl-mobile": ["Figtree"], "headline-md": ["Figtree"], "body-md": ["Figtree"] }, fontSize: { "label-sm": ["0.6875rem", { "lineHeight": "0.9rem", "letterSpacing": "0.03em", "fontWeight": "700" }], "headline-lg": ["1.5rem", { "lineHeight": "2rem", "letterSpacing": "-0.02em", "fontWeight": "700" }], "body-lead": ["1.08rem", { "lineHeight": "1.75rem", "fontWeight": "400" }], "body-sm": ["0.875rem", { "lineHeight": "1.4rem", "fontWeight": "400" }], "headline-xl": ["2.6rem", { "lineHeight": "3.1rem", "letterSpacing": "-0.03em", "fontWeight": "800" }], "label-md": ["0.8125rem", { "lineHeight": "1.2rem", "letterSpacing": "0.01em", "fontWeight": "600" }], "headline-xl-mobile": ["2rem", { "lineHeight": "2.4rem", "letterSpacing": "-0.02em", "fontWeight": "800" }], "headline-md": ["1.15rem", { "lineHeight": "1.6rem", "letterSpacing": "-0.01em", "fontWeight": "700" }], "body-md": ["1rem", { "lineHeight": "1.65rem", "fontWeight": "400" }] } } } }</script><style>@layer base{html,body{width:100%;margin:0;padding:0;}body{overscroll-behavior-y:none;background-color:#F7F6F2;}.pb-safe{padding-bottom:env(safe-area-inset-bottom,0px);}.pt-safe{padding-top:env(safe-area-inset-top,0px);}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head><body class="bg-bg-canvas text-on-surface antialiased min-h-screen flex flex-col font-body-md"><header class="fixed top-0 w-full z-50 pt-safe bg-surface/85 backdrop-blur-xl shadow-[0_1px_8px_rgba(34,49,43,0.04)]"><div class="h-16 px-gutter flex items-center justify-between gap-space-sm"><div class="flex items-center gap-space-xs"><button aria-label="Go back" class="w-11 h-11 flex items-center justify-center rounded-xl hover:bg-table-header transition-colors text-on-surface" onclick="history.back()"><span class="material-symbols-outlined text-[24px]">arrow_back</span></button><img alt="Tasks Agentic Logo" class="h-7 w-auto object-contain flex-shrink-0" src="https://lh3.googleusercontent.com/aida/AEtjO1UzmqCuFCLUd3EztkGakEpAFvUtAdLtzeVoVnlxHkQYyhJ9aDA_3ymDB_q3o5x9qAn1Kyav-_9ER4ckKo_ELy7qEgqoOMAVsNbYkqfU4ggqjA0FPmmDVqYdj2-pJiAlZu_E1zf9N7Tqchbfbatk4xJx01DQAi0-XZeNEOPSxVJaBC7QojQTvP4dWJSTGglj8M21XXkUQiFcTS2ngkk6VyeI4ifycXqkgCy7VCYPWfFboYEb5yeP5xkD9L-w"/><h1 class="font-headline-md text-headline-md text-on-surface font-bold tracking-tight truncate ml-1">Task Detail</h1></div><div class="flex items-center gap-space-xs"><button aria-label="More options" class="w-11 h-11 flex items-center justify-center rounded-xl hover:bg-table-header transition-colors text-on-surface-variant"><span class="material-symbols-outlined text-[22px]">more_vert</span></button><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center flex-shrink-0 shadow-[0_2px_6px_rgba(17,105,74,0.2)]"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></div></header><main class="flex-1 w-full bg-bg-canvas pt-16 pb-safe px-gutter flex flex-col"><div class="flex flex-col w-full relative">
+<!-- Subtle Simulated Background Layer (Settings Page Under Backdrop) -->
+<div aria-hidden="true" class="w-full flex flex-col gap-space-md opacity-40 blur-[1px] select-none pointer-events-none pb-space-lg">
+<div class="bg-surface rounded-xl p-space-md shadow-sm">
+<div class="flex items-center justify-between mb-space-sm">
+<span class="font-headline-md text-headline-md text-on-surface">Categories &amp; Workspaces</span>
+<span class="font-label-sm text-label-sm text-text-muted">4 Active</span>
+</div>
+<div class="space-y-space-xs">
+<div class="flex items-center justify-between p-space-sm rounded-lg bg-surface-container-low">
+<div class="flex items-center gap-space-sm">
+<span class="w-2.5 h-2.5 rounded-full bg-primary"></span>
+<span class="font-body-md text-body-md text-on-surface font-semibold">Ventures &amp; Ops</span>
+</div>
+<span class="font-label-sm text-label-sm text-text-muted">@ventures</span>
+</div>
+<div class="flex items-center justify-between p-space-sm rounded-lg bg-surface-container-low">
+<div class="flex items-center gap-space-sm">
+<span class="w-2.5 h-2.5 rounded-full bg-status-medium"></span>
+<span class="font-body-md text-body-md text-on-surface font-semibold">Product Engineering</span>
+</div>
+<span class="font-label-sm text-label-sm text-text-muted">@eng</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Modal Presentation Layer / Backdrop Wash -->
+<div class="fixed inset-0 z-50 flex flex-col justify-end bg-inverse-surface/40 backdrop-blur-sm transition-opacity duration-300" id="modal-container">
+<!-- Clickable dismiss zone outside sheet -->
+<div class="flex-1 w-full" onclick="dismissModal()"></div>
+<!-- Bottom Sheet Content Dialog -->
+<div class="relative w-full max-h-[813px] bg-surface rounded-t-[1.75rem] shadow-[0_-8px_32px_rgba(34,49,43,0.14)] flex flex-col overflow-hidden animate-in slide-in-from-bottom duration-300">
+<!-- Top Grab Bar & Header Section -->
+<div class="pt-space-sm pb-space-xs px-gutter flex flex-col items-center bg-surface sticky top-0 z-20">
+<!-- Grab Pill Handle -->
+<div class="w-12 h-1.5 rounded-full bg-surface-variant mb-space-sm"></div>
+<div class="w-full flex items-start justify-between gap-space-sm pt-space-xs">
+<div class="flex flex-col min-w-0 pr-space-xs">
+<div class="flex items-center gap-space-xs mb-0.5">
+<span class="material-symbols-outlined text-primary text-[20px]">domain_add</span>
+<span class="font-label-sm text-label-sm text-primary uppercase tracking-wider">Domain Architecture</span>
+</div>
+<h2 class="font-headline-md text-headline-md text-on-surface font-bold tracking-tight">New Category &amp; Domain</h2>
+<p class="font-body-sm text-body-sm text-text-muted leading-tight mt-0.5">Define operational scope, priority rules, and visual tokens for agent triage.</p>
+</div>
+<button aria-label="Close dialog" class="w-9 h-9 rounded-full bg-table-header hover:bg-surface-variant flex items-center justify-center text-on-surface-variant transition-colors flex-shrink-0" onclick="dismissModal()">
+<span class="material-symbols-outlined text-[20px]">close</span>
+</button>
+</div>
+</div>
+<!-- Scrollable Configuration Body -->
+<div class="flex-1 overflow-y-auto px-gutter py-space-sm space-y-space-md">
+<!-- SECTION 1: Identity & Keying -->
+<div class="bg-surface-container-lowest rounded-xl p-space-md shadow-sm space-y-space-sm">
+<!-- Category Name -->
+<div>
+<label class="block font-label-md text-label-md text-on-surface mb-1">Category / Domain Name</label>
+<div class="relative flex items-center">
+<input class="w-full bg-surface-container-low text-on-surface font-body-md text-body-md px-3.5 py-2.5 rounded-xl placeholder:text-text-muted/60 focus:bg-surface focus:outline-none focus:ring-2 focus:ring-primary transition-all" id="cat-name-input" oninput="updateLivePreview()" placeholder="e.g. Health &amp; Longevity" type="text" value="Angel Investments &amp; Advisory"/>
+<button class="absolute right-3 text-text-muted hover:text-on-surface text-[18px] flex items-center" onclick="clearInput()" type="button">
+<span class="material-symbols-outlined text-[18px]">cancel</span>
+</button>
+</div>
+</div>
+<!-- Domain Key / Short Tag Preview -->
+<div class="flex items-center justify-between pt-1">
+<div>
+<span class="block font-label-md text-label-md text-on-surface">Domain Key</span>
+<span class="font-body-sm text-body-sm text-text-muted">Natural language voice shorthand</span>
+</div>
+<div class="flex items-center gap-1.5 bg-surface-container px-3 py-1.5 rounded-full">
+<span class="material-symbols-outlined text-primary text-[15px]">alternate_email</span>
+<span class="font-label-md text-label-md text-primary font-bold" id="domain-slug-preview">advisory</span>
+<span class="material-symbols-outlined text-text-muted text-[14px]">edit</span>
+</div>
+</div>
+<!-- Category Icon Picker -->
+<div class="pt-2">
+<label class="block font-label-md text-label-md text-on-surface mb-2">Domain Glyph Token</label>
+<div class="grid grid-cols-8 gap-1.5">
+<button class="icon-btn h-10 rounded-lg flex items-center justify-center bg-primary text-on-primary shadow-sm transition-transform active:scale-95" data-icon="pie_chart" onclick="selectIcon(this, 'pie_chart')" type="button">
+<span class="material-symbols-outlined text-[20px]">pie_chart</span>
+</button>
+<button class="icon-btn h-10 rounded-lg flex items-center justify-center bg-surface-container text-on-surface-variant hover:bg-surface-variant transition-transform active:scale-95" data-icon="auto_awesome" onclick="selectIcon(this, 'auto_awesome')" type="button">
+<span class="material-symbols-outlined text-[20px]">auto_awesome</span>
+</button>
+<button class="icon-btn h-10 rounded-lg flex items-center justify-center bg-surface-container text-on-surface-variant hover:bg-surface-variant transition-transform active:scale-95" data-icon="cardiology" onclick="selectIcon(this, 'cardiology')" type="button">
+<span class="material-symbols-outlined text-[20px]">cardiology</span>
+</button>
+<button class="icon-btn h-10 rounded-lg flex items-center justify-center bg-surface-container text-on-surface-variant hover:bg-surface-variant transition-transform active:scale-95" data-icon="terminal" onclick="selectIcon(this, 'terminal')" type="button">
+<span class="material-symbols-outlined text-[20px]">terminal</span>
+</button>
+<button class="icon-btn h-10 rounded-lg flex items-center justify-center bg-surface-container text-on-surface-variant hover:bg-surface-variant transition-transform active:scale-95" data-icon="school" onclick="selectIcon(this, 'school')" type="button">
+<span class="material-symbols-outlined text-[20px]">school</span>
+</button>
+<button class="icon-btn h-10 rounded-lg flex items-center justify-center bg-surface-container text-on-surface-variant hover:bg-surface-variant transition-transform active:scale-95" data-icon="payments" onclick="selectIcon(this, 'payments')" type="button">
+<span class="material-symbols-outlined text-[20px]">payments</span>
+</button>
+<button class="icon-btn h-10 rounded-lg flex items-center justify-center bg-surface-container text-on-surface-variant hover:bg-surface-variant transition-transform active:scale-95" data-icon="explore" onclick="selectIcon(this, 'explore')" type="button">
+<span class="material-symbols-outlined text-[20px]">explore</span>
+</button>
+<button class="icon-btn h-10 rounded-lg flex items-center justify-center bg-surface-container text-on-surface-variant hover:bg-surface-variant transition-transform active:scale-95" data-icon="layers" onclick="selectIcon(this, 'layers')" type="button">
+<span class="material-symbols-outlined text-[20px]">layers</span>
+</button>
+</div>
+</div>
+</div>
+<!-- SECTION 2: Palette Swatch & Badge Simulation -->
+<div class="bg-surface-container-lowest rounded-xl p-space-md shadow-sm space-y-space-sm">
+<div class="flex items-center justify-between">
+<label class="font-label-md text-label-md text-on-surface">Theme Accent Swatch</label>
+<span class="font-label-sm text-label-sm text-primary font-bold" id="active-color-name">Sage Organic</span>
+</div>
+<!-- 8 Color Design System Swatch Buttons -->
+<div class="grid grid-cols-8 gap-2 py-1">
+<!-- Sage -->
+<button class="color-btn w-full aspect-square rounded-full flex items-center justify-center bg-primary ring-2 ring-primary ring-offset-2 ring-offset-surface transition-transform active:scale-90" onclick="selectColor(this, '#11694a', 'Sage Organic', 'bg-primary')" type="button">
+<span class="material-symbols-outlined text-on-primary text-[15px] font-bold">check</span>
+</button>
+<!-- Fresh Lime -->
+<button class="color-btn w-full aspect-square rounded-full flex items-center justify-center bg-secondary transition-transform active:scale-90" onclick="selectColor(this, '#206d1f', 'Fresh Lime', 'bg-secondary')" type="button">
+<span class="material-symbols-outlined text-on-secondary text-[15px] hidden">check</span>
+</button>
+<!-- Warm Coral -->
+<button class="color-btn w-full aspect-square rounded-full flex items-center justify-center bg-status-urgent transition-transform active:scale-90" onclick="selectColor(this, '#F0705A', 'Warm Coral', 'bg-status-urgent')" type="button">
+<span class="material-symbols-outlined text-surface text-[15px] hidden">check</span>
+</button>
+<!-- Soft Amber -->
+<button class="color-btn w-full aspect-square rounded-full flex items-center justify-center bg-status-medium transition-transform active:scale-90" onclick="selectColor(this, '#F2B24C', 'Soft Amber', 'bg-status-medium')" type="button">
+<span class="material-symbols-outlined text-surface text-[15px] hidden">check</span>
+</button>
+<!-- Forest Pine -->
+<button class="color-btn w-full aspect-square rounded-full flex items-center justify-center bg-tertiary transition-transform active:scale-90" onclick="selectColor(this, '#006a3a', 'Forest Pine', 'bg-tertiary')" type="button">
+<span class="material-symbols-outlined text-on-tertiary text-[15px] hidden">check</span>
+</button>
+<!-- Deep Slate -->
+<button class="color-btn w-full aspect-square rounded-full flex items-center justify-center bg-code-bg transition-transform active:scale-90" onclick="selectColor(this, '#1F2B26', 'Deep Slate', 'bg-code-bg')" type="button">
+<span class="material-symbols-outlined text-code-text text-[15px] hidden">check</span>
+</button>
+<!-- Muted Periwinkle -->
+<button class="color-btn w-full aspect-square rounded-full flex items-center justify-center bg-status-rolled transition-transform active:scale-90" onclick="selectColor(this, '#7C87D6', 'Muted Indigo', 'bg-status-rolled')" type="button">
+<span class="material-symbols-outlined text-surface text-[15px] hidden">check</span>
+</button>
+<!-- Sage Tint / Teal -->
+<button class="color-btn w-full aspect-square rounded-full flex items-center justify-center bg-primary-container transition-transform active:scale-90" onclick="selectColor(this, '#338262', 'Sage Container', 'bg-primary-container')" type="button">
+<span class="material-symbols-outlined text-on-primary-container text-[15px] hidden">check</span>
+</button>
+</div>
+<!-- Real-Time Badge Rendering Card -->
+<div class="p-space-sm rounded-lg bg-surface-container-low flex flex-col gap-1.5 mt-2">
+<span class="font-label-sm text-label-sm text-text-muted uppercase tracking-wider">Live Task Pill Preview</span>
+<div class="flex items-center gap-2">
+<div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-surface-container text-primary font-label-md text-label-md transition-all shadow-sm" id="badge-pill">
+<span class="w-2 h-2 rounded-full bg-primary flex-shrink-0" id="badge-dot"></span>
+<span class="font-bold truncate max-w-[190px]" id="badge-text">Angel Investments &amp; Advisory</span>
+<span class="text-text-muted font-normal">• 3 tasks</span>
+</div>
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-surface-variant font-label-sm text-label-sm text-on-surface-variant">
+<span class="material-symbols-outlined text-[13px] text-status-urgent">bolt</span> Urgent Enabled
+              </span>
+</div>
+</div>
+</div>
+<!-- SECTION 3: Agentic Prioritization & Triage Calibration -->
+<div class="bg-surface-container-lowest rounded-xl p-space-md shadow-sm space-y-space-md">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-primary text-[20px]">psychology</span>
+<span class="font-label-md text-label-md text-on-surface">Agent Default Triage Behavior</span>
+</div>
+<span class="font-label-sm text-label-sm bg-primary-fixed text-on-primary-fixed px-2 py-0.5 rounded-full font-bold">Auto-Pilot</span>
+</div>
+<!-- 3 Radio-like Behavior Cards -->
+<div class="grid grid-cols-1 gap-2">
+<!-- Option 1: High Cognitive Slot (Selected) -->
+<div class="triage-card p-3 rounded-xl bg-surface-container cursor-pointer transition-all flex items-start gap-3" onclick="selectTriageCard(this)">
+<div class="triage-indicator mt-0.5 w-5 h-5 rounded-full bg-primary text-on-primary flex items-center justify-center flex-shrink-0">
+<span class="material-symbols-outlined text-[14px]">check</span>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex items-center justify-between">
+<span class="font-label-md text-label-md text-on-surface font-bold">High Cognitive / Focus Slot</span>
+<span class="font-label-sm text-label-sm text-primary">09:00 - 12:00</span>
+</div>
+<p class="font-body-sm text-body-sm text-text-muted mt-0.5">Prioritizes deep uninterrupted morning windows; blocks ad-hoc notifications.</p>
+</div>
+</div>
+<!-- Option 2: Flexible Async Flow -->
+<div class="triage-card p-3 rounded-xl bg-surface-container-low cursor-pointer hover:bg-surface-container transition-all flex items-start gap-3" onclick="selectTriageCard(this)">
+<div class="triage-indicator mt-0.5 w-5 h-5 rounded-full bg-surface-container-highest text-transparent flex items-center justify-center flex-shrink-0">
+<span class="material-symbols-outlined text-[14px]">check</span>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex items-center justify-between">
+<span class="font-label-md text-label-md text-on-surface font-bold">Flexible / Async Flow</span>
+<span class="font-label-sm text-label-sm text-text-muted">Post-14:00 bias</span>
+</div>
+<p class="font-body-sm text-body-sm text-text-muted mt-0.5">Compresses between meetings or glides toward low-energy afternoon time pockets.</p>
+</div>
+</div>
+<!-- Option 3: Critical Cascade Risk -->
+<div class="triage-card p-3 rounded-xl bg-surface-container-low cursor-pointer hover:bg-surface-container transition-all flex items-start gap-3" onclick="selectTriageCard(this)">
+<div class="triage-indicator mt-0.5 w-5 h-5 rounded-full bg-surface-container-highest text-transparent flex items-center justify-center flex-shrink-0">
+<span class="material-symbols-outlined text-[14px]">check</span>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex items-center justify-between">
+<span class="font-label-md text-label-md text-on-surface font-bold">Critical Cascade Risk</span>
+<span class="font-label-sm text-label-sm text-status-urgent">Auto-Flag</span>
+</div>
+<p class="font-body-sm text-body-sm text-text-muted mt-0.5">Instantly maps and flags downstream blockers across all team boards.</p>
+</div>
+</div>
+</div>
+<!-- Autonomous Agent Rule Toggles -->
+<div class="space-y-space-sm pt-2">
+<!-- Toggle 1: Elastic Compression -->
+<div class="flex items-center justify-between p-space-sm rounded-lg bg-surface-container-low">
+<div class="flex items-start gap-2.5 min-w-0 pr-space-sm">
+<span class="material-symbols-outlined text-primary text-[20px] mt-0.5">compress</span>
+<div>
+<span class="font-label-md text-label-md text-on-surface block font-bold">Allow Elastic Compression</span>
+<span class="font-body-sm text-body-sm text-text-muted block">Auto-shrink tasks from 45m → 15m if calendar is constrained</span>
+</div>
+</div>
+<button aria-checked="true" class="w-12 h-6 rounded-full bg-primary flex items-center px-0.5 transition-colors flex-shrink-0 cursor-pointer" onclick="toggleSwitch(this)" role="switch" type="button">
+<span class="w-5 h-5 rounded-full bg-on-primary shadow-sm transform translate-x-6 transition-transform"></span>
+</button>
+</div>
+<!-- Toggle 2: Slippage Watchdog Alert -->
+<div class="flex items-center justify-between p-space-sm rounded-lg bg-surface-container-low">
+<div class="flex items-start gap-2.5 min-w-0 pr-space-sm">
+<span class="material-symbols-outlined text-status-rolled text-[20px] mt-0.5">history_toggle_off</span>
+<div>
+<span class="font-label-md text-label-md text-on-surface block font-bold">Slippage Watchdog Alert</span>
+<span class="font-body-sm text-body-sm text-text-muted block">Warn proactive briefing if deferred more than 1 time</span>
+</div>
+</div>
+<button aria-checked="true" class="w-12 h-6 rounded-full bg-primary flex items-center px-0.5 transition-colors flex-shrink-0 cursor-pointer" onclick="toggleSwitch(this)" role="switch" type="button">
+<span class="w-5 h-5 rounded-full bg-on-primary shadow-sm transform translate-x-6 transition-transform"></span>
+</button>
+</div>
+</div>
+</div>
+</div>
+<!-- Action Footer Strip -->
+<div class="p-gutter bg-surface flex items-center gap-space-sm shadow-[0_-4px_16px_rgba(34,49,43,0.06)] sticky bottom-0 z-20">
+<button class="w-1/3 py-3 rounded-xl bg-table-header hover:bg-surface-variant font-label-md text-label-md text-on-surface font-semibold text-center transition-colors" onclick="dismissModal()" type="button">
+          Cancel
+        </button>
+<button class="w-2/3 py-3 rounded-xl bg-primary hover:bg-primary-container text-on-primary font-label-md text-label-md font-bold shadow-[0_4px_16px_rgba(17,105,74,0.28)] flex items-center justify-center gap-2 transition-all active:scale-[0.98]" onclick="handleCreateCategory()" type="button">
+<span class="material-symbols-outlined text-[18px]">add_task</span>
+<span>Create Category</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+<script>
+  function dismissModal() {
+    const container = document.getElementById('modal-container');
+    if (container) {
+      container.classList.add('opacity-0');
+      setTimeout(() => {
+        container.classList.add('hidden');
+      }, 200);
+    }
+  }
+
+  function clearInput() {
+    const input = document.getElementById('cat-name-input');
+    if (input) {
+      input.value = '';
+      input.focus();
+      updateLivePreview();
+    }
+  }
+
+  function updateLivePreview() {
+    const input = document.getElementById('cat-name-input');
+    const badgeText = document.getElementById('badge-text');
+    const slugPreview = document.getElementById('domain-slug-preview');
+    const val = input.value.trim();
+
+    if (badgeText) {
+      badgeText.textContent = val.length > 0 ? val : 'New Domain';
+    }
+
+    if (slugPreview) {
+      if (val.length === 0) {
+        slugPreview.textContent = 'domain';
+      } else {
+        const slug = val.toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 10);
+        slugPreview.textContent = slug || 'domain';
+      }
+    }
+  }
+
+  function selectIcon(button, iconName) {
+    document.querySelectorAll('.icon-btn').forEach(btn => {
+      btn.className = 'icon-btn h-10 rounded-lg flex items-center justify-center bg-surface-container text-on-surface-variant hover:bg-surface-variant transition-transform active:scale-95';
+    });
+    button.className = 'icon-btn h-10 rounded-lg flex items-center justify-center bg-primary text-on-primary shadow-sm transition-transform active:scale-95';
+  }
+
+  function selectColor(btn, colorHex, colorName, colorClass) {
+    document.querySelectorAll('.color-btn').forEach(el => {
+      el.classList.remove('ring-2', 'ring-primary', 'ring-offset-2', 'ring-offset-surface');
+      const check = el.querySelector('span');
+      if (check) check.classList.add('hidden');
+    });
+
+    btn.classList.add('ring-2', 'ring-primary', 'ring-offset-2', 'ring-offset-surface');
+    const activeCheck = btn.querySelector('span');
+    if (activeCheck) activeCheck.classList.remove('hidden');
+
+    const nameLabel = document.getElementById('active-color-name');
+    if (nameLabel) nameLabel.textContent = colorName;
+
+    const badgeDot = document.getElementById('badge-dot');
+    if (badgeDot) {
+      badgeDot.style.backgroundColor = colorHex;
+    }
+  }
+
+  function selectTriageCard(card) {
+    document.querySelectorAll('.triage-card').forEach(c => {
+      c.classList.remove('bg-surface-container');
+      c.classList.add('bg-surface-container-low');
+      const ind = c.querySelector('.triage-indicator');
+      if (ind) {
+        ind.className = 'triage-indicator mt-0.5 w-5 h-5 rounded-full bg-surface-container-highest text-transparent flex items-center justify-center flex-shrink-0';
+      }
+    });
+
+    card.classList.remove('bg-surface-container-low');
+    card.classList.add('bg-surface-container');
+    const activeInd = card.querySelector('.triage-indicator');
+    if (activeInd) {
+      activeInd.className = 'triage-indicator mt-0.5 w-5 h-5 rounded-full bg-primary text-on-primary flex items-center justify-center flex-shrink-0';
+    }
+  }
+
+  function toggleSwitch(btn) {
+    const isChecked = btn.getAttribute('aria-checked') === 'true';
+    const thumb = btn.querySelector('span');
+    if (isChecked) {
+      btn.setAttribute('aria-checked', 'false');
+      btn.classList.remove('bg-primary');
+      btn.classList.add('bg-surface-variant');
+      thumb.classList.remove('translate-x-6');
+      thumb.classList.add('translate-x-0');
+    } else {
+      btn.setAttribute('aria-checked', 'true');
+      btn.classList.remove('bg-surface-variant');
+      btn.classList.add('bg-primary');
+      thumb.classList.remove('translate-x-0');
+      thumb.classList.add('translate-x-6');
+    }
+  }
+
+  function handleCreateCategory() {
+    const btn = event.currentTarget;
+    btn.innerHTML = '<span class="material-symbols-outlined text-[18px] animate-spin">refresh</span><span>Configuring Agent...</span>';
+    setTimeout(() => {
+      btn.innerHTML = '<span class="material-symbols-outlined text-[18px]">check</span><span>Domain Ready!</span>';
+      setTimeout(() => {
+        dismissModal();
+      }, 500);
+    }, 600);
+  }
+</script></main></body></html>

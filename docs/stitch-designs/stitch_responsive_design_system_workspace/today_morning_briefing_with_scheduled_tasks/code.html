@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/><meta content="mobile_tab" name="shell-type"/><link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;600;700;800&amp;display=swap" rel="stylesheet"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { colors: { "on-primary": "#ffffff", "surface-dim": "#cdded5", "inverse-on-surface": "#e3f5eb", "on-secondary": "#ffffff", "status-medium": "#F2B24C", "on-secondary-container": "#257123", "status-rolled": "#7C87D6", "on-secondary-fixed-variant": "#005308", "secondary-fixed-dim": "#8ad97d", "tertiary": "#006a3a", "outline-variant": "#bec9c1", "primary-fixed": "#a3f3cc", "status-ontrack": "#5DB87E", "secondary-container": "#a3f394", "surface-container": "#e0f2e9", "secondary-fixed": "#a5f697", "text-muted": "#5B6B62", "primary-fixed-dim": "#88d6b1", "error": "#ba1a1a", "surface-container-lowest": "#ffffff", "tertiary-fixed-dim": "#7ed99c", "inverse-surface": "#24342d", "on-tertiary-fixed": "#00210e", "surface-tint": "#156b4d", "on-background": "#101e19", "code-bg": "#1F2B26", "outline": "#6f7a73", "primary-container": "#338262", "on-primary-fixed-variant": "#005138", "on-primary-fixed": "#002114", "error-container": "#ffdad6", "surface-bright": "#ecfef4", "on-tertiary-fixed-variant": "#00522c", "tertiary-fixed": "#99f6b7", "tertiary-container": "#258450", "code-text": "#E8EFE9", "surface": "#FFFFFF", "surface-container-low": "#e6f8ee", "on-surface-variant": "#3f4943", "surface-container-highest": "#d5e7dd", "on-surface": "#101e19", "on-primary-container": "#f5fff7", "primary": "#11694a", "status-urgent": "#F0705A", "border-subtle": "#E7E5DF", "bg-canvas": "#F7F6F2", "on-tertiary": "#ffffff", "on-secondary-fixed": "#002201", "table-header": "#EEF3F0", "surface-variant": "#d5e7dd", "secondary": "#206d1f", "on-error": "#ffffff", "inverse-primary": "#88d6b1", "background": "#ecfef4", "on-error-container": "#93000a", "on-tertiary-container": "#f6fff4", "surface-container-high": "#dbece3" }, borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" }, spacing: { "space-lg": "1.5rem", "gutter-lg": "1.5rem", "space-md": "1rem", "gutter": "1rem", "space-xl": "2.25rem", "space-xs": "0.25rem", "margin-md": "1.5rem", "space-sm": "0.5rem", "margin-lg": "2.5rem", "margin": "1.25rem" }, fontFamily: { "label-sm": ["Figtree"], "headline-lg": ["Figtree"], "body-lead": ["Figtree"], "body-sm": ["Figtree"], "headline-xl": ["Figtree"], "label-md": ["Figtree"], "headline-xl-mobile": ["Figtree"], "headline-md": ["Figtree"], "body-md": ["Figtree"] }, fontSize: { "label-sm": ["0.6875rem", { "lineHeight": "0.9rem", "letterSpacing": "0.03em", "fontWeight": "700" }], "headline-lg": ["1.5rem", { "lineHeight": "2rem", "letterSpacing": "-0.02em", "fontWeight": "700" }], "body-lead": ["1.08rem", { "lineHeight": "1.75rem", "fontWeight": "400" }], "body-sm": ["0.875rem", { "lineHeight": "1.4rem", "fontWeight": "400" }], "headline-xl": ["2.6rem", { "lineHeight": "3.1rem", "letterSpacing": "-0.03em", "fontWeight": "800" }], "label-md": ["0.8125rem", { "lineHeight": "1.2rem", "letterSpacing": "0.01em", "fontWeight": "600" }], "headline-xl-mobile": ["2rem", { "lineHeight": "2.4rem", "letterSpacing": "-0.02em", "fontWeight": "800" }], "headline-md": ["1.15rem", { "lineHeight": "1.6rem", "letterSpacing": "-0.01em", "fontWeight": "700" }], "body-md": ["1rem", { "lineHeight": "1.65rem", "fontWeight": "400" }] } } } }</script><style>@layer base{html,body{width:100%;margin:0;padding:0;}body{overscroll-behavior-y:none;background-color:#F7F6F2;}.pb-safe{padding-bottom:env(safe-area-inset-bottom,0px);}.pt-safe{padding-top:env(safe-area-inset-top,0px);}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head><body class="bg-bg-canvas text-on-surface antialiased min-h-screen flex flex-col font-body-md"><header class="fixed top-0 w-full z-50 pt-safe bg-surface/85 backdrop-blur-xl shadow-[0_1px_8px_rgba(34,49,43,0.04)]"><div class="h-20 px-gutter flex items-center justify-between gap-space-sm"><div class="flex items-center gap-space-sm min-w-0"><img alt="Tasks Agentic Logo" class="h-8 w-auto object-contain flex-shrink-0" src="https://lh3.googleusercontent.com/aida/AEtjO1UzmqCuFCLUd3EztkGakEpAFvUtAdLtzeVoVnlxHkQYyhJ9aDA_3ymDB_q3o5x9qAn1Kyav-_9ER4ckKo_ELy7qEgqoOMAVsNbYkqfU4ggqjA0FPmmDVqYdj2-pJiAlZu_E1zf9N7Tqchbfbatk4xJx01DQAi0-XZeNEOPSxVJaBC7QojQTvP4dWJSTGglj8M21XXkUQiFcTS2ngkk6VyeI4ifycXqkgCy7VCYPWfFboYEb5yeP5xkD9L-w"/><div class="flex flex-col min-w-0"><div class="flex items-center gap-space-xs"><span class="font-headline-md text-headline-md text-on-surface font-bold tracking-tight truncate">Today</span><span class="w-1.5 h-1.5 rounded-full bg-status-ontrack flex-shrink-0"></span></div><span class="font-label-sm text-label-sm text-text-muted truncate">Morning Focus · 9:00 AM - 12:00 PM</span></div></div><div class="flex items-center gap-space-xs flex-shrink-0"><button aria-label="Alerts" class="w-11 h-11 flex items-center justify-center rounded-xl hover:bg-table-header transition-colors text-on-surface-variant"><span class="material-symbols-outlined text-[22px]">notifications</span></button><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center flex-shrink-0 shadow-[0_2px_6px_rgba(17,105,74,0.2)]"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></div></header><main class="flex-1 w-full bg-bg-canvas pt-20 pb-28 px-gutter flex flex-col"><div class="flex flex-col w-full gap-space-md">
+<!-- Claude Agentic Morning Briefing Card -->
+<section class="bg-surface rounded-xl shadow-[0_1px_3px_rgba(34,49,43,0.05),0_8px_24px_rgba(34,49,43,0.04)] p-space-md flex flex-col gap-space-sm relative overflow-hidden">
+<!-- Subtle left-edge brand accent line -->
+<div class="absolute left-0 top-0 bottom-0 w-1.5 bg-primary"></div>
+<div class="flex items-start justify-between gap-space-sm pl-space-xs">
+<div class="flex flex-col">
+<div class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-primary text-[20px]" style="font-variation-settings: 'FILL' 1;">wb_twilight</span>
+<h2 class="font-headline-md text-headline-md text-on-surface">Wednesday, Oct 3</h2>
+</div>
+<span class="font-label-sm text-label-sm text-text-muted mt-0.5">Today's Morning Briefing</span>
+</div>
+<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-surface-container-high text-primary font-label-sm text-label-sm">
+<span class="w-1.5 h-1.5 rounded-full bg-status-ontrack animate-pulse"></span>
+        8:30 – 11:30 AM Peak
+      </span>
+</div>
+<!-- Synthesized Claude briefing narrative -->
+<p class="font-body-sm text-body-sm text-on-surface-variant leading-relaxed pl-space-xs">
+      Good morning! You've protected <strong class="font-semibold text-on-surface">2h 45m of deep focus</strong>. 3 freshly triaged tasks from yesterday have been woven into your morning flow without calendar clashes. Priority 1 is drafting the investor pitch memo while cognitive energy is peak.
+    </p>
+<!-- Briefing summary metric chips -->
+<div class="flex flex-wrap items-center gap-2 pt-1 pl-space-xs">
+<div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-surface-container text-on-surface font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-[15px] text-primary">task_alt</span>
+<span>4 priority tasks</span>
+</div>
+<div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-primary-fixed text-on-primary-fixed font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-[15px]">shield</span>
+<span>2h 45m shielded</span>
+</div>
+<div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-surface-container-low text-secondary font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-[15px] text-status-ontrack">event_available</span>
+<span>0 clashes</span>
+</div>
+<div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-table-header text-on-surface-variant font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-[15px] text-status-rolled">history</span>
+<span>1 rolled resolved</span>
+</div>
+</div>
+</section>
+<!-- Batch Triage Ingestion Notice Banner -->
+<div class="bg-surface-container-low rounded-xl px-3.5 py-2.5 flex items-center justify-between gap-space-sm shadow-[0_1px_3px_rgba(34,49,43,0.03)]">
+<div class="flex items-center gap-2.5 min-w-0">
+<div class="w-7 h-7 rounded-lg bg-surface flex items-center justify-center flex-shrink-0 text-primary shadow-sm">
+<span class="material-symbols-outlined text-[18px]">auto_awesome</span>
+</div>
+<p class="font-label-md text-label-md text-on-surface truncate">
+<span class="font-bold text-primary">3 newly triaged</span> tasks slotted from batch session
+      </p>
+</div>
+<span class="font-label-sm text-label-sm text-text-muted flex-shrink-0 uppercase tracking-wider">Synced</span>
+</div>
+<!-- TIMELINE CLUSTER 1: MORNING DEEP FOCUS -->
+<div class="flex flex-col gap-2.5">
+<div class="flex items-center justify-between px-1">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-status-urgent"></span>
+<h3 class="font-headline-md text-headline-md text-on-surface">Morning Focus Block</h3>
+</div>
+<span class="font-label-sm text-label-sm text-text-muted">8:30 – 11:30 AM · Peak Energy</span>
+</div>
+<!-- Task 1 (Newly Triaged - Urgent) -->
+<article class="bg-surface rounded-xl p-space-md shadow-[0_1px_3px_rgba(34,49,43,0.05),0_8px_24px_rgba(34,49,43,0.04)] flex flex-col gap-2.5 relative">
+<div class="flex items-center justify-between gap-2 flex-wrap">
+<div class="flex items-center gap-1.5 flex-wrap">
+<span class="px-2 py-0.5 rounded-full bg-surface-container text-primary font-label-sm text-label-sm">
+            @alpha · Startup
+          </span>
+<span class="px-2 py-0.5 rounded-full bg-primary-fixed text-on-primary-fixed font-label-sm text-label-sm inline-flex items-center gap-1">
+<span class="material-symbols-outlined text-[12px]">auto_awesome</span> Newly Scheduled
+          </span>
+</div>
+<span class="px-2 py-0.5 rounded-full bg-[rgba(240,112,90,0.12)] text-status-urgent font-label-sm text-label-sm font-semibold">
+          Urgent
+        </span>
+</div>
+<div class="flex items-start gap-3">
+<button aria-label="Toggle completed" class="mt-1 w-[18px] h-[18px] rounded flex-shrink-0 bg-surface-container flex items-center justify-center transition-all hover:bg-primary/20" onclick="toggleTask(this)" type="button">
+<span class="material-symbols-outlined text-transparent text-[14px]">check</span>
+</button>
+<div class="flex flex-col min-w-0 flex-1">
+<h4 class="font-headline-md text-headline-md text-on-surface leading-snug">
+            Draft investor pitch memo for seed extension
+          </h4>
+<p class="font-body-sm text-body-sm text-text-muted mt-0.5">
+            Synthesize MRR trajectory, pilot pipeline, and 18-month burn milestones before circulation.
+          </p>
+</div>
+</div>
+<div class="flex items-center justify-between pt-1 text-text-muted font-label-sm text-label-sm flex-wrap gap-2">
+<div class="flex items-center gap-3">
+<span class="inline-flex items-center gap-1 text-on-surface">
+<span class="material-symbols-outlined text-[16px] text-primary">schedule</span>
+            9:00 AM – 10:30 AM
+          </span>
+<span class="inline-flex items-center gap-1">
+<span class="material-symbols-outlined text-[15px]">lock_clock</span>
+            90m Shielded
+          </span>
+</div>
+<span class="inline-flex items-center gap-1 text-status-urgent font-semibold">
+<span class="material-symbols-outlined text-[14px]">flag</span>
+          due before 11:00 AM
+        </span>
+</div>
+</article>
+<!-- Task 2 (Newly Triaged - Medium / Elastic) -->
+<article class="bg-surface rounded-xl p-space-md shadow-[0_1px_3px_rgba(34,49,43,0.05),0_8px_24px_rgba(34,49,43,0.04)] flex flex-col gap-2.5">
+<div class="flex items-center justify-between gap-2 flex-wrap">
+<div class="flex items-center gap-1.5 flex-wrap">
+<span class="px-2 py-0.5 rounded-full bg-table-header text-on-surface-variant font-label-sm text-label-sm">
+            @beta · AI Evals
+          </span>
+<span class="px-2 py-0.5 rounded-full bg-primary-fixed text-on-primary-fixed font-label-sm text-label-sm inline-flex items-center gap-1">
+<span class="material-symbols-outlined text-[12px]">auto_awesome</span> Newly Scheduled
+          </span>
+</div>
+<span class="px-2 py-0.5 rounded-full bg-[rgba(242,178,76,0.18)] text-status-medium font-label-sm text-label-sm font-semibold">
+          Medium Priority
+        </span>
+</div>
+<div class="flex items-start gap-3">
+<button aria-label="Toggle completed" class="mt-1 w-[18px] h-[18px] rounded flex-shrink-0 bg-surface-container flex items-center justify-center transition-all hover:bg-primary/20" onclick="toggleTask(this)" type="button">
+<span class="material-symbols-outlined text-transparent text-[14px]">check</span>
+</button>
+<div class="flex flex-col min-w-0 flex-1">
+<h4 class="font-headline-md text-headline-md text-on-surface leading-snug">
+            Review LLM benchmark evals and vector index latency
+          </h4>
+<div class="mt-1 inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-error-container text-on-error-container font-label-sm text-label-sm w-fit">
+<span class="material-symbols-outlined text-[14px]">link_off</span>
+            Blocks founder review at 3:00 PM
+          </div>
+</div>
+</div>
+<div class="flex items-center justify-between pt-1 text-text-muted font-label-sm text-label-sm flex-wrap gap-2">
+<div class="flex items-center gap-3">
+<span class="inline-flex items-center gap-1 text-on-surface">
+<span class="material-symbols-outlined text-[16px] text-text-muted">schedule</span>
+            10:30 AM – 11:15 AM
+          </span>
+<span class="inline-flex items-center gap-1 text-primary">
+<span class="material-symbols-outlined text-[14px]">pinch</span>
+            Elastic (min 20m)
+          </span>
+</div>
+<span>Buffer ready (+15m)</span>
+</div>
+</article>
+</div>
+<!-- TIMELINE CLUSTER 2: AFTERNOON & COMPLIANCE -->
+<div class="flex flex-col gap-2.5 pt-1">
+<div class="flex items-center justify-between px-1">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-status-medium"></span>
+<h3 class="font-headline-md text-headline-md text-on-surface">Afternoon &amp; Compliance</h3>
+</div>
+<span class="font-label-sm text-label-sm text-text-muted">1:30 – 3:00 PM · Execution</span>
+</div>
+<!-- Task 3 (Newly Triaged - Corporate Tax) -->
+<article class="bg-surface rounded-xl p-space-md shadow-[0_1px_3px_rgba(34,49,43,0.05),0_8px_24px_rgba(34,49,43,0.04)] flex flex-col gap-2.5">
+<div class="flex items-center justify-between gap-2 flex-wrap">
+<div class="flex items-center gap-1.5 flex-wrap">
+<span class="px-2 py-0.5 rounded-full bg-surface-container text-secondary font-label-sm text-label-sm">
+            Governance &amp; Tax
+          </span>
+<span class="px-2 py-0.5 rounded-full bg-primary-fixed text-on-primary-fixed font-label-sm text-label-sm inline-flex items-center gap-1">
+<span class="material-symbols-outlined text-[12px]">auto_awesome</span> Newly Scheduled
+          </span>
+</div>
+<span class="px-2 py-0.5 rounded-full bg-[rgba(242,178,76,0.18)] text-status-medium font-label-sm text-label-sm font-semibold">
+          High Priority Compliance
+        </span>
+</div>
+<div class="flex items-start gap-3">
+<button aria-label="Toggle completed" class="mt-1 w-[18px] h-[18px] rounded flex-shrink-0 bg-surface-container flex items-center justify-center transition-all hover:bg-primary/20" onclick="toggleTask(this)" type="button">
+<span class="material-symbols-outlined text-transparent text-[14px]">check</span>
+</button>
+<div class="flex flex-col min-w-0 flex-1">
+<h4 class="font-headline-md text-headline-md text-on-surface leading-snug">
+            Renew Delaware corporate franchise tax &amp; filing
+          </h4>
+<p class="font-body-sm text-body-sm text-text-muted mt-0.5">
+            Submit annual assessment report and confirm authorized share capital calculations.
+          </p>
+</div>
+</div>
+<div class="flex items-center justify-between pt-1 text-text-muted font-label-sm text-label-sm">
+<span class="inline-flex items-center gap-1 text-on-surface">
+<span class="material-symbols-outlined text-[16px] text-text-muted">schedule</span>
+          2:00 PM – 2:30 PM · 30m
+        </span>
+<span class="inline-flex items-center gap-1 text-secondary font-semibold">
+<span class="material-symbols-outlined text-[14px]">account_balance</span>
+          Delaware Portal
+        </span>
+</div>
+</article>
+<!-- Task 4 (Existing Task) -->
+<article class="bg-surface rounded-xl p-space-md shadow-[0_1px_3px_rgba(34,49,43,0.05),0_8px_24px_rgba(34,49,43,0.04)] flex flex-col gap-2.5 opacity-90">
+<div class="flex items-center justify-between gap-2 flex-wrap">
+<span class="px-2 py-0.5 rounded-full bg-surface-container text-primary font-label-sm text-label-sm">
+          @alpha · Finance
+        </span>
+<span class="px-2 py-0.5 rounded-full bg-table-header text-on-surface-variant font-label-sm text-label-sm">
+          Scheduled
+        </span>
+</div>
+<div class="flex items-start gap-3">
+<button aria-label="Toggle completed" class="mt-1 w-[18px] h-[18px] rounded flex-shrink-0 bg-surface-container flex items-center justify-center transition-all hover:bg-primary/20" onclick="toggleTask(this)" type="button">
+<span class="material-symbols-outlined text-transparent text-[14px]">check</span>
+</button>
+<div class="flex flex-col min-w-0 flex-1">
+<h4 class="font-headline-md text-headline-md text-on-surface leading-snug">
+            Prepare board deck financial appendix &amp; cap table scenario
+          </h4>
+</div>
+</div>
+<div class="flex items-center justify-between pt-1 text-text-muted font-label-sm text-label-sm">
+<span class="inline-flex items-center gap-1 text-on-surface">
+<span class="material-symbols-outlined text-[16px] text-text-muted">schedule</span>
+          2:30 PM · 45m block
+        </span>
+<span class="inline-flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">table_chart</span>
+          Sheets linked
+        </span>
+</div>
+</article>
+</div>
+<!-- TIMELINE CLUSTER 3: EVENING & PERSONAL QUICK-WIN -->
+<div class="flex flex-col gap-2.5 pt-1">
+<div class="flex items-center justify-between px-1">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-status-ontrack"></span>
+<h3 class="font-headline-md text-headline-md text-on-surface">Evening Recharge</h3>
+</div>
+<span class="font-label-sm text-label-sm text-text-muted">Personal · Decompression</span>
+</div>
+<!-- Task 5 (Personal) -->
+<article class="bg-surface rounded-xl p-space-md shadow-[0_1px_3px_rgba(34,49,43,0.05),0_8px_24px_rgba(34,49,43,0.04)] flex flex-col gap-2.5">
+<div class="flex items-center justify-between gap-2 flex-wrap">
+<span class="px-2 py-0.5 rounded-full bg-surface-container-high text-on-surface-variant font-label-sm text-label-sm">
+          Wellness
+        </span>
+<span class="px-2 py-0.5 rounded-full bg-[rgba(93,184,126,0.16)] text-status-ontrack font-label-sm text-label-sm font-semibold">
+          Flexible
+        </span>
+</div>
+<div class="flex items-start gap-3">
+<button aria-label="Toggle completed" class="mt-1 w-[18px] h-[18px] rounded flex-shrink-0 bg-surface-container flex items-center justify-center transition-all hover:bg-primary/20" onclick="toggleTask(this)" type="button">
+<span class="material-symbols-outlined text-transparent text-[14px]">check</span>
+</button>
+<div class="flex flex-col min-w-0 flex-1">
+<h4 class="font-headline-md text-headline-md text-on-surface leading-snug">
+            Schedule annual physical &amp; bloodwork check
+          </h4>
+<p class="font-body-sm text-body-sm text-text-muted mt-0.5">
+            Use One Medical patient portal for morning fasting appointment next Tuesday.
+          </p>
+</div>
+</div>
+<div class="flex items-center justify-between pt-1 text-text-muted font-label-sm text-label-sm">
+<span class="inline-flex items-center gap-1 text-on-surface">
+<span class="material-symbols-outlined text-[16px] text-status-ontrack">spa</span>
+          Flexible Evening · ~6:30 PM
+        </span>
+<span class="inline-flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">timer_10</span>
+          10m quick-win
+        </span>
+</div>
+</article>
+</div>
+<!-- Docked Natural Language & Voice Quick-Capture Pill -->
+<div class="pt-2 sticky bottom-20 z-40">
+<div class="bg-surface/95 backdrop-blur-md rounded-xl p-2 shadow-[0_4px_16px_rgba(34,49,43,0.12)] flex items-center gap-2">
+<div class="w-8 h-8 rounded-lg bg-surface-container flex items-center justify-center text-primary flex-shrink-0">
+<span class="material-symbols-outlined text-[20px]">auto_awesome</span>
+</div>
+<input class="flex-1 bg-transparent border-none outline-none font-body-sm text-body-sm text-on-surface placeholder:text-text-muted placeholder:opacity-70 px-1" id="quickInput" placeholder="Add task naturally (e.g. 'Coffee with Sarah 4pm flexible')..." type="text"/>
+<button aria-label="Start voice input" class="w-9 h-9 rounded-full bg-primary-fixed hover:bg-primary text-on-primary-fixed hover:text-on-primary flex items-center justify-center transition-colors flex-shrink-0 shadow-sm" id="micButton" onclick="toggleVoiceListening(this)" type="button">
+<span class="material-symbols-outlined text-[20px]" id="micIcon">mic</span>
+</button>
+</div>
+</div>
+<script>
+    // Micro-interaction: Task completion visual feedback
+    function toggleTask(button) {
+      const icon = button.querySelector('span');
+      const card = button.closest('article');
+      const title = card ? card.querySelector('h4') : null;
+
+      const isChecked = button.dataset.checked === 'true';
+
+      if (!isChecked) {
+        button.dataset.checked = 'true';
+        button.classList.remove('bg-surface-container');
+        button.classList.add('bg-primary');
+        icon.classList.remove('text-transparent');
+        icon.classList.add('text-on-primary');
+        if (title) {
+          title.classList.add('line-through', 'opacity-50');
+        }
+      } else {
+        button.dataset.checked = 'false';
+        button.classList.add('bg-surface-container');
+        button.classList.remove('bg-primary');
+        icon.classList.add('text-transparent');
+        icon.classList.remove('text-on-primary');
+        if (title) {
+          title.classList.remove('line-through', 'opacity-50');
+        }
+      }
+    }
+
+    // Micro-interaction: Voice trigger toggle state
+    let isListening = false;
+    function toggleVoiceListening(btn) {
+      isListening = !isListening;
+      const input = document.getElementById('quickInput');
+      const icon = document.getElementById('micIcon');
+
+      if (isListening) {
+        btn.classList.remove('bg-primary-fixed', 'text-on-primary-fixed');
+        btn.classList.add('bg-status-urgent', 'text-on-error', 'animate-pulse');
+        icon.textContent = 'graphic_eq';
+        if (input) {
+          input.placeholder = 'Listening for speech input...';
+        }
+      } else {
+        btn.classList.add('bg-primary-fixed', 'text-on-primary-fixed');
+        btn.classList.remove('bg-status-urgent', 'text-on-error', 'animate-pulse');
+        icon.textContent = 'mic';
+        if (input) {
+          input.placeholder = "Add task naturally (e.g. 'Coffee with Sarah 4pm flexible')...";
+        }
+      }
+    }
+  </script>
+</div></main><nav class="fixed bottom-0 w-full z-50 pb-safe bg-surface/90 backdrop-blur-xl shadow-[0_-2px_12px_rgba(34,49,43,0.05)]" data-active-classes="text-primary font-semibold"><div class="h-16 px-space-xs flex items-center justify-around relative max-w-lg mx-auto"><a class="flex flex-col items-center justify-center min-w-[56px] h-12 text-on-surface-variant transition-colors" data-path="today" href="#"><span class="material-symbols-outlined text-[22px]">wb_sunny</span><span class="font-label-sm text-label-sm mt-0.5">Today</span></a><a class="flex flex-col items-center justify-center min-w-[56px] h-12 text-on-surface-variant transition-colors" data-path="my-tasks" href="#"><span class="material-symbols-outlined text-[22px]">check_circle</span><span class="font-label-sm text-label-sm mt-0.5">My Tasks</span></a><div class="relative -top-5 flex flex-col items-center"><a class="w-14 h-14 rounded-full bg-primary hover:bg-primary-container text-on-primary flex items-center justify-center shadow-[0_4px_16px_rgba(17,105,74,0.35)] transition-transform active:scale-95" data-path="quick-capture" href="#"><span class="material-symbols-outlined text-[26px]">mic</span></a><span class="font-label-sm text-label-sm text-text-muted mt-1">Capture</span></div><a class="flex flex-col items-center justify-center min-w-[56px] h-12 text-on-surface-variant transition-colors" data-path="rolled" href="#"><span class="material-symbols-outlined text-[22px]">history</span><span class="font-label-sm text-label-sm mt-0.5">Rolled</span></a><a class="flex flex-col items-center justify-center min-w-[56px] h-12 text-on-surface-variant transition-colors" data-path="settings" href="#"><span class="material-symbols-outlined text-[22px]">settings</span><span class="font-label-sm text-label-sm mt-0.5">Settings</span></a></div></nav></body></html>

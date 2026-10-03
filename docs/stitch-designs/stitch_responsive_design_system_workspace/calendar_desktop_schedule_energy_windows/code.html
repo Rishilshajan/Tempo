@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="web_dashboard" name="shell-type"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@100..900&display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config={darkMode:"class",theme:{extend:{"colors":{"on-secondary-fixed":"#002201","surface-container-low":"#e6f8ee","on-secondary-container":"#257123","secondary-container":"#a3f394","on-surface-variant":"#3f4943","on-surface":"#101e19","surface-container-highest":"#d5e7dd","border-subtle":"#E7E5DF","surface-tint":"#156b4d","inverse-primary":"#88d6b1","surface-container-lowest":"#ffffff","on-tertiary-container":"#f6fff4","status-rolled":"#7C87D6","background":"#ecfef4","on-error":"#ffffff","surface":"#FFFFFF","code-bg":"#1F2B26","tertiary":"#006a3a","bg-canvas":"#F7F6F2","error":"#ba1a1a","on-secondary":"#ffffff","surface-dim":"#cdded5","inverse-surface":"#24342d","tertiary-fixed-dim":"#7ed99c","on-primary":"#ffffff","primary-fixed-dim":"#88d6b1","on-primary-fixed-variant":"#005138","status-medium":"#F2B24C","on-tertiary":"#ffffff","secondary-fixed":"#a5f697","on-tertiary-fixed":"#00210e","on-error-container":"#93000a","tertiary-fixed":"#99f6b7","secondary":"#206d1f","code-text":"#E8EFE9","surface-container":"#e0f2e9","primary-fixed":"#a3f3cc","on-primary-container":"#f5fff7","secondary-fixed-dim":"#8ad97d","status-ontrack":"#5DB87E","outline-variant":"#bec9c1","surface-bright":"#ecfef4","outline":"#6f7a73","on-primary-fixed":"#002114","text-muted":"#5B6B62","primary-container":"#338262","on-secondary-fixed-variant":"#005308","on-background":"#101e19","on-tertiary-fixed-variant":"#00522c","table-header":"#EEF3F0","surface-container-high":"#dbece3","status-urgent":"#F0705A","error-container":"#ffdad6","primary":"#11694a","inverse-on-surface":"#e3f5eb","tertiary-container":"#258450","surface-variant":"#d5e7dd"},"borderRadius":{"DEFAULT":"0.25rem","lg":"0.5rem","xl":"0.75rem","full":"9999px"},"spacing":{"space-md":"1rem","space-xl":"2.25rem","space-xs":"0.25rem","space-sm":"0.5rem","margin-lg":"2.5rem","margin":"1.25rem","space-lg":"1.5rem","gutter-lg":"1.5rem","margin-md":"1.5rem","gutter":"1rem"},"fontFamily":{"label-sm":["Figtree"],"headline-md":["Figtree"],"body-lead":["Figtree"],"label-md":["Figtree"],"body-md":["Figtree"],"body-sm":["Figtree"],"headline-xl":["Figtree"],"headline-lg":["Figtree"],"headline-xl-mobile":["Figtree"]},"fontSize":{"label-sm":["0.6875rem",{"lineHeight":"0.9rem","letterSpacing":"0.03em","fontWeight":"700"}],"headline-md":["1.15rem",{"lineHeight":"1.6rem","letterSpacing":"-0.01em","fontWeight":"700"}],"body-lead":["1.08rem",{"lineHeight":"1.75rem","fontWeight":"400"}],"label-md":["0.8125rem",{"lineHeight":"1.2rem","letterSpacing":"0.01em","fontWeight":"600"}],"body-md":["1rem",{"lineHeight":"1.65rem","fontWeight":"400"}],"body-sm":["0.875rem",{"lineHeight":"1.4rem","fontWeight":"400"}],"headline-xl":["2.6rem",{"lineHeight":"3.1rem","letterSpacing":"-0.03em","fontWeight":"800"}],"headline-lg":["1.5rem",{"lineHeight":"2rem","letterSpacing":"-0.02em","fontWeight":"700"}],"headline-xl-mobile":["2rem",{"lineHeight":"2.4rem","letterSpacing":"-0.02em","fontWeight":"800"}]}}}};</script></head><body class="bg-bg-canvas font-body-md text-on-surface antialiased"><aside class="fixed left-0 top-0 h-full w-64 bg-surface z-50 flex flex-col justify-between shadow-[0_1px_8px_rgba(0,0,0,0.04)]"><div class="flex flex-col flex-1 overflow-y-auto px-space-md pt-space-lg"><div class="flex items-center gap-space-sm mb-space-lg px-space-xs"><img alt="Brand logo. - Primary color: #4c9a78
+- Font: publicSans
+- Mode: light
+- Roundness: rounded-md
+" class="h-8 w-auto object-contain" src="https://lh3.googleusercontent.com/aida/AEtjO1W7TMboXyQSoNJFBSUoUwfQ_H-fhHtXGo4VzKbvYriP4Im6D9oqrmQmPi9kXZJdXZyXJ5AiNFy-1zU14XcHp6inQUFyUjqAh9OxGefUeS5KUONSKO_ei-onBG-54oS54zEEBCw4DWilVyxY35rTLAxMnPwivGDDnpoW99qLq1SlzfTvkrmj-F2r701OW_iX0votTvFD0GbDoC7V9H9s4wiI6ZERd6AwHsvI7zMbjUnmqhwNDXj3CBlNWrQ"/><div class="flex flex-col"><span class="font-headline-md text-headline-md text-on-surface leading-tight">Tasks</span><span class="font-label-sm text-label-sm text-text-muted">Agentic Workspace</span></div></div><button class="w-full flex items-center justify-center gap-space-xs py-space-sm px-space-md bg-primary text-on-primary rounded-xl font-label-md text-label-md hover:bg-primary-container transition-colors mb-space-lg shadow-[0_1px_3px_rgba(34,49,43,0.05)]"><span class="material-symbols-outlined text-[18px]">add</span>Create Task</button><div class="mb-space-lg"><div class="font-label-sm text-label-sm uppercase tracking-wider text-text-muted px-space-sm mb-space-xs">General</div><nav class="flex flex-col gap-space-xs" data-active-classes="bg-surface-container-high text-on-surface font-label-md"><a class="flex items-center justify-between px-space-sm py-space-xs rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors font-body-sm text-body-sm" data-path="today" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[18px] text-primary">arrow_back_ios_new</span><span>Today</span></div></a><a class="flex items-center justify-between px-space-sm py-space-xs rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors font-body-sm text-body-sm" data-path="my-tasks" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[18px]">check_circle</span><span>My Tasks</span></div><span class="font-label-sm text-label-sm px-space-xs py-0.5 rounded-full bg-surface-container text-on-surface-variant">8</span></a><a class="flex items-center justify-between px-space-sm py-space-xs rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors font-body-sm text-body-sm" data-path="rolled-forward" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[18px] text-status-rolled">history</span><span>Rolled-Forward</span></div><span class="font-label-sm text-label-sm px-space-xs py-0.5 rounded-full bg-status-rolled/15 text-status-rolled font-label-sm">3</span></a><a class="flex items-center justify-between px-space-sm py-space-xs rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors font-body-sm text-body-sm" data-path="batch-triage" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[18px]">auto_awesome_motion</span><span>Batch Triage</span></div></a><a aria-current="page" class="flex items-center justify-between px-space-sm py-space-xs rounded-lg transition-colors bg-surface-container-high text-on-surface font-label-md" data-path="calendar" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[18px]">calendar_today</span><span>Calendar</span></div></a></nav></div><div class="mb-space-lg"><div class="font-label-sm text-label-sm uppercase tracking-wider text-text-muted px-space-sm mb-space-xs">Domains</div><nav class="flex flex-col gap-space-xs" data-active-classes="bg-surface-container-high text-on-surface font-label-md"><a class="flex items-center gap-space-sm px-space-sm py-space-xs rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors font-body-sm text-body-sm" data-path="startup-alpha" href="#"><span class="w-2 h-2 rounded-full bg-primary flex-shrink-0"></span><span class="truncate">Startup Alpha (@alpha)</span></a><a class="flex items-center gap-space-sm px-space-sm py-space-xs rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors font-body-sm text-body-sm" data-path="startup-beta" href="#"><span class="w-2 h-2 rounded-full bg-status-medium flex-shrink-0"></span><span class="truncate">Startup Beta (@beta)</span></a><a class="flex items-center gap-space-sm px-space-sm py-space-xs rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors font-body-sm text-body-sm" data-path="financial-governance" href="#"><span class="w-2 h-2 rounded-full bg-secondary flex-shrink-0"></span><span class="truncate">Financial & Governance</span></a><a class="flex items-center gap-space-sm px-space-sm py-space-xs rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors font-body-sm text-body-sm" data-path="personal-wellness" href="#"><span class="w-2 h-2 rounded-full bg-status-ontrack flex-shrink-0"></span><span class="truncate">Personal & Wellness</span></a><a class="flex items-center gap-space-sm px-space-sm py-space-xs rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors font-body-sm text-body-sm" data-path="learning-deep-work" href="#"><span class="w-2 h-2 rounded-full bg-status-rolled flex-shrink-0"></span><span class="truncate">Learning & Deep Work</span></a></nav></div></div><div class="p-space-md flex flex-col gap-space-sm bg-surface"><div class="p-space-sm rounded-xl bg-surface-container-low flex flex-col gap-space-xs"><div class="flex items-center justify-between"><span class="font-label-sm text-label-sm text-on-surface">Cognitive Balance</span><span class="font-label-sm text-label-sm text-primary font-bold">Optimal</span></div><div class="w-full bg-surface rounded-full h-1.5 overflow-hidden"><div class="bg-primary h-1.5 rounded-full" style="width: 78%"></div></div></div><nav class="flex flex-col gap-space-xs" data-active-classes="bg-surface-container-high text-on-surface font-label-md"><a class="flex items-center gap-space-sm px-space-sm py-space-xs rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors font-body-sm text-body-sm" data-path="settings" href="#"><span class="material-symbols-outlined text-[18px]">settings</span><span>Settings</span></a><a class="flex items-center gap-space-sm px-space-sm py-space-xs rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors font-body-sm text-body-sm" data-path="help-shortkeys" href="#"><span class="material-symbols-outlined text-[18px]">keyboard</span><span>Help & Shortkeys</span></a></nav><div class="flex items-center justify-between pt-space-xs px-space-xs"><div class="flex items-center gap-space-sm min-w-0"><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center flex-shrink-0"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div><div class="flex flex-col min-w-0"><span class="font-label-md text-label-md text-on-surface truncate">Elena Rostova</span><span class="font-label-sm text-label-sm text-text-muted truncate">Founder Mode</span></div></div><span class="material-symbols-outlined text-on-surface-variant text-[18px] cursor-pointer hover:text-on-surface">unfold_more</span></div></div></aside><div class="pl-64"><header class="fixed top-0 left-64 right-0 h-16 bg-surface/80 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)] z-40 px-space-lg flex items-center justify-between gap-space-md"><div class="flex items-center gap-space-md min-w-0"><div class="flex flex-col"><span class="font-headline-md text-headline-md text-on-surface leading-none">Wednesday, Oct 3</span><span class="font-label-sm text-label-sm text-text-muted">Autonomous Task Agent</span></div><div class="hidden xl:flex items-center gap-space-xs px-space-sm py-1 rounded-full bg-surface-container text-on-surface font-label-sm text-label-sm"><span class="material-symbols-outlined text-[16px] text-status-medium">wb_sunny</span><span>Morning Focus · 8:30 AM - 11:30 AM Peak Energy</span></div></div><div class="flex items-center gap-space-md flex-1 max-w-xl justify-end"><div class="relative flex items-center w-full max-w-md bg-surface-container-low rounded-xl px-space-sm py-1.5 focus-within:ring-2 focus-within:ring-primary/20"><span class="material-symbols-outlined text-text-muted text-[18px] mr-space-xs">auto_awesome</span><input class="w-full bg-transparent border-0 outline-none font-body-sm text-body-sm text-on-surface placeholder:text-text-muted/60" placeholder="Add task naturally or press ⌘K..." type="text"/><button class="p-1 text-text-muted hover:text-primary transition-colors flex items-center justify-center"><span class="material-symbols-outlined text-[18px]">mic</span></button></div><div class="flex items-center gap-space-xs flex-shrink-0"><button class="w-8 h-8 rounded-lg flex items-center justify-center text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors"><span class="material-symbols-outlined text-[20px]">view_kanban</span></button><button class="w-8 h-8 rounded-lg flex items-center justify-center text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors relative"><span class="material-symbols-outlined text-[20px]">notifications</span><span class="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-status-urgent rounded-full"></span></button><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></div></header><main class="relative pt-16 bg-bg-canvas min-h-screen"><div class="flex flex-col w-full">
+<div class="p-space-lg flex flex-col gap-space-lg">
+<!-- Top Header Bar & Ambient Chrono Controls -->
+<div class="flex flex-col xl:flex-row xl:items-center justify-between gap-space-md">
+<!-- Title & Agentic Sync Badges -->
+<div class="flex flex-col gap-space-xs">
+<div class="flex items-center gap-space-sm flex-wrap">
+<h1 class="font-headline-lg text-headline-lg text-on-surface tracking-tight">Calendar Schedule</h1>
+<div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-surface-container text-primary font-label-md text-label-md">
+<span class="material-symbols-outlined text-[15px] text-primary" style="font-variation-settings: 'FILL' 1;">auto_awesome</span>
+<span>Agentic Chrono-Mapping Active</span>
+</div>
+<div class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-surface-container-low text-secondary font-label-sm text-label-sm">
+<span class="w-1.5 h-1.5 rounded-full bg-status-ontrack"></span>
+<span>Zero Clashes Synced</span>
+</div>
+</div>
+<div class="flex items-center gap-space-sm text-text-muted font-body-sm text-body-sm">
+<span>Autonomous multi-venture scheduler</span>
+<span>•</span>
+<span class="text-on-surface-variant font-label-md text-label-md">Optimized for Ultradian Focus Cycles</span>
+</div>
+</div>
+<!-- Navigation & Controls Cluster -->
+<div class="flex items-center gap-space-sm flex-wrap">
+<!-- Day / Week / Month / Agenda Segmented Control -->
+<div class="p-1 rounded-xl bg-surface-container-high flex items-center shadow-inner">
+<button class="px-3 py-1.5 rounded-lg text-text-muted hover:text-on-surface font-label-md text-label-md transition-colors">Day</button>
+<button class="px-3.5 py-1.5 rounded-lg bg-surface text-on-surface font-label-md text-label-md shadow-sm">Week</button>
+<button class="px-3 py-1.5 rounded-lg text-text-muted hover:text-on-surface font-label-md text-label-md transition-colors">Month</button>
+<button class="px-3 py-1.5 rounded-lg text-text-muted hover:text-on-surface font-label-md text-label-md transition-colors">Agenda</button>
+</div>
+<!-- Date Range Navigator -->
+<div class="flex items-center gap-1 bg-surface rounded-xl px-2 py-1 shadow-sm">
+<button class="p-1.5 rounded-lg hover:bg-surface-container text-text-muted hover:text-on-surface transition-colors" title="Previous Week">
+<span class="material-symbols-outlined text-[18px]">chevron_left</span>
+</button>
+<button class="px-2.5 py-1 rounded-lg bg-surface-container-low text-primary font-label-sm text-label-sm hover:bg-surface-container transition-colors">Today</button>
+<span class="font-headline-md text-headline-md text-on-surface px-2">Oct 1 – Oct 7, 2026</span>
+<button class="p-1.5 rounded-lg hover:bg-surface-container text-text-muted hover:text-on-surface transition-colors" title="Next Week">
+<span class="material-symbols-outlined text-[18px]">chevron_right</span>
+</button>
+</div>
+<!-- Timezone & Sync Indicators -->
+<div class="hidden 2xl:flex items-center gap-space-xs px-3 py-2 rounded-xl bg-surface shadow-sm font-label-sm text-label-sm text-text-muted">
+<span class="material-symbols-outlined text-[16px] text-text-muted">schedule</span>
+<span>America/New_York (EDT)</span>
+</div>
+<button class="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-surface shadow-sm hover:bg-surface-container-low text-on-surface font-label-md text-label-md transition-colors" id="btn-sync">
+<span class="material-symbols-outlined text-[16px] text-primary">sync</span>
+<span class="hidden sm:inline">GCal Synced</span>
+</button>
+<!-- Energy View Filter -->
+<button class="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-primary text-on-primary font-label-md text-label-md hover:bg-primary-container shadow-sm transition-colors">
+<span class="material-symbols-outlined text-[16px]">bolt</span>
+<span>Energy Flow</span>
+<span class="material-symbols-outlined text-[16px]">expand_more</span>
+</button>
+</div>
+</div>
+<!-- Chronotype Legend & Energy Bar Strip -->
+<div class="p-space-sm rounded-xl bg-surface shadow-sm flex flex-wrap items-center justify-between gap-space-sm">
+<div class="flex items-center gap-space-md flex-wrap font-label-sm text-label-sm">
+<span class="text-text-muted uppercase tracking-wider font-label-sm">Energy Zones:</span>
+<div class="flex items-center gap-2">
+<span class="w-3 h-3 rounded-full bg-surface-container-high"></span>
+<span class="text-on-surface font-label-md">Morning Focus (8:30 – 11:30 AM)</span>
+<span class="text-text-muted">· Peak Analytical</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="w-3 h-3 rounded-full bg-status-medium/30"></span>
+<span class="text-on-surface font-label-md">Afternoon Execution (1:30 – 4:30 PM)</span>
+<span class="text-text-muted">· Operations & Syncs</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="w-3 h-3 rounded-full bg-status-rolled/30"></span>
+<span class="text-on-surface font-label-md">Evening Recharge (5:30 – 7:00 PM)</span>
+<span class="text-text-muted">· Low Cognitive Load</span>
+</div>
+</div>
+<div class="flex items-center gap-space-sm font-label-sm text-label-sm text-text-muted">
+<span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-primary"></span>@alpha</span>
+<span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-status-medium"></span>@beta</span>
+<span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-secondary"></span>Finance</span>
+<span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-status-ontrack"></span>Wellness</span>
+</div>
+</div>
+<!-- Main Workspace Split Layout: Timetable Grid + Docked Task Inspector Drawer -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-space-lg items-start">
+<!-- Calendar Grid Panel (Left 8 cols on standard desktop, 7 on wide) -->
+<div class="lg:col-span-7 xl:col-span-8 bg-surface rounded-xl shadow-sm overflow-hidden flex flex-col">
+<!-- Day Columns Header -->
+<div class="grid grid-cols-8 bg-table-header px-space-xs py-space-sm">
+<div class="text-center font-label-sm text-label-sm text-text-muted uppercase">Time</div>
+<!-- Mon -->
+<div class="flex flex-col items-center">
+<span class="font-label-sm text-label-sm text-text-muted">Mon</span>
+<span class="font-headline-md text-headline-md text-on-surface">1</span>
+</div>
+<!-- Tue -->
+<div class="flex flex-col items-center">
+<span class="font-label-sm text-label-sm text-text-muted">Tue</span>
+<span class="font-headline-md text-headline-md text-on-surface">2</span>
+</div>
+<!-- Wed (TODAY ACTIVE) -->
+<div class="flex flex-col items-center relative">
+<span class="font-label-sm text-label-sm text-primary uppercase font-bold">Today</span>
+<div class="w-8 h-8 rounded-full bg-primary text-on-primary flex items-center justify-center font-headline-md text-headline-md shadow-sm">
+              3
+            </div>
+</div>
+<!-- Thu -->
+<div class="flex flex-col items-center">
+<span class="font-label-sm text-label-sm text-text-muted">Thu</span>
+<span class="font-headline-md text-headline-md text-on-surface">4</span>
+</div>
+<!-- Fri -->
+<div class="flex flex-col items-center">
+<span class="font-label-sm text-label-sm text-text-muted">Fri</span>
+<span class="font-headline-md text-headline-md text-on-surface">5</span>
+</div>
+<!-- Sat -->
+<div class="flex flex-col items-center text-text-muted">
+<span class="font-label-sm text-label-sm">Sat</span>
+<span class="font-headline-md text-headline-md">6</span>
+</div>
+<!-- Sun -->
+<div class="flex flex-col items-center text-text-muted">
+<span class="font-label-sm text-label-sm">Sun</span>
+<span class="font-headline-md text-headline-md">7</span>
+</div>
+</div>
+<!-- Schedule Grid Matrix (11 hours: 8:00 AM to 6:00 PM) -->
+<div class="relative overflow-x-auto min-w-[700px]">
+<!-- Background Energy Bands (Biological Chronotype Overlays) -->
+<!-- 8:30 AM to 11:30 AM: Morning Focus Band -->
+<div class="absolute top-[28px] left-[12.5%] right-0 h-[168px] bg-surface-container-low/40 pointer-events-none z-0">
+<div class="absolute right-4 top-2 text-[10px] font-label-sm text-primary uppercase tracking-wider opacity-60">
+              ⚡ Morning Peak Analytical Window
+            </div>
+</div>
+<!-- 1:30 PM to 4:30 PM: Afternoon Execution Band -->
+<div class="absolute top-[308px] left-[12.5%] right-0 h-[168px] bg-status-medium/5 pointer-events-none z-0">
+<div class="absolute right-4 top-2 text-[10px] font-label-sm text-status-medium uppercase tracking-wider opacity-70">
+              🎯 Operations & Multi-venture Execution
+            </div>
+</div>
+<!-- 5:30 PM to 6:30 PM: Evening Recharge Band -->
+<div class="absolute top-[532px] left-[12.5%] right-0 h-[56px] bg-status-rolled/5 pointer-events-none z-0">
+<div class="absolute right-4 top-1 text-[10px] font-label-sm text-status-rolled uppercase tracking-wider opacity-60">
+              🌿 Twilight Recharge Window
+            </div>
+</div>
+<!-- Time Rows Structure -->
+<div class="relative z-10">
+<!-- 8:00 AM Row (56px per hour) -->
+<div class="grid grid-cols-8 h-14 bg-surface-container-lowest/30">
+<div class="text-right pr-3 font-label-sm text-label-sm text-text-muted -mt-2">8:00 AM</div>
+<div class="p-0.5"></div>
+<div class="p-0.5"></div>
+<div class="p-0.5"></div>
+<div class="p-0.5"></div>
+<div class="p-0.5"></div>
+<div class="p-0.5"></div>
+<div class="p-0.5"></div>
+</div>
+<!-- 9:00 AM Row -->
+<div class="grid grid-cols-8 h-14 bg-surface-container-lowest/30 relative">
+<div class="text-right pr-3 font-label-sm text-label-sm text-text-muted -mt-2">9:00 AM</div>
+<div class="p-0.5">
+<!-- Mon 9:00 block -->
+<div class="h-12 rounded-lg bg-surface p-2 shadow-xs flex flex-col justify-between cursor-pointer hover:bg-surface-container-low transition-colors">
+<span class="font-label-sm text-label-sm text-on-surface truncate">Weekly Synthesis</span>
+<span class="text-[10px] text-text-muted">45m · Ops</span>
+</div>
+</div>
+<div class="p-0.5">
+<!-- Tue 9:00 block -->
+<div class="h-12 rounded-lg bg-surface-container p-2 flex flex-col justify-between cursor-pointer hover:bg-surface-container-high transition-colors">
+<span class="font-label-sm text-label-sm text-on-surface truncate">Alpha Architecture</span>
+<span class="text-[10px] text-primary">60m · Deep</span>
+</div>
+</div>
+<!-- WEDNESDAY 9:00 AM - 10:30 AM: SELECTED TASK BLOCK -->
+<div class="p-0.5 relative z-20">
+<div class="absolute top-0 left-0.5 right-0.5 h-[80px] rounded-xl bg-primary text-on-primary p-2.5 shadow-md flex flex-col justify-between cursor-pointer hover:opacity-95 transition-transform scale-[1.02] ring-2 ring-primary ring-offset-2 ring-offset-surface">
+<div class="flex items-start justify-between gap-1">
+<span class="font-label-sm text-label-sm px-1.5 py-0.5 rounded-full bg-status-urgent text-on-primary">Urgent</span>
+<span class="material-symbols-outlined text-[15px] text-primary-fixed">lock</span>
+</div>
+<div class="flex flex-col">
+<span class="font-headline-md text-headline-md text-on-primary leading-tight line-clamp-2">Draft investor pitch memo</span>
+<div class="flex items-center gap-1 text-[11px] text-primary-fixed mt-1">
+<span>@alpha</span>
+<span>•</span>
+<span>90m Shielded</span>
+</div>
+</div>
+</div>
+</div>
+<div class="p-0.5"></div>
+<div class="p-0.5">
+<!-- Fri 9:00 block -->
+<div class="h-12 rounded-lg bg-surface p-2 shadow-xs flex flex-col justify-between">
+<span class="font-label-sm text-label-sm text-on-surface truncate">Financial Audit Review</span>
+<span class="text-[10px] text-secondary">45m</span>
+</div>
+</div>
+<div class="p-0.5"></div>
+<div class="p-0.5"></div>
+</div>
+<!-- 10:00 AM Row -->
+<div class="grid grid-cols-8 h-14 bg-surface-container-lowest/30">
+<div class="text-right pr-3 font-label-sm text-label-sm text-text-muted -mt-2">10:00 AM</div>
+<div class="p-0.5"></div>
+<div class="p-0.5"></div>
+<!-- Wed 10:30 block (starts half-way through 10am) -->
+<div class="p-0.5 relative z-10">
+<div class="absolute top-7 left-0.5 right-0.5 h-[40px] rounded-lg bg-surface p-2 shadow-xs flex items-center justify-between cursor-pointer hover:bg-surface-container-low transition-colors">
+<div class="flex flex-col min-w-0 pr-1">
+<span class="font-label-sm text-label-sm text-on-surface truncate">Review LLM evals</span>
+<span class="text-[10px] text-text-muted truncate">@beta · Elastic 45m</span>
+</div>
+<span class="material-symbols-outlined text-[14px] text-status-urgent" title="Blocks 3:00 PM Sync">warning</span>
+</div>
+</div>
+<div class="p-0.5">
+<div class="h-12 rounded-lg bg-surface p-2 shadow-xs flex flex-col justify-between">
+<span class="font-label-sm text-label-sm text-on-surface truncate">Q4 Goals Mapping</span>
+<span class="text-[10px] text-text-muted">45m</span>
+</div>
+</div>
+<div class="p-0.5"></div>
+<div class="p-0.5"></div>
+<div class="p-0.5"></div>
+</div>
+<!-- 11:00 AM Row -->
+<div class="grid grid-cols-8 h-14 bg-surface-container-lowest/30">
+<div class="text-right pr-3 font-label-sm text-label-sm text-text-muted -mt-2">11:00 AM</div>
+<div class="p-0.5"></div>
+<div class="p-0.5"></div>
+<!-- Wed 11:30 AM Block: Rolled forward Cap Table -->
+<div class="p-0.5 relative z-10">
+<div class="absolute top-7 left-0.5 right-0.5 h-[42px] rounded-lg bg-surface-container-high p-2 shadow-xs flex items-center justify-between cursor-pointer hover:bg-surface-container-highest transition-colors">
+<div class="flex flex-col min-w-0 pr-1">
+<span class="font-label-sm text-label-sm text-on-surface truncate">Cap Table & Pro-forma</span>
+<div class="flex items-center gap-1 text-[10px] text-status-rolled font-bold">
+<span class="material-symbols-outlined text-[12px]">history</span>
+<span>Pushed 3x</span>
+</div>
+</div>
+<span class="w-2 h-2 rounded-full bg-status-urgent"></span>
+</div>
+</div>
+<div class="p-0.5"></div>
+<div class="p-0.5"></div>
+<div class="p-0.5"></div>
+<div class="p-0.5"></div>
+</div>
+<!-- 12:00 PM Row (Lunch / Elastic Buffer) -->
+<div class="grid grid-cols-8 h-14 bg-surface-container-lowest/20">
+<div class="text-right pr-3 font-label-sm text-label-sm text-text-muted -mt-2">12:00 PM</div>
+<div class="p-0.5 col-span-7 flex items-center justify-center">
+<span class="font-label-sm text-label-sm text-text-muted/60 tracking-wider uppercase">Biological Reset · Fluid Buffer & Nourishment</span>
+</div>
+</div>
+<!-- 1:00 PM Row -->
+<div class="grid grid-cols-8 h-14 bg-surface-container-lowest/30">
+<div class="text-right pr-3 font-label-sm text-label-sm text-text-muted -mt-2">1:00 PM</div>
+<div class="p-0.5">
+<div class="h-12 rounded-lg bg-surface p-2 shadow-xs flex flex-col justify-between">
+<span class="font-label-sm text-label-sm text-on-surface truncate">Investor Update Draft</span>
+<span class="text-[10px] text-primary">30m</span>
+</div>
+</div>
+<div class="p-0.5"></div>
+<!-- Wed 1:00 PM: 45m Elastic Cushion Buffer -->
+<div class="p-0.5">
+<div class="h-12 rounded-lg bg-surface-container-low/60 flex items-center justify-center px-1 text-center">
+<span class="text-[10px] font-label-sm text-primary/80 font-bold uppercase tracking-tight">45m Elastic Cushion</span>
+</div>
+</div>
+<div class="p-0.5"></div>
+<div class="p-0.5">
+<div class="h-12 rounded-lg bg-surface p-2 shadow-xs flex flex-col justify-between">
+<span class="font-label-sm text-label-sm text-on-surface truncate">Weekly Wrap-up</span>
+<span class="text-[10px] text-text-muted">30m</span>
+</div>
+</div>
+<div class="p-0.5"></div>
+<div class="p-0.5"></div>
+</div>
+<!-- 2:00 PM Row -->
+<div class="grid grid-cols-8 h-14 bg-surface-container-lowest/30">
+<div class="text-right pr-3 font-label-sm text-label-sm text-text-muted -mt-2">2:00 PM</div>
+<div class="p-0.5"></div>
+<div class="p-0.5">
+<div class="h-12 rounded-lg bg-surface p-2 shadow-xs flex flex-col justify-between">
+<span class="font-label-sm text-label-sm text-on-surface truncate">Alpha Advisory Board</span>
+<span class="text-[10px] text-text-muted">60m · Zoom</span>
+</div>
+</div>
+<!-- Wed 2:00 PM: Delaware franchise tax filing & Board appendix -->
+<div class="p-0.5 relative z-10">
+<div class="h-12 rounded-lg bg-surface p-2 shadow-xs flex flex-col justify-between cursor-pointer hover:bg-surface-container-low transition-colors">
+<div class="flex items-center justify-between">
+<span class="font-label-sm text-label-sm text-on-surface truncate">Delaware Tax Filing</span>
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+</div>
+<span class="text-[10px] text-text-muted">2:00 - 2:30 PM · 30m</span>
+</div>
+</div>
+<div class="p-0.5"></div>
+<div class="p-0.5"></div>
+<div class="p-0.5"></div>
+<div class="p-0.5"></div>
+</div>
+<!-- 3:00 PM Row -->
+<div class="grid grid-cols-8 h-14 bg-surface-container-lowest/30">
+<div class="text-right pr-3 font-label-sm text-label-sm text-text-muted -mt-2">3:00 PM</div>
+<div class="p-0.5"></div>
+<div class="p-0.5"></div>
+<!-- Wed 3:00 PM Block: Board Deck Appendix -->
+<div class="p-0.5 relative z-10">
+<div class="h-12 rounded-lg bg-surface p-2 shadow-xs flex flex-col justify-between cursor-pointer hover:bg-surface-container-low transition-colors">
+<div class="flex items-center justify-between">
+<span class="font-label-sm text-label-sm text-on-surface truncate">Board Deck Appendix</span>
+<span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
+</div>
+<span class="text-[10px] text-text-muted">3:00 - 3:45 PM · 45m</span>
+</div>
+</div>
+<!-- Thu 3:00 PM Block -->
+<div class="p-0.5">
+<div class="h-12 rounded-lg bg-surface-container-high p-2 shadow-xs flex flex-col justify-between">
+<span class="font-label-sm text-label-sm text-on-surface truncate">Founder Sync & Circulation</span>
+<span class="text-[10px] text-primary">3:00 PM · Critical</span>
+</div>
+</div>
+<div class="p-0.5"></div>
+<div class="p-0.5"></div>
+<div class="p-0.5"></div>
+</div>
+<!-- 4:00 PM Row -->
+<div class="grid grid-cols-8 h-14 bg-surface-container-lowest/30">
+<div class="text-right pr-3 font-label-sm text-label-sm text-text-muted -mt-2">4:00 PM</div>
+<div class="p-0.5"></div>
+<div class="p-0.5"></div>
+<div class="p-0.5">
+<div class="h-12 rounded-lg bg-surface p-2 shadow-xs flex flex-col justify-between">
+<span class="font-label-sm text-label-sm text-on-surface truncate">Async Triage Inbox</span>
+<span class="text-[10px] text-text-muted">4:00 - 4:45 PM</span>
+</div>
+</div>
+<div class="p-0.5">
+<div class="h-12 rounded-lg bg-surface p-2 shadow-xs flex flex-col justify-between">
+<span class="font-label-sm text-label-sm text-on-surface truncate">Sprint Retrospective</span>
+<span class="text-[10px] text-text-muted">45m</span>
+</div>
+</div>
+<div class="p-0.5"></div>
+<div class="p-0.5"></div>
+<div class="p-0.5"></div>
+</div>
+<!-- 5:00 PM Row (Recharge Transition) -->
+<div class="grid grid-cols-8 h-14 bg-surface-container-lowest/30">
+<div class="text-right pr-3 font-label-sm text-label-sm text-text-muted -mt-2">5:00 PM</div>
+<div class="p-0.5"></div>
+<div class="p-0.5"></div>
+<!-- Wed 5:30 PM: Annual physical bloodwork check -->
+<div class="p-0.5 relative z-10">
+<div class="absolute top-6 left-0.5 right-0.5 h-[38px] rounded-lg bg-surface-container p-2 shadow-xs flex items-center justify-between cursor-pointer hover:bg-surface-container-high transition-colors">
+<span class="font-label-sm text-label-sm text-on-surface truncate">Schedule Annual Physical</span>
+<span class="font-label-sm text-label-sm px-1.5 py-0.5 rounded-full bg-status-ontrack/20 text-status-ontrack">Flexible</span>
+</div>
+</div>
+<div class="p-0.5"></div>
+<div class="p-0.5"></div>
+<div class="p-0.5"></div>
+<div class="p-0.5"></div>
+</div>
+<!-- 6:00 PM Row -->
+<div class="grid grid-cols-8 h-14 bg-surface-container-lowest/30">
+<div class="text-right pr-3 font-label-sm text-label-sm text-text-muted -mt-2">6:00 PM</div>
+<div class="p-0.5"></div>
+<div class="p-0.5"></div>
+<div class="p-0.5"></div>
+<div class="p-0.5"></div>
+<div class="p-0.5"></div>
+<div class="p-0.5"></div>
+<div class="p-0.5"></div>
+</div>
+</div>
+</div>
+<!-- Timetable Footer Quick Bar -->
+<div class="p-space-sm bg-table-header flex items-center justify-between text-text-muted font-body-sm text-body-sm">
+<div class="flex items-center gap-space-sm">
+<span class="material-symbols-outlined text-[16px] text-primary">psychology</span>
+<span>Agentic recommendation: Schedule 15m mental decompression after 10:30 AM LLM Eval task.</span>
+</div>
+<button class="font-label-md text-label-md text-primary hover:text-primary-container transition-colors flex items-center gap-1">
+<span>Auto-Compress Agenda</span>
+<span class="material-symbols-outlined text-[16px]">tune</span>
+</button>
+</div>
+</div>
+<!-- Docked Right-Hand Basesheet / Inspector Drawer (Matches https://lh3.googleusercontent.com/aida-public/AB6AXuDFfqFu4SwY96o4mnxOzyfLS13VMK1wkDoyX3l66bK33nTyaxalId94CpJI3a9ZNmSkKSpt2mjJ4vsAQsyVA1aVDau-DGpNtwcKfULeo51uYkK5-u2sbzUGiBh-c6UHiAv7taBkjU8ncQRLM4fWCTsKJarWcB_j9kccqj0FLjT-MVQ3Pnga9SpDmEiapcsDFbEYlBkSuepUelb5p2fdXolRaI2K7_ygCJpxT5WEIiVJlEbaOdPR-6G0Sz9cvDskUzhAP_c layout & style) -->
+<div class="lg:col-span-5 xl:col-span-4 bg-surface rounded-2xl shadow-md p-space-lg flex flex-col gap-space-md sticky top-20">
+<!-- Drawer Action Controls Header -->
+<div class="flex items-center justify-between pb-space-xs">
+<button class="p-1.5 rounded-lg hover:bg-surface-container text-text-muted hover:text-on-surface transition-colors" title="Close Drawer">
+<span class="material-symbols-outlined text-[20px]">close</span>
+</button>
+<div class="flex items-center gap-1">
+<button class="p-1.5 rounded-lg hover:bg-surface-container text-text-muted hover:text-on-surface transition-colors" title="Edit Task">
+<span class="material-symbols-outlined text-[18px]">edit</span>
+</button>
+<button class="p-1.5 rounded-lg hover:bg-surface-container text-text-muted hover:text-on-surface transition-colors" title="Share Task">
+<span class="material-symbols-outlined text-[18px]">share</span>
+</button>
+<button class="p-1.5 rounded-lg hover:bg-surface-container text-text-muted hover:text-on-surface transition-colors" title="More Options">
+<span class="material-symbols-outlined text-[18px]">more_horiz</span>
+</button>
+</div>
+</div>
+<!-- Main Task Title & Badges -->
+<div class="flex flex-col gap-space-xs">
+<div class="flex items-center gap-2 flex-wrap">
+<span class="font-label-sm text-label-sm px-2.5 py-0.5 rounded-full bg-status-urgent/15 text-status-urgent font-bold uppercase tracking-wider">
+              Priority 9 · Urgent
+            </span>
+<span class="font-label-sm text-label-sm px-2.5 py-0.5 rounded-full bg-surface-container text-primary font-bold">
+              @alpha · Startup Alpha
+            </span>
+</div>
+<h2 class="font-headline-lg text-headline-lg text-on-surface leading-tight mt-1">
+            Draft investor pitch memo for seed extension
+          </h2>
+<div class="flex items-center gap-space-xs text-text-muted font-label-md text-label-md">
+<span class="material-symbols-outlined text-[16px] text-primary" style="font-variation-settings: 'FILL' 1;">shield</span>
+<span class="text-on-surface font-semibold">Shielded Deep Work Window</span>
+<span>•</span>
+<span>Oct 3, 9:00 – 10:30 AM</span>
+</div>
+</div>
+<!-- Meta Attributes Table Grid -->
+<div class="bg-surface-container-low rounded-xl p-space-md flex flex-col gap-space-sm font-body-sm text-body-sm">
+<div class="grid grid-cols-3 items-center">
+<span class="text-text-muted font-label-md text-label-md">Status</span>
+<div class="col-span-2 flex items-center gap-1.5">
+<span class="w-2 h-2 rounded-full bg-status-medium animate-pulse"></span>
+<span class="font-label-md text-label-md text-on-surface">In Progress (Execution)</span>
+</div>
+</div>
+<div class="grid grid-cols-3 items-center">
+<span class="text-text-muted font-label-md text-label-md">Scheduled</span>
+<span class="col-span-2 text-on-surface font-medium">Wednesday, Oct 3 · 9:00 AM (90m)</span>
+</div>
+<div class="grid grid-cols-3 items-center">
+<span class="text-text-muted font-label-md text-label-md">Hard Deadline</span>
+<span class="col-span-2 text-status-urgent font-semibold">Today before 11:00 AM</span>
+</div>
+<div class="grid grid-cols-3 items-center">
+<span class="text-text-muted font-label-md text-label-md">Assignees</span>
+<div class="col-span-2 flex items-center gap-2">
+<div class="w-6 h-6 rounded-full bg-primary text-on-primary flex items-center justify-center font-label-sm text-label-sm">ER</div>
+<span class="font-label-md text-label-md text-on-surface">Elena Rostova</span>
+<button class="text-text-muted hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-[16px]">person_add</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Inferred Intelligence Agent Card -->
+<div class="rounded-xl bg-surface-container p-space-md flex flex-col gap-space-xs">
+<div class="flex items-center gap-1.5 text-primary font-label-md text-label-md">
+<span class="material-symbols-outlined text-[18px]">psychology</span>
+<span>Autonomous Chrono-Guard Reasoning</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant leading-relaxed">
+            Locked to your <strong class="text-on-surface">Morning Peak Energy Window (8:30 – 11:30 AM)</strong>. Agent identified this task as a prerequisite blocking the 3:00 PM Thursday Founder Sync and Seed Deck distribution.
+          </p>
+</div>
+<!-- Time Dynamics & Elasticity Control Box -->
+<div class="flex flex-col gap-space-xs">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[16px] text-text-muted">compress</span>
+<span class="font-label-md text-label-md text-on-surface">Elastic Task Duration</span>
+</div>
+<span class="font-label-sm text-label-sm text-primary font-bold">90m Target • 45m Minimum</span>
+</div>
+<div class="w-full bg-surface-container-high rounded-full h-2 overflow-hidden flex">
+<div class="bg-primary h-2 rounded-full" style="width: 50%" title="Rigid minimum (45m)"></div>
+<div class="bg-primary-fixed-dim h-2" style="width: 50%" title="Elastic cushion buffer (45m)"></div>
+</div>
+<div class="flex justify-between items-center text-[11px] text-text-muted">
+<span>Minimum floor: 45 min</span>
+<span class="text-primary font-semibold">Elastic Compression Allowed</span>
+</div>
+</div>
+<!-- Relational Graph & Blockers -->
+<div class="flex flex-col gap-space-xs">
+<span class="font-label-sm text-label-sm uppercase tracking-wider text-text-muted">Dependency Graph</span>
+<div class="flex flex-col gap-1.5 font-body-sm text-body-sm">
+<div class="flex items-center gap-2 p-2 rounded-lg bg-surface-container-low text-on-surface">
+<span class="material-symbols-outlined text-[16px] text-secondary">check_circle</span>
+<span class="line-through text-text-muted truncate">Clean cap table review & debt notes</span>
+<span class="ml-auto font-label-sm text-label-sm text-secondary">Prereq Met</span>
+</div>
+<div class="flex items-center gap-2 p-2 rounded-lg bg-surface-container-low text-on-surface">
+<span class="material-symbols-outlined text-[16px] text-status-urgent">arrow_forward</span>
+<span class="truncate font-medium">Blocks: Seed pitch deck v2 updating</span>
+<span class="ml-auto font-label-sm text-label-sm text-status-urgent">Critical Path</span>
+</div>
+</div>
+</div>
+<!-- Deconstructed Subtasks (Interactive Checklist) -->
+<div class="flex flex-col gap-space-xs">
+<div class="flex items-center justify-between">
+<span class="font-label-sm text-label-sm uppercase tracking-wider text-text-muted">Deconstructed Milestones</span>
+<span class="font-label-sm text-label-sm text-text-muted">1 of 4 resolved</span>
+</div>
+<div class="flex flex-col gap-1.5" id="subtask-list">
+<!-- Subtask 1 (Completed) -->
+<label class="flex items-start gap-2.5 p-2 rounded-lg hover:bg-surface-container-low transition-colors cursor-pointer group">
+<input checked="" class="mt-1 w-4 h-4 rounded text-primary focus:ring-0 accent-primary cursor-pointer" type="checkbox"/>
+<div class="flex flex-col min-w-0">
+<span class="line-through text-text-muted font-body-sm text-body-sm">Extract final ARR and churn numbers from Stripe sheet</span>
+<span class="text-[10px] text-text-muted">Done 8:45 AM</span>
+</div>
+</label>
+<!-- Subtask 2 -->
+<label class="flex items-start gap-2.5 p-2 rounded-lg hover:bg-surface-container-low transition-colors cursor-pointer group">
+<input class="mt-1 w-4 h-4 rounded text-primary focus:ring-0 accent-primary cursor-pointer" type="checkbox"/>
+<div class="flex flex-col min-w-0">
+<span class="text-on-surface font-body-sm text-body-sm font-medium">Draft 2-page executive summary & milestone roadmap</span>
+<span class="text-[10px] text-primary">In progress · 25m left</span>
+</div>
+</label>
+<!-- Subtask 3 -->
+<label class="flex items-start gap-2.5 p-2 rounded-lg hover:bg-surface-container-low transition-colors cursor-pointer group">
+<input class="mt-1 w-4 h-4 rounded text-primary focus:ring-0 accent-primary cursor-pointer" type="checkbox"/>
+<div class="flex flex-col min-w-0">
+<span class="text-on-surface font-body-sm text-body-sm">Outline use of funds & 18-month runway extension scenarios</span>
+<span class="text-[10px] text-text-muted">Est. 20m</span>
+</div>
+</label>
+<!-- Subtask 4 -->
+<label class="flex items-start gap-2.5 p-2 rounded-lg hover:bg-surface-container-low transition-colors cursor-pointer group">
+<input class="mt-1 w-4 h-4 rounded text-primary focus:ring-0 accent-primary cursor-pointer" type="checkbox"/>
+<div class="flex flex-col min-w-0">
+<span class="text-on-surface font-body-sm text-body-sm">Send draft to co-founder for async feedback</span>
+<span class="text-[10px] text-status-urgent font-bold">Hard limit: 11:00 AM</span>
+</div>
+</label>
+</div>
+</div>
+<!-- Primary Action Trigger -->
+<div class="pt-space-xs flex flex-col gap-2">
+<button class="w-full py-3 px-space-md rounded-xl bg-primary text-on-primary font-label-md text-label-md hover:bg-primary-container shadow-sm flex items-center justify-center gap-2 transition-all">
+<span class="material-symbols-outlined text-[18px]">check_circle</span>
+<span>Mark Complete & Release Blockers</span>
+</button>
+<div class="flex items-center justify-between px-1 text-[11px] text-text-muted">
+<button class="hover:text-primary transition-colors flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">history</span>
+<span>Roll to Tomorrow</span>
+</button>
+<button class="hover:text-primary transition-colors flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">shuffle</span>
+<span>Auto-Delegate to Agent</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<script>
+  (function() {
+    // Quick micro-interactions for calendar block selection
+    const taskCards = document.querySelectorAll('.grid-cols-8 .rounded-lg, .grid-cols-8 .rounded-xl');
+    taskCards.forEach(card => {
+      card.addEventListener('mouseenter', () => {
+        card.style.transform = 'translateY(-1px)';
+      });
+      card.addEventListener('mouseleave', () => {
+        card.style.transform = 'none';
+      });
+    });
+
+    // Refresh rotation effect on GCal Sync button
+    const syncBtn = document.getElementById('btn-sync');
+    if (syncBtn) {
+      syncBtn.addEventListener('click', () => {
+        const icon = syncBtn.querySelector('.material-symbols-outlined');
+        if (icon) {
+          icon.classList.add('animate-spin');
+          setTimeout(() => {
+            icon.classList.remove('animate-spin');
+          }, 800);
+        }
+      });
+    }
+  })();
+</script></main></div></body></html>

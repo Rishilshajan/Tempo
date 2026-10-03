@@ -1,0 +1,338 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Tempo · Build Breakdown</title>
+<style>
+  :root {
+    --ink: #1d1d1d; --paper: #FFFFFF; --muted: #686868; --line: #e9eaeb;
+    --line-strong: #101010; --accent: #aa8d15; --accent-soft: #f8e597; --accent-wash: #fdf9e8;
+    --code-bg: #fafafa;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --mono: "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace; --content-w: 820px;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body { margin: 0; background: var(--paper); color: var(--ink); font-family: var(--sans); font-size: 16px; line-height: 1.6; -webkit-font-smoothing: antialiased; }
+  a { color: var(--accent); text-decoration: none; border-bottom: 1px solid transparent; }
+  a:hover { border-bottom-color: var(--accent); }
+  code { font-family: var(--mono); font-size: 0.86em; background: var(--code-bg); padding: 0.1em 0.35em; border-radius: 4px; }
+  .wrap { display: grid; grid-template-columns: 244px minmax(0, 1fr); gap: 48px; max-width: 1180px; margin: 0 auto; padding: 0 32px; }
+  nav.toc { position: sticky; top: 0; align-self: start; height: 100vh; padding: 40px 0; overflow-y: auto; border-right: 1px solid var(--line); }
+  nav.toc .brand { font-weight: 700; letter-spacing: -0.01em; margin-bottom: 4px; }
+  nav.toc .sub { color: var(--muted); font-size: 12px; margin-bottom: 24px; }
+  nav.toc ol { list-style: none; margin: 0; padding: 0; counter-reset: s; }
+  nav.toc li { counter-increment: s; }
+  nav.toc a { display: block; color: var(--muted); font-size: 13.5px; padding: 5px 0; border: 0; }
+  nav.toc a::before { content: counter(s) ". "; color: #bdbdbd; }
+  nav.toc a:hover { color: var(--ink); }
+  main { padding: 40px 0 120px; max-width: var(--content-w); }
+  header.doc { border-bottom: 1px solid var(--line-strong); padding-bottom: 24px; margin-bottom: 8px; }
+  header.doc h1 { font-size: 30px; line-height: 1.2; letter-spacing: -0.02em; margin: 0 0 8px; }
+  header.doc .lead { color: var(--muted); font-size: 17px; margin: 0 0 18px; }
+  .meta { display: flex; flex-wrap: wrap; gap: 8px 18px; font-size: 13px; color: var(--muted); }
+  .meta b { color: var(--ink); font-weight: 600; }
+  .pills { display: inline-flex; gap: 6px; }
+  .pill { font-size: 11.5px; font-weight: 600; letter-spacing: 0.02em; text-transform: uppercase; border: 1px solid var(--line-strong); border-radius: 999px; padding: 2px 9px; color: var(--ink); }
+  .pill.muted { border-color: var(--line); color: var(--muted); }
+  details.section { border-bottom: 1px solid var(--line); padding: 8px 0; }
+  details.section > summary { list-style: none; cursor: pointer; display: flex; align-items: baseline; gap: 10px; padding: 18px 0; }
+  details.section > summary::-webkit-details-marker { display: none; }
+  details.section > summary h2 { font-size: 20px; letter-spacing: -0.01em; margin: 0; }
+  details.section > summary .n { font-family: var(--mono); font-size: 13px; color: var(--muted); min-width: 20px; }
+  details.section > summary::after { content: "collapse"; margin-left: auto; font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
+  details.section:not([open]) > summary::after { content: "expand"; }
+  .section-body { padding: 0 0 20px 30px; }
+  h3 { font-size: 15px; letter-spacing: 0.01em; margin: 24px 0 8px; }
+  p { margin: 10px 0; }
+  ul, ol { margin: 10px 0; padding-left: 22px; }
+  li { margin: 5px 0; }
+  table { border-collapse: collapse; width: 100%; margin: 14px 0; font-size: 14.5px; }
+  th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); font-weight: 600; }
+  tbody tr:last-child td { border-bottom: 0; }
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; margin: 16px 0; }
+  .stat { background: var(--paper); padding: 16px 18px; }
+  .stat .v { font-size: 23px; font-weight: 700; letter-spacing: -0.02em; }
+  .stat .k { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .lane { display: inline-block; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; border-radius: 4px; padding: 1px 7px; margin-right: 6px; }
+  .lane.db { background: #eef4ff; color: #2b5cb8; }
+  .lane.be { background: #fff3e0; color: #a15c07; }
+  .lane.fe { background: var(--accent-wash); color: var(--accent); }
+  .lane.infra { background: #eefaf1; color: #17835a; }
+  .time { font-family: var(--mono); font-size: 12px; color: var(--muted); white-space: nowrap; }
+  .task { border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; margin: 10px 0; }
+  .task h4 { margin: 0 0 4px; font-size: 14.5px; display: flex; align-items: center; gap: 6px; }
+  .task h4 .time { margin-left: auto; }
+  .task ul { margin: 6px 0 0; padding-left: 20px; font-size: 13.5px; color: #333; }
+  .callout { border-left: 3px solid var(--muted); background: #FAFAFA; border-radius: 0 8px 8px 0; padding: 12px 16px; margin: 16px 0; font-size: 14.5px; }
+  .callout .lbl { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); margin-bottom: 4px; }
+  .callout.decision { border-left-color: var(--accent); background: var(--accent-wash); }
+  .callout.decision .lbl { color: var(--accent); }
+  .callout.risk { border-left-color: var(--line-strong); }
+  .callout.risk .lbl { color: var(--ink); }
+  .accent-bar { height: 3px; width: 44px; background: var(--accent-soft); border-radius: 2px; margin: 0 0 20px; }
+  footer.doc { margin-top: 40px; padding-top: 20px; border-top: 1px solid var(--line); font-size: 13px; color: var(--muted); }
+  @media (max-width: 880px) {
+    .wrap { grid-template-columns: 1fr; gap: 0; padding: 0 20px; }
+    nav.toc { position: static; height: auto; border-right: 0; border-bottom: 1px solid var(--line); padding: 24px 0; }
+    nav.toc ol { columns: 2; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <nav class="toc">
+    <div class="brand">Tempo</div>
+    <div class="sub">Build Breakdown</div>
+    <ol>
+      <li><a href="#what">What we are building</a></li>
+      <li><a href="#layers">What changes, by layer</a></li>
+      <li><a href="#p1">Phase 1 - Foundation + data layer</a></li>
+      <li><a href="#p2">Phase 2 - App shell + empty states</a></li>
+      <li><a href="#p3">Phase 3 - Tasks, domains + three views</a></li>
+      <li><a href="#p4">Phase 4 - Agentic layer</a></li>
+      <li><a href="#p5">Phase 5 - Rollforward, briefing + alerts</a></li>
+      <li><a href="#effort">Effort summary</a></li>
+      <li><a href="#watch">Watch-items</a></li>
+    </ol>
+  </nav>
+
+  <main>
+    <header class="doc">
+      <div class="accent-bar"></div>
+      <h1>Tempo: build breakdown</h1>
+      <p class="lead">An agentic personal task manager that keeps your day in rhythm - it captures tasks with almost no friction, sorts them by what actually matters, warns you before important work slips, and hands you a clear plan each morning.</p>
+      <div class="meta">
+        <span class="pills"><span class="pill">Product</span><span class="pill muted">Tempo</span></span>
+        <span><b>Author</b> Rishil Shajan</span>
+        <span><b>Team</b> SDE + TPE</span>
+        <span><b>Date</b> 02 October 2026</span>
+        <span><b>Estimate</b> ~11.5 working days</span>
+      </div>
+    </header>
+
+    <!-- 1. WHAT -->
+    <details class="section" open id="what">
+      <summary><span class="n">1</span><h2>What we are building</h2></summary>
+      <div class="section-body">
+        <p>Tempo manages your task list <b>with</b> you, rather than just storing it. It is built for juggling personal, financial and multiple work tracks at once, where important things quietly slide to "tomorrow" and a flat single list stops working.</p>
+        <ol>
+          <li>You add a task in plain language, typed or spoken (for example "draft pitch memo before 11am for @alpha, 45m"). The app turns it into a structured task: title, date, time hint, duration and domain.</li>
+          <li>Tasks are grouped into <b>Today</b>, <b>Rolled-Forward</b> and <b>Upcoming</b>, and can be viewed as a <b>List</b>, a <b>Board</b> (columns by status), or a <b>Calendar</b> (tap a date to see that day).</li>
+          <li>Each task can belong to a <b>domain</b> (a startup, personal, financial) and can block another task, so slippage cascades to what depends on it.</li>
+          <li>Anything not finished rolls to the next day and is flagged loudly (for example "pushed 3 times - still real?").</li>
+          <li>Each morning the app assembles a priority-ordered, time-stamped plan tuned to your productive window, and warns when too much clusters into the same slot.</li>
+          <li>You can open a plain list of the exact rules that trigger each warning, so nothing the app does is hidden.</li>
+        </ol>
+        <div class="callout decision">
+          <div class="lbl">The idea in one line</div>
+          You supply the judgement; the app supplies the vigilance and the time math.
+        </div>
+      </div>
+    </details>
+
+    <!-- 2. LAYERS -->
+    <details class="section" open id="layers">
+      <summary><span class="n">2</span><h2>What changes, by layer</h2></summary>
+      <div class="section-body">
+        <p>The bulk of the work is the frontend (the screens, the three views and the capture flow). The backend holds the agent logic. The database and infrastructure are both small.</p>
+        <table>
+          <thead><tr><th style="width:110px">Layer</th><th>What it covers</th><th style="width:150px">Weight</th></tr></thead>
+          <tbody>
+            <tr><td><span class="lane db">DB</span></td><td>Five tables (domains, tasks, dependencies, app settings, warning rules) and one migration. No per-user columns in this phase.</td><td>Very small (~2 hr)</td></tr>
+            <tr><td><span class="lane be">BE</span></td><td>Task and domain save/load, natural-language parsing, importance inference, conflict detection, rollforward and the morning briefing.</td><td>Large (~4 days)</td></tr>
+            <tr><td><span class="lane fe">FE</span></td><td>Cold-start splash, responsive shell, empty states, three task views, the task detail drawer, settings and voice capture - the bulk of the work.</td><td>Largest (~6 days)</td></tr>
+            <tr><td><span class="lane infra">Infra</span></td><td>Supabase project, deploy, one nightly scheduled job and web push. No bespoke infrastructure.</td><td>Small (~1 day)</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </details>
+
+    <!-- PHASE 1: FE 8 + DB 2 + Infra 2 = 12 hr -->
+    <details class="section" open id="p1">
+      <summary><span class="n">3</span><h2>Phase 1 - Foundation + data layer <span class="time" style="margin-left:10px">~1.5 days (12 hr)</span></h2></summary>
+      <div class="section-body">
+        <p>Stand the project up end to end: app online, brand in place, database shaped.</p>
+        <div class="task">
+          <h4><span class="lane fe">FE</span> Scaffold + design tokens <span class="time">~4 hr</span></h4>
+          <ul>
+            <li>Next.js (App Router) + Tailwind + component library + Figtree font.</li>
+            <li>Sage Focus palette as CSS tokens (sage brand, deeper green for buttons, status colours).</li>
+          </ul>
+        </div>
+        <div class="task">
+          <h4><span class="lane db">DB</span> Schema + migration <span class="time">~2 hr</span></h4>
+          <ul><li>Five tables with Drizzle; generate and apply the first migration.</li></ul>
+        </div>
+        <div class="task">
+          <h4><span class="lane infra">Infra</span> Supabase + deploy skeleton <span class="time">~2 hr</span></h4>
+          <ul><li>Create the Supabase project, wire the connection string, push the schema, and get a skeleton live on the host.</li></ul>
+        </div>
+        <div class="task">
+          <h4><span class="lane fe">FE</span> Cold-start splash + installable shell <span class="time">~4 hr</span></h4>
+          <ul><li>Branded 3-second splash on every cold start, then land on the dashboard; app manifest and icons. (Phase tasks 4 + 2 + 2 + 4 = 12 hr.)</li></ul>
+        </div>
+      </div>
+    </details>
+
+    <!-- PHASE 2: FE 6 + 4 + 2 = 12 hr -->
+    <details class="section" open id="p2">
+      <summary><span class="n">4</span><h2>Phase 2 - App shell + empty states <span class="time" style="margin-left:10px">~1.5 days (12 hr)</span></h2></summary>
+      <div class="section-body">
+        <p>The navigation frame and the first-run experience, working on both desktop and mobile.</p>
+        <div class="task">
+          <h4><span class="lane fe">FE</span> Responsive shell <span class="time">~6 hr</span></h4>
+          <ul><li>Desktop left sidebar with counts; mobile top bar plus a bottom tab bar with a centre capture button; shared header (date, agent status, quick-add, view switch).</li></ul>
+        </div>
+        <div class="task">
+          <h4><span class="lane fe">FE</span> Empty state + quick ingestion <span class="time">~4 hr</span></h4>
+          <ul><li>"Your day is wide open" first-run screen with the quick-add card; domains start empty, so prompt to create the first one.</li></ul>
+        </div>
+        <div class="task">
+          <h4><span class="lane fe">FE</span> Nav wiring + logging <span class="time">~2 hr</span></h4>
+          <ul><li>Route all views, active states, and a shared console logging helper for success and error paths. (Phase tasks 6 + 4 + 2 = 12 hr.)</li></ul>
+        </div>
+      </div>
+    </details>
+
+    <!-- PHASE 3: BE 6 + FE (3+3+6+4+2)=18 => 24 hr -->
+    <details class="section" open id="p3">
+      <summary><span class="n">5</span><h2>Phase 3 - Tasks, domains + three views <span class="time" style="margin-left:10px">~3 days (24 hr)</span></h2></summary>
+      <div class="section-body">
+        <p>The core manager: create tasks, group them into domains, and see them three ways.</p>
+        <div class="task">
+          <h4><span class="lane be">BE</span> Task + domain save/load <span class="time">~6 hr</span></h4>
+          <ul><li>Create, read, update, delete for tasks and domains via server actions; one guard on status moves.</li></ul>
+        </div>
+        <div class="task">
+          <h4><span class="lane fe">FE</span> Domains in Settings <span class="time">~3 hr</span></h4>
+          <ul><li>Create, rename, recolour and delete domains; assign a domain when adding a task.</li></ul>
+        </div>
+        <div class="task">
+          <h4><span class="lane fe">FE</span> List view <span class="time">~3 hr</span></h4>
+          <ul><li>Flat, filterable list with domain colour tags and status.</li></ul>
+        </div>
+        <div class="task">
+          <h4><span class="lane fe">FE</span> Board view <span class="time">~6 hr</span></h4>
+          <ul><li>Columns by status (not started, in progress, done, rolled-forward); move a card between columns; horizontal snap-scroll on mobile.</li></ul>
+        </div>
+        <div class="task">
+          <h4><span class="lane fe">FE</span> Calendar view <span class="time">~4 hr</span></h4>
+          <ul><li>Month grid; tap a date to filter to that day's tasks.</li></ul>
+        </div>
+        <div class="task">
+          <h4><span class="lane fe">FE</span> Task detail drawer <span class="time">~2 hr</span></h4>
+          <ul><li>Title, description, sub-steps, domain, status, due date, time hint and duration. (Phase tasks 6 + 3 + 3 + 6 + 4 + 2 = 24 hr.)</li></ul>
+        </div>
+      </div>
+    </details>
+
+    <!-- PHASE 4: BE (6+5+6)=17 + FE (3+4)=7 => 24 hr -->
+    <details class="section" open id="p4">
+      <summary><span class="n">6</span><h2>Phase 4 - Agentic layer <span class="time" style="margin-left:10px">~3 days (24 hr)</span></h2></summary>
+      <div class="section-body">
+        <p>The part that makes Tempo more than a list: parsing, inference and honest warnings. Kept server-side so the key stays secret and the rules stay in one place.</p>
+        <div class="task">
+          <h4><span class="lane be">BE</span> Natural-language quick-add <span class="time">~6 hr</span></h4>
+          <ul><li>Turn free text into a structured task (title, date, time hint, duration, domain) via a hosted language model behind a server endpoint.</li></ul>
+        </div>
+        <div class="task">
+          <h4><span class="lane fe">FE</span> Voice capture <span class="time">~3 hr</span></h4>
+          <ul><li>Browser speech-to-text feeds the same quick-add; handle no-permission and unsupported-browser cases.</li></ul>
+        </div>
+        <div class="task">
+          <h4><span class="lane be">BE</span> Importance inference + dependencies <span class="time">~5 hr</span></h4>
+          <ul><li>Walk the dependency graph; a task that blocks a deadline inherits urgency even when it was labelled flexible.</li></ul>
+        </div>
+        <div class="task">
+          <h4><span class="lane be">BE</span> Conflict + clustering detection <span class="time">~6 hr</span></h4>
+          <ul><li>Flag serious clashes and time-hint clustering ("three before-noon tasks will not fit"); ignore flexible overlaps; all driven by editable rules.</li></ul>
+        </div>
+        <div class="task">
+          <h4><span class="lane fe">FE</span> Auditable rules screen <span class="time">~4 hr</span></h4>
+          <ul><li>A plain list of the exact conditions that trigger warnings, with toggles. (Phase tasks 6 + 3 + 5 + 6 + 4 = 24 hr.)</li></ul>
+        </div>
+      </div>
+    </details>
+
+    <!-- PHASE 5: Infra (4+2)=6 + BE (5+4)=9 + FE (3+2)=5 => 20 hr -->
+    <details class="section" open id="p5">
+      <summary><span class="n">7</span><h2>Phase 5 - Rollforward, briefing + alerts <span class="time" style="margin-left:10px">~2.5 days (20 hr)</span></h2></summary>
+      <div class="section-body">
+        <p>The daily rhythm: nothing hides, the morning plan writes itself, and reminders land on time.</p>
+        <div class="task">
+          <h4><span class="lane infra">Infra</span> Nightly rollforward job <span class="time">~4 hr</span></h4>
+          <ul><li>Scheduled job moves unfinished tasks to the next day and increments their push counter.</li></ul>
+        </div>
+        <div class="task">
+          <h4><span class="lane be">BE</span> Morning briefing <span class="time">~5 hr</span></h4>
+          <ul><li>Assemble a priority-ordered, time-stamped plan for the productive window and phrase it in plain language.</li></ul>
+        </div>
+        <div class="task">
+          <h4><span class="lane fe">FE</span> Briefing UI + loud rolled flags <span class="time">~3 hr</span></h4>
+          <ul><li>Surface the briefing on Today; show "pushed N times" prominently on rolled-forward items.</li></ul>
+        </div>
+        <div class="task">
+          <h4><span class="lane fe">FE</span> + <span class="lane infra">Infra</span> Alerts + push <span class="time">~4 hr</span></h4>
+          <ul><li>Web push plus user-set alert times; a notification fires when important work is slipping.</li></ul>
+        </div>
+        <div class="task">
+          <h4><span class="lane be">BE</span> Google Calendar awareness <span class="time">~4 hr</span></h4>
+          <ul><li>Read calendar events so conflict detection can see real commitments. (Phase tasks 4 + 5 + 3 + 4 + 4 = 20 hr.)</li></ul>
+        </div>
+      </div>
+    </details>
+
+    <!-- EFFORT SUMMARY -->
+    <details class="section" open id="effort">
+      <summary><span class="n">8</span><h2>Effort summary</h2></summary>
+      <div class="section-body">
+        <div class="stats">
+          <div class="stat"><div class="v">~11.5 days</div><div class="k">total (92 hr)</div></div>
+          <div class="stat"><div class="v">~2 hr</div><div class="k">database</div></div>
+          <div class="stat"><div class="v">~32 hr</div><div class="k">backend (4 days)</div></div>
+          <div class="stat"><div class="v">~50 hr</div><div class="k">frontend (6.25 days)</div></div>
+          <div class="stat"><div class="v">~8 hr</div><div class="k">infrastructure (1 day)</div></div>
+        </div>
+        <p style="font-size:13px;color:var(--muted)">Hours assume an 8-hour working day (1 day = 8 hr).</p>
+        <table>
+          <thead><tr><th>Phase</th><th>Focus</th><th style="width:160px">Time</th></tr></thead>
+          <tbody>
+            <tr><td>Phase 1</td><td>Foundation + data layer</td><td class="time">~1.5 days (12 hr)</td></tr>
+            <tr><td>Phase 2</td><td>App shell + empty states</td><td class="time">~1.5 days (12 hr)</td></tr>
+            <tr><td>Phase 3</td><td>Tasks, domains + three views</td><td class="time">~3 days (24 hr)</td></tr>
+            <tr><td>Phase 4</td><td>Agentic layer</td><td class="time">~3 days (24 hr)</td></tr>
+            <tr><td>Phase 5</td><td>Rollforward, briefing + alerts</td><td class="time">~2.5 days (20 hr)</td></tr>
+            <tr><td><b>Total</b></td><td></td><td class="time"><b>~11.5 days (92 hr)</b></td></tr>
+          </tbody>
+        </table>
+        <div class="callout decision">
+          <div class="lbl">Why this is realistic</div>
+          The stack is re-used end to end - server actions, Supabase and a ready component library carry the plumbing, so effort concentrates on the two things only Tempo does: the three task views and the agent rules. The frontend is honestly the bulk; the database and infrastructure stay small by design.
+        </div>
+      </div>
+    </details>
+
+    <!-- WATCH-ITEMS -->
+    <details class="section" open id="watch">
+      <summary><span class="n">9</span><h2>Watch-items (small, but do not skip)</h2></summary>
+      <div class="section-body">
+        <ul>
+          <li>Rollforward must never drop or duplicate a task - it only moves unfinished ones and increments the counter.</li>
+          <li>Dependency cascade: when a blocking task slips, the blocked task's urgency has to update in the same pass.</li>
+          <li>Clustering warnings are about pressure, not hard alarms - do not over-warn on flexible or gig-style tasks.</li>
+          <li>Settings is a single row now; adding per-user columns and row-level security later must stay a clean, additive change.</li>
+          <li>Voice capture depends on the browser speech API - degrade gracefully when it is missing or denied.</li>
+        </ul>
+      </div>
+    </details>
+
+    <footer class="doc">
+      Tempo · Build Breakdown · 02 October 2026. Author Rishil Shajan.
+    </footer>
+  </main>
+</div>
+</body>
+</html>

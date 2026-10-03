@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="web_dashboard" name="shell-type"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Figtree:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config={darkMode:"class",theme:{extend:{colors:{"surface-container-low":"#e6f8ee","surface-container-highest":"#d5e7dd","surface-container-high":"#dbece3","secondary-container":"#a3f394","inverse-surface":"#24342d","on-error-container":"#93000a","secondary-fixed":"#a5f697","on-tertiary":"#ffffff","secondary":"#206d1f","on-primary-fixed-variant":"#005138","status-rolled":"#7C87D6","on-primary":"#ffffff","on-secondary-fixed-variant":"#005308","on-secondary":"#ffffff","outline-variant":"#bec9c1","error":"#ba1a1a","on-tertiary-container":"#f6fff4","table-header":"#EEF3F0","status-urgent":"#F0705A","on-surface-variant":"#3f4943","code-text":"#E8EFE9","status-medium":"#F2B24C","on-secondary-container":"#257123","tertiary-container":"#258450","surface-bright":"#ecfef4","inverse-primary":"#88d6b1","primary":"#11694a","primary-container":"#338262","surface-variant":"#d5e7dd","on-tertiary-fixed-variant":"#00522c","error-container":"#ffdad6","inverse-on-surface":"#e3f5eb","secondary-fixed-dim":"#8ad97d","on-primary-fixed":"#002114","on-error":"#ffffff","surface-tint":"#156b4d","primary-fixed":"#a3f3cc","tertiary-fixed-dim":"#7ed99c","surface-dim":"#cdded5","tertiary-fixed":"#99f6b7","tertiary":"#006a3a","border-subtle":"#E7E5DF","primary-fixed-dim":"#88d6b1","surface":"#FFFFFF","code-bg":"#1F2B26","text-muted":"#5B6B62","on-tertiary-fixed":"#00210e","bg-canvas":"#F7F6F2","surface-container-lowest":"#ffffff","on-surface":"#101e19","background":"#ecfef4","surface-container":"#e0f2e9","on-primary-container":"#f5fff7","status-ontrack":"#5DB87E","outline":"#6f7a73","on-background":"#101e19","on-secondary-fixed":"#002201"},borderRadius:{DEFAULT:"0.25rem",lg:"0.5rem",xl:"0.75rem",full:"9999px"},spacing:{"space-lg":"1.5rem","margin":"1.25rem","margin-lg":"2.5rem","gutter-lg":"1.5rem","space-xs":"0.25rem","gutter":"1rem","space-sm":"0.5rem","space-md":"1rem","space-xl":"2.25rem","margin-md":"1.5rem"},fontFamily:{"headline-xl-mobile":["Figtree"],"label-md":["Figtree"],"body-sm":["Figtree"],"headline-lg":["Figtree"],"label-sm":["Figtree"],"headline-md":["Figtree"],"body-md":["Figtree"],"headline-xl":["Figtree"],"body-lead":["Figtree"]},fontSize:{"headline-xl-mobile":["2rem",{lineHeight:"2.4rem",letterSpacing:"-0.02em",fontWeight:"800"}],"label-md":["0.8125rem",{lineHeight:"1.2rem",letterSpacing:"0.01em",fontWeight:"600"}],"body-sm":["0.875rem",{lineHeight:"1.4rem",fontWeight:"400"}],"headline-lg":["1.5rem",{lineHeight:"2rem",letterSpacing:"-0.02em",fontWeight:"700"}],"label-sm":["0.6875rem",{lineHeight:"0.9rem",letterSpacing:"0.03em",fontWeight:"700"}],"headline-md":["1.15rem",{lineHeight:"1.6rem",letterSpacing:"-0.01em",fontWeight:"700"}],"body-md":["1rem",{lineHeight:"1.65rem",fontWeight:"400"}],"headline-xl":["2.6rem",{lineHeight:"3.1rem",letterSpacing:"-0.03em",fontWeight:"800"}],"body-lead":["1.08rem",{lineHeight:"1.75rem",fontWeight:"400"}]}}}}</script></head><body class="bg-bg-canvas font-body-md text-on-surface antialiased"><aside class="fixed left-0 top-0 h-full w-64 bg-surface z-50 flex flex-col justify-between shadow-[0_1px_8px_rgba(0,0,0,0.04)]"><div class="flex flex-col flex-1 overflow-y-auto px-4 pt-5"><div class="flex items-center gap-3 px-2 mb-6"><img alt="Brand logo. - Primary color: #4c9a78
+- Font: publicSans
+- Mode: light
+- Roundness: rounded-md
+" class="h-8 w-auto object-contain" src="https://lh3.googleusercontent.com/aida/AEtjO1W7TMboXyQSoNJFBSUoUwfQ_H-fhHtXGo4VzKbvYriP4Im6D9oqrmQmPi9kXZJdXZyXJ5AiNFy-1zU14XcHp6inQUFyUjqAh9OxGefUeS5KUONSKO_ei-onBG-54oS54zEEBCw4DWilVyxY35rTLAxMnPwivGDDnpoW99qLq1SlzfTvkrmj-F2r701OW_iX0votTvFD0GbDoC7V9H9s4wiI6ZERd6AwHsvI7zMbjUnmqhwNDXj3CBlNWrQ"/><div class="flex flex-col"><span class="font-headline-md text-headline-md text-on-surface tracking-tight leading-none">Tasks</span><span class="font-label-sm text-label-sm text-text-muted mt-0.5">Agentic Workspace</span></div></div><div class="mb-6 px-1"><button class="w-full flex items-center justify-center gap-2 py-2.5 px-4 bg-primary text-on-primary rounded-xl font-label-md text-label-md hover:bg-primary-container hover:text-on-primary-container transition-all shadow-[0_1px_3px_rgba(34,49,43,0.05),0_8px_24px_rgba(34,49,43,0.04)]" type="button"><span class="material-symbols-outlined text-[18px]">add_circle</span><span>Create Task</span></button></div><div class="space-y-6"><div class="flex flex-col"><span class="px-2.5 mb-2 font-label-sm text-label-sm uppercase tracking-wider text-text-muted">General</span><nav class="space-y-1" data-active-classes="bg-surface-container-low text-primary font-label-md font-bold rounded-xl"><a class="flex items-center justify-between px-3 py-2 rounded-xl text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-all" data-path="today-dashboard" href="#"><div class="flex items-center gap-3"><span class="material-symbols-outlined text-[20px]">wb_sunny</span><span class="font-label-md text-label-md">Today</span></div><span class="material-symbols-outlined text-[16px] text-text-muted">auto_awesome</span></a><a class="flex items-center justify-between px-3 py-2 rounded-xl text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-all" data-path="my-tasks" href="#"><div class="flex items-center gap-3"><span class="material-symbols-outlined text-[20px]">check_circle</span><span class="font-label-md text-label-md">My Tasks</span></div><span class="px-2 py-0.5 bg-surface-container-high text-on-surface font-label-sm text-label-sm rounded-full">8</span></a><a class="flex items-center justify-between px-3 py-2 rounded-xl text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-all" data-path="rolled-forward" href="#"><div class="flex items-center gap-3"><span class="material-symbols-outlined text-[20px]">history</span><span class="font-label-md text-label-md">Rolled-Forward</span></div><span class="px-2 py-0.5 bg-surface-container-high text-on-surface font-label-sm text-label-sm rounded-full">3</span></a><a class="flex items-center justify-between px-3 py-2 rounded-xl text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-all" data-path="batch-triage" href="#"><div class="flex items-center gap-3"><span class="material-symbols-outlined text-[20px]">tune</span><span class="font-label-md text-label-md">Batch Triage</span></div></a><a class="flex items-center justify-between px-3 py-2 rounded-xl text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-all" data-path="calendar" href="#"><div class="flex items-center gap-3"><span class="material-symbols-outlined text-[20px]">calendar_today</span><span class="font-label-md text-label-md">Calendar</span></div></a></nav></div><div class="flex flex-col"><span class="px-2.5 mb-2 font-label-sm text-label-sm uppercase tracking-wider text-text-muted">Domains</span><nav class="space-y-1" data-active-classes="bg-surface-container-low text-primary font-label-md font-bold rounded-xl"><a class="flex items-center justify-between px-3 py-2 rounded-xl text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-all" data-path="startup-alpha" href="#"><div class="flex items-center gap-3"><span class="w-2 h-2 rounded-full bg-primary"></span><span class="font-label-md text-label-md">Startup Alpha</span></div><span class="font-label-sm text-label-sm text-text-muted">@alpha</span></a><a class="flex items-center justify-between px-3 py-2 rounded-xl text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-all" data-path="startup-beta" href="#"><div class="flex items-center gap-3"><span class="w-2 h-2 rounded-full bg-status-medium"></span><span class="font-label-md text-label-md">Startup Beta</span></div><span class="font-label-sm text-label-sm text-text-muted">@beta</span></a><a class="flex items-center justify-between px-3 py-2 rounded-xl text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-all" data-path="financial-governance" href="#"><div class="flex items-center gap-3"><span class="w-2 h-2 rounded-full bg-status-rolled"></span><span class="font-label-md text-label-md">Financial &amp; Governance</span></div></a><a class="flex items-center justify-between px-3 py-2 rounded-xl text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-all" data-path="personal-wellness" href="#"><div class="flex items-center gap-3"><span class="w-2 h-2 rounded-full bg-status-ontrack"></span><span class="font-label-md text-label-md">Personal &amp; Wellness</span></div></a><a class="flex items-center justify-between px-3 py-2 rounded-xl text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-all" data-path="deep-work" href="#"><div class="flex items-center gap-3"><span class="w-2 h-2 rounded-full bg-primary-container"></span><span class="font-label-md text-label-md">Learning &amp; Deep Work</span></div></a></nav></div></div></div><div class="p-4 mt-auto space-y-2"><div class="flex items-center justify-between px-2 py-1.5 rounded-xl bg-surface-container-low"><div class="flex items-center gap-2"><span class="material-symbols-outlined text-primary text-[18px]">psychology</span><span class="font-label-sm text-label-sm text-on-surface">Cognitive Balance</span></div><span class="font-label-sm text-label-sm text-primary font-bold">Optimal</span></div><nav class="space-y-1" data-active-classes="bg-surface-container-low text-primary font-label-md font-bold rounded-xl"><a class="flex items-center gap-3 px-3 py-2 rounded-xl text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-all" data-path="settings" href="#"><span class="material-symbols-outlined text-[20px]">settings</span><span class="font-label-md text-label-md">Settings</span></a><a class="flex items-center gap-3 px-3 py-2 rounded-xl text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-all" data-path="help" href="#"><span class="material-symbols-outlined text-[20px]">help_outline</span><span class="font-label-md text-label-md">Help &amp; Shortkeys</span></a></nav><div class="pt-2 flex items-center justify-between px-2"><div class="flex items-center gap-2.5"><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div><div class="flex flex-col"><span class="font-label-md text-label-md text-on-surface leading-tight">Elena Rostova</span><span class="font-label-sm text-label-sm text-text-muted">Founder Mode</span></div></div><span class="material-symbols-outlined text-on-surface-variant text-[18px] cursor-pointer hover:text-on-surface">more_vert</span></div></div></aside><div class="pl-64"><header class="fixed top-0 left-64 right-0 h-16 bg-surface/80 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)] z-40 flex items-center justify-between px-8"><div class="flex items-center gap-6"><div class="flex items-center gap-3"><img alt="Brand logo. - Primary color: #4c9a78
+- Font: publicSans
+- Mode: light
+- Roundness: rounded-md
+" class="h-8 w-auto object-contain" src="https://lh3.googleusercontent.com/aida/AEtjO1W7TMboXyQSoNJFBSUoUwfQ_H-fhHtXGo4VzKbvYriP4Im6D9oqrmQmPi9kXZJdXZyXJ5AiNFy-1zU14XcHp6inQUFyUjqAh9OxGefUeS5KUONSKO_ei-onBG-54oS54zEEBCw4DWilVyxY35rTLAxMnPwivGDDnpoW99qLq1SlzfTvkrmj-F2r701OW_iX0votTvFD0GbDoC7V9H9s4wiI6ZERd6AwHsvI7zMbjUnmqhwNDXj3CBlNWrQ"/><div class="flex flex-col"><span class="font-label-md text-label-md text-on-surface leading-none">Wednesday, Oct 3</span><span class="font-label-sm text-label-sm text-text-muted mt-0.5">Autonomous Task Agent</span></div></div><div class="hidden xl:flex items-center gap-2 px-3 py-1.5 rounded-full bg-surface-container-low"><span class="material-symbols-outlined text-primary text-[16px]">bolt</span><span class="font-label-sm text-label-sm text-primary font-bold">Morning Focus</span><span class="font-label-sm text-label-sm text-text-muted">· 8:30 AM - 11:30 AM Peak Energy</span></div></div><div class="flex items-center gap-4 flex-1 max-w-xl justify-end"><div class="relative w-full max-w-md"><span class="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-[18px] text-text-muted">arrow_back_ios_new</span><input class="w-full pl-10 pr-10 py-1.5 text-body-sm font-body-sm bg-surface rounded-xl text-on-surface placeholder:text-text-muted/60 shadow-[0_1px_3px_rgba(34,49,43,0.05)] focus:outline-none focus:ring-2 focus:ring-primary/20" placeholder="Quick-add task or type ⌘K..." type="text"/><button class="absolute right-2.5 top-1/2 -translate-y-1/2 text-text-muted hover:text-primary transition-colors" type="button"><span class="material-symbols-outlined text-[18px]">mic</span></button></div><div class="flex items-center gap-2"><button class="w-9 h-9 rounded-xl flex items-center justify-center text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors relative" type="button"><span class="material-symbols-outlined text-[20px]">notifications</span><span class="absolute top-2 right-2 w-2 h-2 rounded-full bg-status-urgent"></span></button><button class="w-9 h-9 rounded-xl flex items-center justify-center text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors" type="button"><span class="material-symbols-outlined text-[20px]">view_sidebar</span></button><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></div></header><main class="relative pt-16 bg-bg-canvas min-h-screen"><div class="flex flex-col w-full">
+<div class="p-8 max-w-[1680px] mx-auto w-full">
+<!-- Top System State & Productivity Banner -->
+<div class="mb-6 flex flex-wrap items-center justify-between gap-4 bg-surface rounded-2xl p-4 shadow-[0_1px_3px_rgba(34,49,43,0.05),0_8px_24px_rgba(34,49,43,0.04)]">
+<div class="flex items-center gap-3">
+<div class="w-2.5 h-2.5 rounded-full bg-status-ontrack animate-pulse"></div>
+<div class="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3">
+<span class="font-label-md text-label-md text-on-surface">Agent Engine Calibrated</span>
+<span class="hidden sm:inline text-outline-variant font-label-md">•</span>
+<span class="font-body-sm text-body-sm text-text-muted">4 auditable deterministic rules active · zero silent magic</span>
+</div>
+</div>
+<div class="flex items-center gap-3">
+<div class="flex items-center gap-2 px-3 py-1 rounded-full bg-surface-container-low text-primary">
+<span class="material-symbols-outlined text-[16px]">verified</span>
+<span class="font-label-sm text-label-sm font-bold">Local Node v1.2.4-fast</span>
+</div>
+<div class="flex items-center gap-2 px-3 py-1 rounded-full bg-surface-container text-on-surface-variant">
+<span class="material-symbols-outlined text-[16px]">shield</span>
+<span class="font-label-sm text-label-sm">Zero Telemetry</span>
+</div>
+</div>
+</div>
+<!-- Main Dual Panel Workspace Grid -->
+<div class="grid grid-cols-1 xl:grid-cols-12 gap-8 items-start">
+<!-- LEFT WORKSPACE COLUMN (7 of 12 cols on desktop) -->
+<div class="xl:col-span-7 flex flex-col gap-8 min-w-0">
+<!-- Header Section -->
+<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2">
+<div>
+<div class="flex items-center gap-2 mb-1">
+<span class="font-label-sm text-label-sm tracking-widest uppercase text-text-muted font-bold">Preferences &amp; Governance</span>
+<span class="px-2 py-0.5 rounded-full bg-surface-container-low text-primary font-label-sm text-label-sm font-bold">Production</span>
+</div>
+<h1 class="font-headline-lg text-headline-lg text-on-surface">Settings &amp; Domain Architecture</h1>
+<p class="font-body-sm text-body-sm text-text-muted mt-1">Configure operational domains, productivity calibration, and auditable agent rules.</p>
+</div>
+<div class="flex items-center gap-2.5">
+<button class="px-3.5 py-2 rounded-xl bg-surface hover:bg-surface-container-low text-on-surface font-label-md text-label-md shadow-[0_1px_3px_rgba(34,49,43,0.04)] transition-all flex items-center gap-2" type="button">
+<span class="material-symbols-outlined text-[18px] text-text-muted">download</span>
+<span>Export JSON</span>
+</button>
+<button class="px-4 py-2 rounded-xl bg-primary text-on-primary font-label-md text-label-md hover:bg-primary-container transition-all shadow-[0_1px_3px_rgba(34,49,43,0.05),0_8px_24px_rgba(34,49,43,0.04)] flex items-center gap-2" type="button">
+<span class="material-symbols-outlined text-[18px]">add</span>
+<span>New Domain</span>
+</button>
+</div>
+</div>
+<!-- SECTION 1: Categories & Operational Domains -->
+<div class="flex flex-col gap-4 bg-surface rounded-2xl p-6 shadow-[0_1px_3px_rgba(34,49,43,0.05),0_8px_24px_rgba(34,49,43,0.04)]">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2.5">
+<span class="material-symbols-outlined text-primary text-[22px]">category</span>
+<div>
+<h2 class="font-headline-md text-headline-md text-on-surface">Operational Domains</h2>
+<p class="font-body-sm text-body-sm text-text-muted">5 active ventures and functional sandboxes</p>
+</div>
+</div>
+<span class="font-label-sm text-label-sm text-text-muted px-2.5 py-1 bg-surface-container-high rounded-full">15 Tasks Enqueued</span>
+</div>
+<!-- Domain Cards List -->
+<div class="flex flex-col gap-3 mt-2">
+<!-- Domain 1: Startup Alpha (Active / Selected in Right Drawer) -->
+<div class="p-4 rounded-xl bg-surface-container-low flex flex-col md:flex-row md:items-center justify-between gap-4 cursor-pointer shadow-sm transition-all relative overflow-hidden group">
+<div class="absolute left-0 top-0 bottom-0 w-1.5 bg-primary"></div>
+<div class="flex items-start md:items-center gap-3.5 pl-2">
+<div class="w-10 h-10 rounded-xl bg-primary text-on-primary flex items-center justify-center shrink-0 shadow-sm">
+<span class="material-symbols-outlined text-[20px]">rocket_launch</span>
+</div>
+<div class="flex flex-col">
+<div class="flex items-center gap-2 flex-wrap">
+<span class="font-headline-md text-headline-md text-on-surface">Startup Alpha</span>
+<span class="font-label-sm text-label-sm text-primary font-bold px-2 py-0.5 rounded-full bg-surface">@alpha</span>
+<span class="px-2 py-0.5 rounded-full bg-primary text-on-primary font-label-sm text-label-sm flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-surface"></span> Selected in Drawer
+                    </span>
+</div>
+<p class="font-body-sm text-body-sm text-text-muted mt-0.5">Primary startup focus, fundraising &amp; core sprint execution.</p>
+</div>
+</div>
+<div class="flex items-center justify-between md:justify-end gap-3 pl-2 md:pl-0">
+<div class="flex items-center gap-2">
+<span class="px-2.5 py-1 rounded-full bg-surface text-primary font-label-sm text-label-sm font-bold shadow-sm">5 tasks</span>
+<span class="px-2 py-0.5 rounded-full bg-status-urgent/10 text-status-urgent font-label-sm text-label-sm">1 cascade risk</span>
+</div>
+<div class="flex items-center gap-1 text-on-surface-variant">
+<button class="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-surface transition-colors" title="Edit Domain">
+<span class="material-symbols-outlined text-[18px]">edit</span>
+</button>
+<button class="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-surface transition-colors" title="More Options">
+<span class="material-symbols-outlined text-[18px]">more_vert</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Domain 2: Startup Beta -->
+<div class="p-4 rounded-xl bg-surface hover:bg-surface-container-low/50 flex flex-col md:flex-row md:items-center justify-between gap-4 cursor-pointer transition-all shadow-[0_1px_3px_rgba(34,49,43,0.02)] relative overflow-hidden group">
+<div class="absolute left-0 top-0 bottom-0 w-1.5 bg-status-medium"></div>
+<div class="flex items-start md:items-center gap-3.5 pl-2">
+<div class="w-10 h-10 rounded-xl bg-status-medium/20 text-status-medium flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[20px]">architecture</span>
+</div>
+<div class="flex flex-col">
+<div class="flex items-center gap-2 flex-wrap">
+<span class="font-headline-md text-headline-md text-on-surface">Startup Beta</span>
+<span class="font-label-sm text-label-sm text-text-muted font-bold px-2 py-0.5 rounded-full bg-surface-container-high">@beta</span>
+</div>
+<p class="font-body-sm text-body-sm text-text-muted mt-0.5">Advisory, systems architecture &amp; mentor sprints.</p>
+</div>
+</div>
+<div class="flex items-center justify-between md:justify-end gap-3 pl-2 md:pl-0">
+<span class="px-2.5 py-1 rounded-full bg-surface-container-high text-on-surface font-label-sm text-label-sm font-bold">3 tasks</span>
+<div class="flex items-center gap-1 text-on-surface-variant">
+<button class="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-surface-container-high transition-colors" title="Edit Domain">
+<span class="material-symbols-outlined text-[18px]">edit</span>
+</button>
+<button class="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-surface-container-high transition-colors" title="More Options">
+<span class="material-symbols-outlined text-[18px]">more_vert</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Domain 3: Financial & Governance -->
+<div class="p-4 rounded-xl bg-surface hover:bg-surface-container-low/50 flex flex-col md:flex-row md:items-center justify-between gap-4 cursor-pointer transition-all shadow-[0_1px_3px_rgba(34,49,43,0.02)] relative overflow-hidden group">
+<div class="absolute left-0 top-0 bottom-0 w-1.5 bg-status-rolled"></div>
+<div class="flex items-start md:items-center gap-3.5 pl-2">
+<div class="w-10 h-10 rounded-xl bg-status-rolled/20 text-status-rolled flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[20px]">account_balance</span>
+</div>
+<div class="flex flex-col">
+<div class="flex items-center gap-2 flex-wrap">
+<span class="font-headline-md text-headline-md text-on-surface">Financial &amp; Governance</span>
+<span class="font-label-sm text-label-sm text-text-muted font-bold px-2 py-0.5 rounded-full bg-surface-container-high">@finances</span>
+</div>
+<p class="font-body-sm text-body-sm text-text-muted mt-0.5">Tax compliance, cap table, Delaware franchise &amp; investor reports.</p>
+</div>
+</div>
+<div class="flex items-center justify-between md:justify-end gap-3 pl-2 md:pl-0">
+<span class="px-2.5 py-1 rounded-full bg-surface-container-high text-on-surface font-label-sm text-label-sm font-bold">2 tasks</span>
+<div class="flex items-center gap-1 text-on-surface-variant">
+<button class="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-surface-container-high transition-colors">
+<span class="material-symbols-outlined text-[18px]">edit</span>
+</button>
+<button class="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-surface-container-high transition-colors">
+<span class="material-symbols-outlined text-[18px]">more_vert</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Domain 4: Personal & Wellness -->
+<div class="p-4 rounded-xl bg-surface hover:bg-surface-container-low/50 flex flex-col md:flex-row md:items-center justify-between gap-4 cursor-pointer transition-all shadow-[0_1px_3px_rgba(34,49,43,0.02)] relative overflow-hidden group">
+<div class="absolute left-0 top-0 bottom-0 w-1.5 bg-status-ontrack"></div>
+<div class="flex items-start md:items-center gap-3.5 pl-2">
+<div class="w-10 h-10 rounded-xl bg-status-ontrack/20 text-status-ontrack flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[20px]">spa</span>
+</div>
+<div class="flex flex-col">
+<div class="flex items-center gap-2 flex-wrap">
+<span class="font-headline-md text-headline-md text-on-surface">Personal &amp; Wellness</span>
+<span class="font-label-sm text-label-sm text-text-muted font-bold px-2 py-0.5 rounded-full bg-surface-container-high">@wellness</span>
+</div>
+<p class="font-body-sm text-body-sm text-text-muted mt-0.5">Health habits, bloodwork, family logistics &amp; decompression.</p>
+</div>
+</div>
+<div class="flex items-center justify-between md:justify-end gap-3 pl-2 md:pl-0">
+<span class="px-2.5 py-1 rounded-full bg-surface-container-high text-on-surface font-label-sm text-label-sm font-bold">4 tasks</span>
+<div class="flex items-center gap-1 text-on-surface-variant">
+<button class="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-surface-container-high transition-colors">
+<span class="material-symbols-outlined text-[18px]">edit</span>
+</button>
+<button class="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-surface-container-high transition-colors">
+<span class="material-symbols-outlined text-[18px]">more_vert</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Domain 5: Learning & Deep Work -->
+<div class="p-4 rounded-xl bg-surface hover:bg-surface-container-low/50 flex flex-col md:flex-row md:items-center justify-between gap-4 cursor-pointer transition-all shadow-[0_1px_3px_rgba(34,49,43,0.02)] relative overflow-hidden group">
+<div class="absolute left-0 top-0 bottom-0 w-1.5 bg-primary-container"></div>
+<div class="flex items-start md:items-center gap-3.5 pl-2">
+<div class="w-10 h-10 rounded-xl bg-primary-container/20 text-primary-container flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[20px]">auto_stories</span>
+</div>
+<div class="flex flex-col">
+<div class="flex items-center gap-2 flex-wrap">
+<span class="font-headline-md text-headline-md text-on-surface">Learning &amp; Deep Work</span>
+<span class="font-label-sm text-label-sm text-text-muted font-bold px-2 py-0.5 rounded-full bg-surface-container-high">@deepwork</span>
+</div>
+<p class="font-body-sm text-body-sm text-text-muted mt-0.5">Elastic learning blocks, AI paper synthesis &amp; technical research.</p>
+</div>
+</div>
+<div class="flex items-center justify-between md:justify-end gap-3 pl-2 md:pl-0">
+<span class="px-2.5 py-1 rounded-full bg-surface-container-high text-on-surface font-label-sm text-label-sm font-bold">1 task</span>
+<div class="flex items-center gap-1 text-on-surface-variant">
+<button class="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-surface-container-high transition-colors">
+<span class="material-symbols-outlined text-[18px]">edit</span>
+</button>
+<button class="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-surface-container-high transition-colors">
+<span class="material-symbols-outlined text-[18px]">more_vert</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+<!-- Quick Inline Add Domain Bar -->
+<div class="mt-2 pt-3 flex flex-col sm:flex-row items-center gap-3">
+<div class="flex items-center gap-2 w-full sm:flex-1 bg-surface-container-low px-3 py-2 rounded-xl">
+<span class="material-symbols-outlined text-text-muted text-[20px]">add_circle</span>
+<input class="bg-transparent border-none outline-none font-body-sm text-body-sm text-on-surface placeholder:text-text-muted/60 w-full" placeholder="Domain name (e.g. Real Estate Portfolio)..." type="text"/>
+</div>
+<div class="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-start">
+<div class="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-surface-container-high font-label-sm text-label-sm text-text-muted">
+<span>Color</span>
+<div class="w-4 h-4 rounded-full bg-status-medium cursor-pointer"></div>
+</div>
+<button class="px-4 py-2 rounded-xl bg-surface hover:bg-surface-container-high text-on-surface font-label-md text-label-md transition-colors" type="button">
+                Add Domain
+              </button>
+</div>
+</div>
+</div>
+<!-- SECTION 2: Productivity Calibration & Peak Energy Windows -->
+<div class="flex flex-col gap-5 bg-surface rounded-2xl p-6 shadow-[0_1px_3px_rgba(34,49,43,0.05),0_8px_24px_rgba(34,49,43,0.04)]">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2.5">
+<span class="material-symbols-outlined text-primary text-[22px]">vital_signs</span>
+<div>
+<h2 class="font-headline-md text-headline-md text-on-surface">Productivity Calibration &amp; Energy Windows</h2>
+<p class="font-body-sm text-body-sm text-text-muted">Heuristic auto-scheduling alignment with your biological chronotype</p>
+</div>
+</div>
+<span class="px-2.5 py-1 rounded-full bg-surface-container-low text-primary font-label-sm text-label-sm font-bold">Lark Chronotype</span>
+</div>
+<!-- Chronotype Selection Cards -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+<div class="p-4 rounded-xl bg-surface-container-low flex flex-col gap-2 relative cursor-pointer">
+<div class="flex items-center justify-between">
+<span class="font-label-md text-label-md text-primary flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[18px]">light_mode</span>
+                  Morning Focus Bias
+                </span>
+<span class="w-3 h-3 rounded-full bg-primary ring-4 ring-primary/20"></span>
+</div>
+<span class="font-headline-md text-headline-md text-on-surface">8:30 AM – 11:30 AM</span>
+<p class="font-body-sm text-body-sm text-text-muted">High cognitive load sprint execution. Agent schedules deep blocks here by default.</p>
+</div>
+<div class="p-4 rounded-xl bg-surface hover:bg-surface-container-low/40 flex flex-col gap-2 relative cursor-pointer transition-colors">
+<div class="flex items-center justify-between">
+<span class="font-label-md text-label-md text-text-muted flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[18px]">wb_twilight</span>
+                  Afternoon Flow
+                </span>
+<span class="w-3 h-3 rounded-full bg-surface-container-high"></span>
+</div>
+<span class="font-headline-md text-headline-md text-on-surface">1:30 PM – 4:30 PM</span>
+<p class="font-body-sm text-body-sm text-text-muted">Collaborative syncs, review loops, elastic decompression &amp; triage.</p>
+</div>
+</div>
+<!-- Elastic Cushion Protection Switch -->
+<div class="p-4 rounded-xl bg-surface-container-low flex items-center justify-between gap-4">
+<div class="flex items-start gap-3">
+<span class="material-symbols-outlined text-primary text-[22px] mt-0.5">hourglass_top</span>
+<div>
+<span class="font-headline-md text-headline-md text-on-surface">Elastic Cushion Protection</span>
+<p class="font-body-sm text-body-sm text-text-muted mt-0.5">Hold 30–45m unassigned buffer before critical cascade deadlines to absorb unforeseen friction.</p>
+</div>
+</div>
+<!-- Interactive Switch -->
+<label class="relative inline-flex items-center cursor-pointer shrink-0">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-12 h-6 bg-surface-container-high peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+</label>
+</div>
+<!-- Daily Notification Cadence Table -->
+<div class="flex flex-col gap-2">
+<span class="font-label-sm text-label-sm text-text-muted uppercase tracking-wider font-bold">Autonomous Check-in Schedule</span>
+<div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+<div class="p-3 rounded-xl bg-surface-container-low flex flex-col gap-1">
+<div class="flex items-center justify-between">
+<span class="font-label-sm text-label-sm text-primary font-bold">Morning Brief</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant font-mono">08:30 AM</span>
+</div>
+<span class="font-body-sm text-body-sm text-on-surface font-semibold">Priority cascade plan</span>
+</div>
+<div class="p-3 rounded-xl bg-surface-container-low flex flex-col gap-1">
+<div class="flex items-center justify-between">
+<span class="font-label-sm text-label-sm text-status-medium font-bold">Midday Triage</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant font-mono">01:30 PM</span>
+</div>
+<span class="font-body-sm text-body-sm text-on-surface font-semibold">Slippage &amp; shift alerts</span>
+</div>
+<div class="p-3 rounded-xl bg-surface-container-low flex flex-col gap-1">
+<div class="flex items-center justify-between">
+<span class="font-label-sm text-label-sm text-status-rolled font-bold">Evening Roll</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant font-mono">06:00 PM</span>
+</div>
+<span class="font-body-sm text-body-sm text-on-surface font-semibold">Rolled forward ledger</span>
+</div>
+</div>
+</div>
+</div>
+<!-- SECTION 3: Auditable Agent Rules Engine (No Silent Magic) -->
+<div class="flex flex-col gap-5 bg-surface rounded-2xl p-6 shadow-[0_1px_3px_rgba(34,49,43,0.05),0_8px_24px_rgba(34,49,43,0.04)]">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2.5">
+<span class="material-symbols-outlined text-primary text-[22px]">tune</span>
+<div>
+<h2 class="font-headline-md text-headline-md text-on-surface">Auditable Heuristic Rules Engine</h2>
+<p class="font-body-sm text-body-sm text-text-muted">Deterministic agent triggers. Review conditions before any task state shifts.</p>
+</div>
+</div>
+<button class="px-2.5 py-1 text-primary hover:bg-surface-container-low rounded-lg font-label-sm text-label-sm font-bold transition-colors">
+              Audit Logs (42)
+            </button>
+</div>
+<div class="flex flex-col gap-3">
+<!-- Rule 1: Cascade Risk Trigger -->
+<div class="p-4 rounded-xl bg-surface hover:bg-surface-container-low/40 flex items-start justify-between gap-4 transition-all">
+<div class="flex items-start gap-3">
+<span class="w-8 h-8 rounded-lg bg-status-urgent/10 text-status-urgent flex items-center justify-center shrink-0 mt-0.5">
+<span class="material-symbols-outlined text-[18px]">crisis_alert</span>
+</span>
+<div class="flex flex-col">
+<div class="flex items-center gap-2">
+<span class="font-headline-md text-headline-md text-on-surface">Cascade Risk Trigger</span>
+<span class="px-2 py-0.5 rounded-full bg-status-urgent/10 text-status-urgent font-label-sm text-label-sm">High Priority</span>
+</div>
+<p class="font-body-sm text-body-sm text-text-muted mt-0.5">Automatically elevates flexible upstream tasks to urgent coral if they block a downstream task with a fixed milestone within 24 hours.</p>
+</div>
+</div>
+<label class="relative inline-flex items-center cursor-pointer shrink-0 mt-1">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-surface-container-high peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+</label>
+</div>
+<!-- Rule 2: Density & Cognitive Clustering Alert -->
+<div class="p-4 rounded-xl bg-surface hover:bg-surface-container-low/40 flex items-start justify-between gap-4 transition-all">
+<div class="flex items-start gap-3">
+<span class="w-8 h-8 rounded-lg bg-status-medium/15 text-status-medium flex items-center justify-center shrink-0 mt-0.5">
+<span class="material-symbols-outlined text-[18px]">psychology</span>
+</span>
+<div class="flex flex-col">
+<div class="flex items-center gap-2">
+<span class="font-headline-md text-headline-md text-on-surface">Density &amp; Clustering Alert</span>
+<span class="px-2 py-0.5 rounded-full bg-status-medium/10 text-status-medium font-label-sm text-label-sm">Balance</span>
+</div>
+<p class="font-body-sm text-body-sm text-text-muted mt-0.5">Triggers warning notification when &gt;2 high-focus cognitive blocks are scheduled inside the same 3-hour calendar segment.</p>
+</div>
+</div>
+<label class="relative inline-flex items-center cursor-pointer shrink-0 mt-1">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-surface-container-high peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+</label>
+</div>
+<!-- Rule 3: Repeated Rollforward Watchdog -->
+<div class="p-4 rounded-xl bg-surface hover:bg-surface-container-low/40 flex items-start justify-between gap-4 transition-all">
+<div class="flex items-start gap-3">
+<span class="w-8 h-8 rounded-lg bg-status-rolled/15 text-status-rolled flex items-center justify-center shrink-0 mt-0.5">
+<span class="material-symbols-outlined text-[18px]">history</span>
+</span>
+<div class="flex flex-col">
+<div class="flex items-center gap-2">
+<span class="font-headline-md text-headline-md text-on-surface">Repeated Rollforward Watchdog</span>
+<span class="px-2 py-0.5 rounded-full bg-status-rolled/10 text-status-rolled font-label-sm text-label-sm">Anti-Procrastination</span>
+</div>
+<p class="font-body-sm text-body-sm text-text-muted mt-0.5">Flags tasks deferred ≥2 consecutive days. Offers 1-click option to decompose into micro-steps or archive silently.</p>
+</div>
+</div>
+<label class="relative inline-flex items-center cursor-pointer shrink-0 mt-1">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-surface-container-high peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+</label>
+</div>
+<!-- Rule 4: Elastic Compression Policy -->
+<div class="p-4 rounded-xl bg-surface hover:bg-surface-container-low/40 flex items-start justify-between gap-4 transition-all">
+<div class="flex items-start gap-3">
+<span class="w-8 h-8 rounded-lg bg-status-ontrack/15 text-status-ontrack flex items-center justify-center shrink-0 mt-0.5">
+<span class="material-symbols-outlined text-[18px]">compress</span>
+</span>
+<div class="flex flex-col">
+<div class="flex items-center gap-2">
+<span class="font-headline-md text-headline-md text-on-surface">Elastic Compression Policy</span>
+<span class="px-2 py-0.5 rounded-full bg-status-ontrack/10 text-status-ontrack font-label-sm text-label-sm">Flexibility</span>
+</div>
+<p class="font-body-sm text-body-sm text-text-muted mt-0.5">Compress marked elastic tasks to their minimum duration floor (e.g. 45m → 15m) when urgent meetings displace calendar slots.</p>
+</div>
+</div>
+<label class="relative inline-flex items-center cursor-pointer shrink-0 mt-1">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-surface-container-high peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+</label>
+</div>
+</div>
+</div>
+<!-- SECTION 4: Interface Theme & System Storage -->
+<div class="flex flex-col sm:flex-row items-center justify-between gap-4 bg-surface rounded-2xl p-6 shadow-[0_1px_3px_rgba(34,49,43,0.05),0_8px_24px_rgba(34,49,43,0.04)] mb-8">
+<div>
+<span class="font-headline-md text-headline-md text-on-surface">Interface Appearance</span>
+<p class="font-body-sm text-body-sm text-text-muted mt-0.5">Sage Focus palette active with organic paper-feel contrast.</p>
+</div>
+<div class="flex items-center gap-2 bg-surface-container-low p-1.5 rounded-xl">
+<button class="px-3.5 py-1.5 rounded-lg bg-surface text-primary font-label-md text-label-md font-bold shadow-sm" type="button">Sage Focus</button>
+<button class="px-3.5 py-1.5 rounded-lg text-text-muted hover:text-on-surface font-label-md text-label-md transition-colors" type="button">Warm Calm</button>
+<button class="px-3.5 py-1.5 rounded-lg text-text-muted hover:text-on-surface font-label-md text-label-md transition-colors" type="button">Dark Slate</button>
+</div>
+</div>
+</div>
+<!-- RIGHT BASESHEET DRAWER (5 of 12 cols on desktop) -->
+<div class="xl:col-span-5 bg-surface rounded-3xl p-6 sm:p-8 shadow-[0_4px_24px_rgba(34,49,43,0.06),0_12px_40px_rgba(34,49,43,0.04)] sticky top-24">
+<!-- Drawer Top Navigation & Actions -->
+<div class="flex items-center justify-between pb-5">
+<button class="w-9 h-9 rounded-xl flex items-center justify-center text-text-muted hover:bg-surface-container-low hover:text-on-surface transition-colors" title="Close Drawer" type="button">
+<span class="material-symbols-outlined text-[20px]">close</span>
+</button>
+<div class="flex items-center gap-1.5">
+<button class="w-9 h-9 rounded-xl flex items-center justify-center text-text-muted hover:bg-surface-container-low hover:text-on-surface transition-colors" title="Edit Domain Meta" type="button">
+<span class="material-symbols-outlined text-[20px]">edit</span>
+</button>
+<button class="w-9 h-9 rounded-xl flex items-center justify-center text-text-muted hover:bg-surface-container-low hover:text-on-surface transition-colors" title="Share Architecture" type="button">
+<span class="material-symbols-outlined text-[20px]">ios_share</span>
+</button>
+<button class="w-9 h-9 rounded-xl flex items-center justify-center text-text-muted hover:bg-surface-container-low hover:text-on-surface transition-colors" title="More Options" type="button">
+<span class="material-symbols-outlined text-[20px]">more_vert</span>
+</button>
+</div>
+</div>
+<!-- Drawer Title & Status Badges -->
+<div class="flex flex-col gap-2">
+<div class="flex items-center gap-2">
+<span class="w-3 h-3 rounded-full bg-primary"></span>
+<span class="font-label-sm text-label-sm uppercase tracking-wider text-text-muted font-bold">Domain Inspector</span>
+</div>
+<h2 class="font-headline-xl text-headline-xl text-on-surface tracking-tight">Startup Alpha</h2>
+<div class="flex items-center gap-2 flex-wrap mt-1">
+<span class="px-2.5 py-1 rounded-full bg-surface-container-low text-primary font-label-sm text-label-sm font-bold flex items-center gap-1">
+<span class="material-symbols-outlined text-[15px]">task_alt</span>
+              5 Active Tasks Bound
+            </span>
+<span class="px-2.5 py-1 rounded-full bg-status-urgent/10 text-status-urgent font-label-sm text-label-sm font-bold flex items-center gap-1">
+<span class="material-symbols-outlined text-[15px]">warning</span>
+              1 Cascade Blocker
+            </span>
+</div>
+</div>
+<!-- Drawer Properties Table & Input Controls -->
+<div class="flex flex-col gap-5 mt-6">
+<!-- Name Input -->
+<div class="flex flex-col gap-1.5">
+<label class="font-label-sm text-label-sm text-text-muted uppercase tracking-wider font-bold">Domain Name</label>
+<input class="w-full px-4 py-2.5 rounded-xl bg-surface-container-low text-on-surface font-headline-md text-headline-md outline-none focus:ring-2 focus:ring-primary/20 transition-all" type="text" value="Startup Alpha"/>
+</div>
+<!-- Shortcode & Domain Glyph -->
+<div class="grid grid-cols-2 gap-4">
+<div class="flex flex-col gap-1.5">
+<label class="font-label-sm text-label-sm text-text-muted uppercase tracking-wider font-bold">Shortcode Tag</label>
+<div class="flex items-center gap-1 px-3.5 py-2.5 rounded-xl bg-surface-container-low">
+<span class="font-label-md text-label-md text-text-muted">@</span>
+<input class="w-full bg-transparent outline-none font-label-md text-label-md text-on-surface" type="text" value="alpha"/>
+</div>
+</div>
+<div class="flex flex-col gap-1.5">
+<label class="font-label-sm text-label-sm text-text-muted uppercase tracking-wider font-bold">Glyph Icon</label>
+<div class="flex items-center justify-between px-3.5 py-2 rounded-xl bg-surface-container-low cursor-pointer">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[20px]">rocket_launch</span>
+<span class="font-label-md text-label-md text-on-surface">Rocket</span>
+</div>
+<span class="material-symbols-outlined text-text-muted text-[18px]">expand_more</span>
+</div>
+</div>
+</div>
+<!-- Visual Color Palette Picker -->
+<div class="flex flex-col gap-2">
+<div class="flex items-center justify-between">
+<label class="font-label-sm text-label-sm text-text-muted uppercase tracking-wider font-bold">Color Theme Identity</label>
+<span class="font-label-sm text-label-sm text-primary font-bold">Sage Primary (#4C9A78)</span>
+</div>
+<div class="flex items-center justify-between p-2 rounded-xl bg-surface-container-low">
+<button class="w-7 h-7 rounded-full bg-primary ring-2 ring-primary ring-offset-2 flex items-center justify-center text-on-primary" type="button">
+<span class="material-symbols-outlined text-[14px]">check</span>
+</button>
+<button class="w-7 h-7 rounded-full bg-status-medium hover:scale-105 transition-transform" type="button"></button>
+<button class="w-7 h-7 rounded-full bg-status-rolled hover:scale-105 transition-transform" type="button"></button>
+<button class="w-7 h-7 rounded-full bg-status-ontrack hover:scale-105 transition-transform" type="button"></button>
+<button class="w-7 h-7 rounded-full bg-status-urgent hover:scale-105 transition-transform" type="button"></button>
+<button class="w-7 h-7 rounded-full bg-primary-container hover:scale-105 transition-transform" type="button"></button>
+</div>
+</div>
+<!-- Agentic Scheduling Policies for this domain -->
+<div class="flex flex-col gap-3 pt-2">
+<label class="font-label-sm text-label-sm text-text-muted uppercase tracking-wider font-bold">Domain Automation Policies</label>
+<div class="p-3.5 rounded-xl bg-surface-container-low flex items-center justify-between gap-3">
+<div>
+<span class="font-label-md text-label-md text-on-surface">Morning Window Bias</span>
+<p class="font-body-sm text-body-sm text-text-muted mt-0.5">Route high-impact tasks to 8:30–11:30 AM peak energy</p>
+</div>
+<label class="relative inline-flex items-center cursor-pointer shrink-0">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-10 h-5 bg-surface-container-high peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary"></div>
+</label>
+</div>
+<div class="p-3.5 rounded-xl bg-surface-container-low flex items-center justify-between gap-3">
+<div>
+<span class="font-label-md text-label-md text-on-surface">Elastic Compression Allowed</span>
+<p class="font-body-sm text-body-sm text-text-muted mt-0.5">Permit dynamic shortening down to 15m minimum</p>
+</div>
+<label class="relative inline-flex items-center cursor-pointer shrink-0">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-10 h-5 bg-surface-container-high peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary"></div>
+</label>
+</div>
+<div class="p-3.5 rounded-xl bg-surface-container-low flex items-center justify-between gap-3">
+<div>
+<span class="font-label-md text-label-md text-on-surface">Default Cognitive Load</span>
+<p class="font-body-sm text-body-sm text-text-muted mt-0.5">Determines energy depletion weighting</p>
+</div>
+<span class="px-2.5 py-1 rounded-lg bg-surface text-primary font-label-sm text-label-sm font-bold shadow-sm">High / Strategic</span>
+</div>
+</div>
+<!-- Danger Zone: Deletion & Fallback Cascade -->
+<div class="flex flex-col gap-3 pt-3">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-status-urgent text-[18px]">shield_with_heart</span>
+<span class="font-label-sm text-label-sm text-status-urgent uppercase tracking-wider font-bold">Fallback Safety Rules</span>
+</div>
+<div class="p-4 rounded-xl bg-surface-container-low flex flex-col gap-3">
+<span class="font-body-sm text-body-sm text-on-surface font-semibold">If Startup Alpha is ever archived or deleted:</span>
+<div class="flex flex-col gap-2">
+<label class="flex items-center gap-2.5 cursor-pointer">
+<input checked="" class="accent-primary w-4 h-4 cursor-pointer" name="fallback" type="radio"/>
+<span class="font-body-sm text-body-sm text-on-surface">Reassign active tasks to 'Uncategorized' (Preserves cascade dependencies)</span>
+</label>
+<label class="flex items-center gap-2.5 cursor-pointer">
+<input class="accent-primary w-4 h-4 cursor-pointer" name="fallback" type="radio"/>
+<span class="font-body-sm text-body-sm text-text-muted">Transfer all remaining tasks to 'Startup Beta'</span>
+</label>
+<label class="flex items-center gap-2.5 cursor-pointer">
+<input class="accent-primary w-4 h-4 cursor-pointer" name="fallback" type="radio"/>
+<span class="font-body-sm text-body-sm text-text-muted">Soft-archive all active task items</span>
+</label>
+</div>
+</div>
+</div>
+<!-- Bottom Drawer Action Footer -->
+<div class="flex items-center justify-end gap-3 pt-4">
+<button class="px-4 py-2.5 rounded-xl bg-surface hover:bg-surface-container-high text-on-surface-variant font-label-md text-label-md transition-colors" type="button">
+              Discard
+            </button>
+<button class="px-6 py-2.5 rounded-xl bg-primary text-on-primary font-label-md text-label-md hover:bg-primary-container transition-all shadow-md flex items-center gap-2" type="button">
+<span class="material-symbols-outlined text-[18px]">check</span>
+<span>Save Domain Architecture</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div></main></div></body></html>

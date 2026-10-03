@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Agentic Task Manager — Project Plan</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#F7F6F2; --surface:#FFFFFF; --text:#22312B; --muted:#5b6b62;
+    --sage:#4C9A78; --lime:#7BC96F;
+    --urgent:#F0705A; --medium:#F2B24C; --ontrack:#5DB87E; --rolled:#7C87D6;
+    --border:#e7e5df; --shadow:0 1px 3px rgba(34,49,43,.06),0 8px 24px rgba(34,49,43,.05);
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;font-family:'Figtree',system-ui,sans-serif;background:var(--bg);
+    color:var(--text);line-height:1.65;-webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:900px;margin:0 auto;padding:0 20px 80px}
+  header.hero{
+    background:linear-gradient(135deg,var(--sage),var(--lime));color:#fff;
+    padding:56px 20px 48px;margin-bottom:40px;
+  }
+  header.hero .inner{max-width:900px;margin:0 auto}
+  .badge{display:inline-block;background:rgba(255,255,255,.2);padding:5px 14px;
+    border-radius:999px;font-size:13px;font-weight:600;letter-spacing:.3px;margin-bottom:16px}
+  h1{font-size:2.6rem;font-weight:800;margin:0 0 10px;letter-spacing:-.5px}
+  .hero p{font-size:1.15rem;margin:0;opacity:.95;font-weight:500;max-width:640px}
+  .meta{margin-top:20px;font-size:14px;opacity:.9}
+  .meta span{margin-right:18px}
+  h2{font-size:1.5rem;font-weight:700;margin:48px 0 8px;letter-spacing:-.3px;
+    padding-bottom:10px;border-bottom:2px solid var(--border)}
+  h2 .num{color:var(--sage);font-weight:800;margin-right:8px}
+  h3{font-size:1.15rem;font-weight:700;margin:28px 0 6px}
+  p{margin:12px 0}
+  .lead{font-size:1.08rem}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:16px;
+    padding:22px 24px;box-shadow:var(--shadow);margin:18px 0}
+  .callout{background:#fff;border-left:4px solid var(--sage);border-radius:0 12px 12px 0;
+    padding:16px 20px;margin:18px 0;box-shadow:var(--shadow)}
+  .callout.accent{border-left-color:var(--lime)}
+  table{width:100%;border-collapse:collapse;margin:16px 0;font-size:14.5px;
+    background:var(--surface);border-radius:12px;overflow:hidden;box-shadow:var(--shadow)}
+  th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--border);vertical-align:top}
+  th{background:#eef3f0;font-weight:700;color:var(--text)}
+  tr:last-child td{border-bottom:none}
+  code{background:#eef1ef;padding:2px 7px;border-radius:6px;font-size:13px;
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+  pre{background:#1f2b26;color:#e8efe9;padding:18px 20px;border-radius:12px;overflow:auto;
+    font-size:13px;line-height:1.5;box-shadow:var(--shadow)}
+  pre code{background:none;color:inherit;padding:0}
+  ul{margin:12px 0;padding-left:22px}
+  li{margin:6px 0}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0}
+  .chip{padding:6px 13px;border-radius:999px;font-size:13px;font-weight:600;color:#fff}
+  .pill-row{display:flex;flex-wrap:wrap;gap:10px;margin:14px 0}
+  .swatch{display:flex;align-items:center;gap:9px;background:var(--surface);
+    border:1px solid var(--border);border-radius:10px;padding:8px 12px;font-size:13px;font-weight:500}
+  .dot{width:20px;height:20px;border-radius:6px;border:1px solid rgba(0,0,0,.06)}
+  .palette{margin:22px 0}
+  .palette h3{display:flex;align-items:center;gap:8px}
+  .rec{background:var(--sage);color:#fff;font-size:11px;font-weight:700;
+    padding:2px 9px;border-radius:999px;letter-spacing:.3px}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  @media(max-width:680px){.grid2{grid-template-columns:1fr}h1{font-size:2rem}}
+  footer{text-align:center;color:var(--muted);font-size:13px;margin-top:60px;
+    padding-top:24px;border-top:1px solid var(--border)}
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="inner">
+    <span class="badge">DELEGATION LESSON · PROJECT PLAN</span>
+    <h1>Agentic Task Manager</h1>
+    <p>A task manager that manages the list <em>with</em> you — watching for slippage,
+       protecting your priorities, and handing you a clear plan each morning.</p>
+    <div class="meta">
+      <span>👤 developer@levich.co</span>
+      <span>📅 2026-08-30</span>
+      <span>✅ Planning complete</span>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <h2><span class="num">1</span>Vision</h2>
+  <p class="lead">An <strong>agentic, AI-powered personal task manager</strong> for
+     juggling <strong>personal, financial, and multi-startup work</strong> at once —
+     where important things stop silently sliding to "tomorrow."</p>
+  <div class="callout accent">
+    <strong>The distinctive idea:</strong> the tool is a <em>delegation engine for
+    your own life</em> — it surfaces where your time is leaking so you can offload,
+    automate, or drop, and redirect effort to what matters.
+  </div>
+
+  <h2><span class="num">2</span>Success Criteria</h2>
+  <div class="card">
+    <strong>After ~2 weeks of use:</strong>
+    <ul>
+      <li>You add tasks with almost <strong>no friction</strong>.</li>
+      <li>You <strong>trust the morning briefing</strong> enough to drop your mental backup list.</li>
+      <li><strong>Nothing important silently slips</strong> — the agent catches it first.</li>
+      <li>The tool <strong>shows where your time is leaking</strong> so you can reclaim it.</li>
+    </ul>
+  </div>
+
+  <h2><span class="num">3</span>The Core Problem</h2>
+  <p>Google Tasks is too simple for many-things-at-once. Important tasks silently
+     slide (+1, +2, +3 days) and complexity snowballs; adding a task only captures a
+     header; one flat screen doesn't reflect how things actually matter; and there's
+     no warning when a new task collides with something important.</p>
+
+  <h2><span class="num">4</span>Key Product Decisions</h2>
+  <table>
+    <tr><th>Area</th><th>Decision</th></tr>
+    <tr><td>Categories</td><td>User-driven (personal / financial / per-startup)</td></tr>
+    <tr><td>Importance</td><td><strong>User labels</strong> + <strong>agent-inferred</strong> from dependencies</td></tr>
+    <tr><td>Dependencies</td><td>Tasks block each other (Part 1 → Part 2); slippage cascades</td></tr>
+    <tr><td>Task states</td><td>not started → in progress → done / rolled-forward</td></tr>
+    <tr><td>Elastic tasks</td><td>Some tasks shrink (study "just 15 min") instead of slipping</td></tr>
+    <tr><td>Rollforward (v1)</td><td>Any task not <em>completed</em> → moves to next day</td></tr>
+    <tr><td>Flexible-vs-dependency</td><td><strong>Agent flags it</strong> — speaks up if a "flexible" task blocks a deadline</td></tr>
+    <tr><td>Auditability</td><td><strong>No silent magic</strong> — user inspects which rules trigger warnings</td></tr>
+    <tr><td>Productivity window</td><td>User-driven (yours = morning); per-user → future generalization</td></tr>
+    <tr><td>Alerts</td><td>User sets times; notification fires then</td></tr>
+    <tr><td>Calendar</td><td><strong>Integrate Google Calendar</strong> — don't rebuild a calendar</td></tr>
+    <tr><td>Quick-add</td><td><strong>Natural language</strong> → agent parses to a structured task; manual optional</td></tr>
+    <tr><td>Time hints</td><td>Soft ("before noon / by 2pm") — detection is about pressure &amp; clustering</td></tr>
+    <tr><td>Auth (v1)</td><td><strong>No auth</strong> (personal/single-user); <strong>Clerk</strong> planned for multi-user</td></tr>
+  </table>
+
+  <h2><span class="num">5</span>Screens &amp; UX</h2>
+  <p><strong>Home = three-tab dashboard</strong> (app opens here — the default view <em>is</em> the value):</p>
+  <div class="chips">
+    <span class="chip" style="background:var(--sage)">Today · prioritized + time hints</span>
+    <span class="chip" style="background:var(--rolled)">Rolled-forward · what keeps moving</span>
+    <span class="chip" style="background:var(--medium)">Upcoming · see around corners</span>
+  </div>
+  <p><strong>UX principles:</strong> minimum clicks to complete a goal (low-friction
+     capture is <em>survival</em>); consistent palette where color carries meaning;
+     calm base with energizing accents so a long list never feels crushing.</p>
+
+  <h2><span class="num">6</span>Tech Stack &amp; Architecture</h2>
+  <table>
+    <tr><th>Layer</th><th>Choice</th><th>Why</th></tr>
+    <tr><td>Frontend</td><td><strong>Next.js</strong> (React)</td><td>SSR/CSR flexibility, great DX, native Vercel support</td></tr>
+    <tr><td>Cross-platform</td><td><strong>PWA</strong></td><td>One codebase → installable on mobile + desktop; push; offline-friendly</td></tr>
+    <tr><td>Backend (BaaS)</td><td><strong>Supabase</strong></td><td>Postgres + auth + realtime + row-level security</td></tr>
+    <tr><td>Auth</td><td><strong>Clerk</strong> (planned)</td><td>Drop-in auth for multi-user; v1 skips auth</td></tr>
+    <tr><td>Deployment</td><td><strong>Vercel</strong></td><td>Zero-config Next.js deploys + previews</td></tr>
+    <tr><td>Version control</td><td><strong>git</strong></td><td>Standard; pairs with Vercel previews</td></tr>
+    <tr><td>AI / assisted coding</td><td><strong>Claude</strong></td><td>NL parsing + briefing generation; assists the coding</td></tr>
+    <tr><td>Calendar</td><td><strong>Google Calendar API</strong></td><td>Integrate the calendar you already use</td></tr>
+  </table>
+  <pre><code>[ PWA client — Next.js/React ]
+        |  (natural language, actions)
+        v
+[ Next.js API routes / server actions ]
+   |            |                 |
+   v            v                 v
+[ Supabase ]  [ Claude API ]  [ Google Calendar API ]
+ Postgres      NL parse +       events for
+ + realtime    briefing gen     conflict detection
+        |
+        v
+[ Push notifications (PWA) at user-set alert times ]</code></pre>
+  <p>Keep agentic logic <strong>server-side</strong> (secret API key, centralized
+     auditable rules). Supabase row-level security eases the multi-user step.
+     A nightly job (Vercel Cron) runs rollforward + prepares the morning briefing.</p>
+
+  <h2><span class="num">7</span>Major Tasks &amp; Delegation Map</h2>
+  <table>
+    <tr><th>#</th><th>Task</th><th>Human (only you)</th><th>AI (leverage)</th><th>Collaboration</th></tr>
+    <tr><td>1</td><td>Discovery &amp; rules</td><td>Workflow, guardrails, what "important" means</td><td>Interview, spot contradictions, structure rules</td><td>You talk → AI organizes + challenges</td></tr>
+    <tr><td>2</td><td>Feature &amp; agent design</td><td>Priority values, agent's authority</td><td>Conflict logic, ripple math, briefing rules</td><td>You set intent → AI designs mechanics</td></tr>
+    <tr><td>3</td><td>UX / screens</td><td>Taste; what "not overwhelming" feels like</td><td>Layouts, hierarchy, microcopy, mockups</td><td>AI generates → you judge</td></tr>
+    <tr><td>4</td><td>Tech architecture</td><td>Approve trade-offs</td><td>Data model, wiring, integrations</td><td>AI proposes → you decide</td></tr>
+    <tr><td>5</td><td>Build core</td><td>Judge "does it behave as I meant"</td><td>Scaffold, CRUD, categories (Next.js + Supabase)</td><td>AI builds → you validate</td></tr>
+    <tr><td>6</td><td>Build agent layer</td><td>Truth when reality ≠ spec</td><td>Sorting, conflicts, rollforward, briefing, NL (Claude)</td><td>AI builds → you validate behavior</td></tr>
+    <tr><td>7</td><td>Dogfood &amp; measure</td><td>Live with it 2 weeks; feel the trust</td><td>Annoyances → prioritized fix list</td><td>You use → AI iterates</td></tr>
+    <tr><td>8</td><td>Generalize (later)</td><td>Decide if/when to go public</td><td>Per-user settings, Clerk multi-user</td><td>Only if going public</td></tr>
+  </table>
+  <div class="callout">
+    <strong>Core principle:</strong> you supply the <em>judgment</em>; the agent
+    supplies the <em>vigilance and the math</em>. And apply delegation to the build
+    itself — don't re-solve solved problems (the calendar); spend human effort on
+    what only your app does (agentic prioritization).
+  </div>
+
+  <h2><span class="num">8</span>Visual Design — Palettes &amp; Font</h2>
+  <p><strong>Strategy:</strong> the <strong>60-30-10 rule</strong> — calm base (~60%),
+     supporting tone (~30%), energizing accent (~10%) for action items. Green blends
+     calm + energy; "urgent" is a warm <em>coral</em>, not alarm-red. Font:
+     <strong>Figtree</strong> (friendly, legible, modern) across all palettes.</p>
+
+  <div class="palette">
+    <h3>🌿 Palette A — "Sage Focus" <span class="rec">RECOMMENDED</span></h3>
+    <div class="pill-row">
+      <span class="swatch"><span class="dot" style="background:#F7F6F2"></span>Background #F7F6F2</span>
+      <span class="swatch"><span class="dot" style="background:#4C9A78"></span>Sage #4C9A78</span>
+      <span class="swatch"><span class="dot" style="background:#7BC96F"></span>Lime #7BC96F</span>
+      <span class="swatch"><span class="dot" style="background:#F0705A"></span>Urgent #F0705A</span>
+      <span class="swatch"><span class="dot" style="background:#F2B24C"></span>Medium #F2B24C</span>
+      <span class="swatch"><span class="dot" style="background:#5DB87E"></span>On-track #5DB87E</span>
+      <span class="swatch"><span class="dot" style="background:#7C87D6"></span>Rolled #7C87D6</span>
+    </div>
+  </div>
+
+  <div class="palette">
+    <h3>🌅 Palette B — "Warm Calm" (Headspace-inspired)</h3>
+    <div class="pill-row">
+      <span class="swatch"><span class="dot" style="background:#FBF7F0"></span>Cream #FBF7F0</span>
+      <span class="swatch"><span class="dot" style="background:#3D9A9A"></span>Teal #3D9A9A</span>
+      <span class="swatch"><span class="dot" style="background:#FF9463"></span>Peach #FF9463</span>
+      <span class="swatch"><span class="dot" style="background:#EC6A5E"></span>Urgent #EC6A5E</span>
+      <span class="swatch"><span class="dot" style="background:#F4B860"></span>Medium #F4B860</span>
+      <span class="swatch"><span class="dot" style="background:#7FB685"></span>Flexible #7FB685</span>
+      <span class="swatch"><span class="dot" style="background:#6D9DC5"></span>Rolled #6D9DC5</span>
+    </div>
+  </div>
+
+  <div class="palette">
+    <h3>🌊 Palette C — "Fresh Teal" (modern, crisp)</h3>
+    <div class="pill-row">
+      <span class="swatch"><span class="dot" style="background:#F5F7F8"></span>Off-white #F5F7F8</span>
+      <span class="swatch"><span class="dot" style="background:#159A8C"></span>Teal #159A8C</span>
+      <span class="swatch"><span class="dot" style="background:#3ED6B0"></span>Mint #3ED6B0</span>
+      <span class="swatch"><span class="dot" style="background:#FF6B6B"></span>Urgent #FF6B6B</span>
+      <span class="swatch"><span class="dot" style="background:#FFB84D"></span>Medium #FFB84D</span>
+      <span class="swatch"><span class="dot" style="background:#2BB673"></span>Flexible #2BB673</span>
+      <span class="swatch"><span class="dot" style="background:#4F9FE0"></span>Rolled #4F9FE0</span>
+    </div>
+  </div>
+  <p style="color:var(--muted);font-size:14px">All palettes support light + dark mode
+     (default light). Final pick: TBD (leaning A).</p>
+
+  <h2><span class="num">9</span>Delegation Growth Reflection</h2>
+  <div class="grid2">
+    <div class="card">
+      <h3 style="margin-top:0">What grew</h3>
+      <ul>
+        <li>Shifted from <strong>feature-first</strong> to <strong>judgment-first</strong>.</li>
+        <li>Reasoned the agent should <em>flag</em> forgotten dependencies — machine covers a human weakness.</li>
+        <li>Invented the "importance = my labels + the structure" split.</li>
+        <li>Added <strong>auditability</strong> — mature trust-calibration.</li>
+        <li>Reframed the product as a <em>delegation engine for your life</em>.</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3 style="margin-top:0">Growth edge (next lessons)</h3>
+      <p>The instinct so far is to <strong>add</strong> — great ideas, fast. The next
+         muscle is <strong>cutting and scoping</strong>: deciding what <em>not</em> to
+         build in v1 (Discernment), and specifying/checking precisely (Description,
+         Diligence).</p>
+    </div>
+  </div>
+
+  <h2><span class="num">10</span>Roadmap &amp; Open Decisions</h2>
+  <div class="card">
+    <strong>Suggested v1 build order</strong>
+    <ol>
+      <li>Scaffold Next.js PWA + Supabase, deploy to Vercel.</li>
+      <li>Core task CRUD: rich tasks, categories, states.</li>
+      <li>Scheduling + soft time hints; three-tab dashboard.</li>
+      <li>Natural-language quick-add (Claude).</li>
+      <li>Rollforward job + morning briefing.</li>
+      <li>Conflict detection + auditable warning rules.</li>
+      <li>Google Calendar integration.</li>
+      <li>Push notifications / alerts.</li>
+      <li>Dogfood 2 weeks → measure vs success criteria.</li>
+    </ol>
+  </div>
+  <div class="card">
+    <strong>Open decisions (later lessons)</strong>
+    <ul>
+      <li>Final palette pick (A / B / C)</li>
+      <li>v1 scope cut — the Discernment exercise</li>
+      <li>PWA push notification strategy</li>
+      <li>When to introduce Clerk auth + multi-user</li>
+    </ul>
+  </div>
+
+  <footer>
+    Agentic Task Manager · Project Plan · Delegation lesson · 2026-08-30<br>
+    Built collaboratively with Claude — you supply the judgment, the agent supplies the vigilance.
+  </footer>
+
+</div>
+</body>
+</html>

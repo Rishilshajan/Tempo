@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="web_dashboard" name="shell-type"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Figtree:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config={darkMode:"class",theme:{extend:{colors:{"surface-container-low":"#e6f8ee","surface-container-highest":"#d5e7dd","surface-container-high":"#dbece3","secondary-container":"#a3f394","inverse-surface":"#24342d","on-error-container":"#93000a","secondary-fixed":"#a5f697","on-tertiary":"#ffffff","secondary":"#206d1f","on-primary-fixed-variant":"#005138","status-rolled":"#7C87D6","on-primary":"#ffffff","on-secondary-fixed-variant":"#005308","on-secondary":"#ffffff","outline-variant":"#bec9c1","error":"#ba1a1a","on-tertiary-container":"#f6fff4","table-header":"#EEF3F0","status-urgent":"#F0705A","on-surface-variant":"#3f4943","code-text":"#E8EFE9","status-medium":"#F2B24C","on-secondary-container":"#257123","tertiary-container":"#258450","surface-bright":"#ecfef4","inverse-primary":"#88d6b1","primary":"#11694a","primary-container":"#338262","surface-variant":"#d5e7dd","on-tertiary-fixed-variant":"#00522c","error-container":"#ffdad6","inverse-on-surface":"#e3f5eb","secondary-fixed-dim":"#8ad97d","on-primary-fixed":"#002114","on-error":"#ffffff","surface-tint":"#156b4d","primary-fixed":"#a3f3cc","tertiary-fixed-dim":"#7ed99c","surface-dim":"#cdded5","tertiary-fixed":"#99f6b7","tertiary":"#006a3a","border-subtle":"#E7E5DF","primary-fixed-dim":"#88d6b1","surface":"#FFFFFF","code-bg":"#1F2B26","text-muted":"#5B6B62","on-tertiary-fixed":"#00210e","bg-canvas":"#F7F6F2","surface-container-lowest":"#ffffff","on-surface":"#101e19","background":"#ecfef4","surface-container":"#e0f2e9","on-primary-container":"#f5fff7","status-ontrack":"#5DB87E","outline":"#6f7a73","on-background":"#101e19","on-secondary-fixed":"#002201"},borderRadius:{DEFAULT:"0.25rem",lg:"0.5rem",xl:"0.75rem",full:"9999px"},spacing:{"space-lg":"1.5rem","margin":"1.25rem","margin-lg":"2.5rem","gutter-lg":"1.5rem","space-xs":"0.25rem","gutter":"1rem","space-sm":"0.5rem","space-md":"1rem","space-xl":"2.25rem","margin-md":"1.5rem"},fontFamily:{"headline-xl-mobile":["Figtree"],"label-md":["Figtree"],"body-sm":["Figtree"],"headline-lg":["Figtree"],"label-sm":["Figtree"],"headline-md":["Figtree"],"body-md":["Figtree"],"headline-xl":["Figtree"],"body-lead":["Figtree"]},fontSize:{"headline-xl-mobile":["2rem",{lineHeight:"2.4rem",letterSpacing:"-0.02em",fontWeight:"800"}],"label-md":["0.8125rem",{lineHeight:"1.2rem",letterSpacing:"0.01em",fontWeight:"600"}],"body-sm":["0.875rem",{lineHeight:"1.4rem",fontWeight:"400"}],"headline-lg":["1.5rem",{lineHeight:"2rem",letterSpacing:"-0.02em",fontWeight:"700"}],"label-sm":["0.6875rem",{lineHeight:"0.9rem",letterSpacing:"0.03em",fontWeight:"700"}],"headline-md":["1.15rem",{lineHeight:"1.6rem",letterSpacing:"-0.01em",fontWeight:"700"}],"body-md":["1rem",{lineHeight:"1.65rem",fontWeight:"400"}],"headline-xl":["2.6rem",{lineHeight:"3.1rem",letterSpacing:"-0.03em",fontWeight:"800"}],"body-lead":["1.08rem",{lineHeight:"1.75rem",fontWeight:"400"}]}}}}</script></head><body class="bg-bg-canvas font-body-md text-on-surface antialiased"><aside class="fixed left-0 top-0 h-full w-64 bg-surface z-50 flex flex-col justify-between shadow-[0_1px_8px_rgba(0,0,0,0.04)]"><div class="flex flex-col flex-1 overflow-y-auto px-4 pt-5"><div class="flex items-center gap-3 px-2 mb-6"><img alt="Brand logo. - Primary color: #4c9a78
+- Font: publicSans
+- Mode: light
+- Roundness: rounded-md
+" class="h-8 w-auto object-contain" src="https://lh3.googleusercontent.com/aida/AEtjO1W7TMboXyQSoNJFBSUoUwfQ_H-fhHtXGo4VzKbvYriP4Im6D9oqrmQmPi9kXZJdXZyXJ5AiNFy-1zU14XcHp6inQUFyUjqAh9OxGefUeS5KUONSKO_ei-onBG-54oS54zEEBCw4DWilVyxY35rTLAxMnPwivGDDnpoW99qLq1SlzfTvkrmj-F2r701OW_iX0votTvFD0GbDoC7V9H9s4wiI6ZERd6AwHsvI7zMbjUnmqhwNDXj3CBlNWrQ"/><div class="flex flex-col"><span class="font-headline-md text-headline-md text-on-surface tracking-tight leading-none">Tasks</span><span class="font-label-sm text-label-sm text-text-muted mt-0.5">Agentic Workspace</span></div></div><div class="mb-6 px-1"><button class="w-full flex items-center justify-center gap-2 py-2.5 px-4 bg-primary text-on-primary rounded-xl font-label-md text-label-md hover:bg-primary-container hover:text-on-primary-container transition-all shadow-[0_1px_3px_rgba(34,49,43,0.05),0_8px_24px_rgba(34,49,43,0.04)]" type="button"><span class="material-symbols-outlined text-[18px]">add_circle</span><span>Create Task</span></button></div><div class="space-y-6"><div class="flex flex-col"><span class="px-2.5 mb-2 font-label-sm text-label-sm uppercase tracking-wider text-text-muted">General</span><nav class="space-y-1" data-active-classes="bg-surface-container-low text-primary font-label-md font-bold rounded-xl"><a class="flex items-center justify-between px-3 py-2 rounded-xl text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-all" data-path="today-dashboard" href="#"><div class="flex items-center gap-3"><span class="material-symbols-outlined text-[20px]">wb_sunny</span><span class="font-label-md text-label-md">Today</span></div><span class="material-symbols-outlined text-[16px] text-text-muted">auto_awesome</span></a><a class="flex items-center justify-between px-3 py-2 rounded-xl text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-all" data-path="my-tasks" href="#"><div class="flex items-center gap-3"><span class="material-symbols-outlined text-[20px]">check_circle</span><span class="font-label-md text-label-md">My Tasks</span></div><span class="px-2 py-0.5 bg-surface-container-high text-on-surface font-label-sm text-label-sm rounded-full">8</span></a><a class="flex items-center justify-between px-3 py-2 rounded-xl text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-all" data-path="rolled-forward" href="#"><div class="flex items-center gap-3"><span class="material-symbols-outlined text-[20px]">history</span><span class="font-label-md text-label-md">Rolled-Forward</span></div><span class="px-2 py-0.5 bg-surface-container-high text-on-surface font-label-sm text-label-sm rounded-full">3</span></a><a class="flex items-center justify-between px-3 py-2 rounded-xl text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-all" data-path="batch-triage" href="#"><div class="flex items-center gap-3"><span class="material-symbols-outlined text-[20px]">tune</span><span class="font-label-md text-label-md">Batch Triage</span></div></a><a class="flex items-center justify-between px-3 py-2 rounded-xl text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-all" data-path="calendar" href="#"><div class="flex items-center gap-3"><span class="material-symbols-outlined text-[20px]">calendar_today</span><span class="font-label-md text-label-md">Calendar</span></div></a></nav></div><div class="flex flex-col"><span class="px-2.5 mb-2 font-label-sm text-label-sm uppercase tracking-wider text-text-muted">Domains</span><nav class="space-y-1" data-active-classes="bg-surface-container-low text-primary font-label-md font-bold rounded-xl"><a class="flex items-center justify-between px-3 py-2 rounded-xl text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-all" data-path="startup-alpha" href="#"><div class="flex items-center gap-3"><span class="w-2 h-2 rounded-full bg-primary"></span><span class="font-label-md text-label-md">Startup Alpha</span></div><span class="font-label-sm text-label-sm text-text-muted">@alpha</span></a><a class="flex items-center justify-between px-3 py-2 rounded-xl text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-all" data-path="startup-beta" href="#"><div class="flex items-center gap-3"><span class="w-2 h-2 rounded-full bg-status-medium"></span><span class="font-label-md text-label-md">Startup Beta</span></div><span class="font-label-sm text-label-sm text-text-muted">@beta</span></a><a class="flex items-center justify-between px-3 py-2 rounded-xl text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-all" data-path="financial-governance" href="#"><div class="flex items-center gap-3"><span class="w-2 h-2 rounded-full bg-status-rolled"></span><span class="font-label-md text-label-md">Financial &amp; Governance</span></div></a><a class="flex items-center justify-between px-3 py-2 rounded-xl text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-all" data-path="personal-wellness" href="#"><div class="flex items-center gap-3"><span class="w-2 h-2 rounded-full bg-status-ontrack"></span><span class="font-label-md text-label-md">Personal &amp; Wellness</span></div></a><a class="flex items-center justify-between px-3 py-2 rounded-xl text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-all" data-path="deep-work" href="#"><div class="flex items-center gap-3"><span class="w-2 h-2 rounded-full bg-primary-container"></span><span class="font-label-md text-label-md">Learning &amp; Deep Work</span></div></a></nav></div></div></div><div class="p-4 mt-auto space-y-2"><div class="flex items-center justify-between px-2 py-1.5 rounded-xl bg-surface-container-low"><div class="flex items-center gap-2"><span class="material-symbols-outlined text-primary text-[18px]">psychology</span><span class="font-label-sm text-label-sm text-on-surface">Cognitive Balance</span></div><span class="font-label-sm text-label-sm text-primary font-bold">Optimal</span></div><nav class="space-y-1" data-active-classes="bg-surface-container-low text-primary font-label-md font-bold rounded-xl"><a class="flex items-center gap-3 px-3 py-2 rounded-xl text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-all" data-path="settings" href="#"><span class="material-symbols-outlined text-[20px]">settings</span><span class="font-label-md text-label-md">Settings</span></a><a class="flex items-center gap-3 px-3 py-2 rounded-xl text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-all" data-path="help" href="#"><span class="material-symbols-outlined text-[20px]">help_outline</span><span class="font-label-md text-label-md">Help &amp; Shortkeys</span></a></nav><div class="pt-2 flex items-center justify-between px-2"><div class="flex items-center gap-2.5"><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div><div class="flex flex-col"><span class="font-label-md text-label-md text-on-surface leading-tight">Elena Rostova</span><span class="font-label-sm text-label-sm text-text-muted">Founder Mode</span></div></div><span class="material-symbols-outlined text-on-surface-variant text-[18px] cursor-pointer hover:text-on-surface">more_vert</span></div></div></aside><div class="pl-64"><header class="fixed top-0 left-64 right-0 h-16 bg-surface/80 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)] z-40 flex items-center justify-between px-8"><div class="flex items-center gap-6"><div class="flex items-center gap-3"><img alt="Brand logo. - Primary color: #4c9a78
+- Font: publicSans
+- Mode: light
+- Roundness: rounded-md
+" class="h-8 w-auto object-contain" src="https://lh3.googleusercontent.com/aida/AEtjO1W7TMboXyQSoNJFBSUoUwfQ_H-fhHtXGo4VzKbvYriP4Im6D9oqrmQmPi9kXZJdXZyXJ5AiNFy-1zU14XcHp6inQUFyUjqAh9OxGefUeS5KUONSKO_ei-onBG-54oS54zEEBCw4DWilVyxY35rTLAxMnPwivGDDnpoW99qLq1SlzfTvkrmj-F2r701OW_iX0votTvFD0GbDoC7V9H9s4wiI6ZERd6AwHsvI7zMbjUnmqhwNDXj3CBlNWrQ"/><div class="flex flex-col"><span class="font-label-md text-label-md text-on-surface leading-none">Wednesday, Oct 3</span><span class="font-label-sm text-label-sm text-text-muted mt-0.5">Autonomous Task Agent</span></div></div><div class="hidden xl:flex items-center gap-2 px-3 py-1.5 rounded-full bg-surface-container-low"><span class="material-symbols-outlined text-primary text-[16px]">bolt</span><span class="font-label-sm text-label-sm text-primary font-bold">Morning Focus</span><span class="font-label-sm text-label-sm text-text-muted">· 8:30 AM - 11:30 AM Peak Energy</span></div></div><div class="flex items-center gap-4 flex-1 max-w-xl justify-end"><div class="relative w-full max-w-md"><span class="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-[18px] text-text-muted">arrow_back_ios_new</span><input class="w-full pl-10 pr-10 py-1.5 text-body-sm font-body-sm bg-surface rounded-xl text-on-surface placeholder:text-text-muted/60 shadow-[0_1px_3px_rgba(34,49,43,0.05)] focus:outline-none focus:ring-2 focus:ring-primary/20" placeholder="Quick-add task or type ⌘K..." type="text"/><button class="absolute right-2.5 top-1/2 -translate-y-1/2 text-text-muted hover:text-primary transition-colors" type="button"><span class="material-symbols-outlined text-[18px]">mic</span></button></div><div class="flex items-center gap-2"><button class="w-9 h-9 rounded-xl flex items-center justify-center text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors relative" type="button"><span class="material-symbols-outlined text-[20px]">notifications</span><span class="absolute top-2 right-2 w-2 h-2 rounded-full bg-status-urgent"></span></button><button class="w-9 h-9 rounded-xl flex items-center justify-center text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors" type="button"><span class="material-symbols-outlined text-[20px]">view_sidebar</span></button><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></div></header><main class="relative pt-16 bg-bg-canvas min-h-screen"><div class="flex flex-col w-full">
+<!-- Active state sync for App Shell Sidebar -->
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+      // Highlight Rolled-Forward link in shell sidebar
+      const navLinks = document.querySelectorAll('aside nav a');
+      navLinks.forEach(link => {
+        if (link.getAttribute('data-path') === 'rolled-forward') {
+          link.classList.add('bg-surface-container-low', 'text-primary', 'font-bold');
+          link.classList.remove('text-on-surface-variant');
+          const badge = link.querySelector('span:last-child');
+          if (badge) {
+            badge.classList.remove('bg-surface-container-high', 'text-on-surface');
+            badge.classList.add('bg-status-rolled/20', 'text-status-rolled', 'font-bold');
+          }
+        } else if (link.getAttribute('data-path') === 'today-dashboard') {
+          link.classList.remove('bg-surface-container-low', 'text-primary', 'font-bold');
+          link.classList.add('text-on-surface-variant');
+        }
+      });
+    });
+  </script>
+<!-- Ambient Top Utility Bar / Live Watchdog Status -->
+<section class="w-full px-6 lg:px-8 pt-6 pb-4">
+<div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-surface p-4 rounded-xl shadow-sm">
+<div class="flex items-center gap-3">
+<span class="flex h-3 w-3 relative">
+<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-status-ontrack opacity-75"></span>
+<span class="relative inline-flex rounded-full h-3 w-3 bg-status-ontrack"></span>
+</span>
+<div class="flex items-center gap-2">
+<span class="font-label-md text-label-md text-on-surface">Agentic Watchdog Active</span>
+<span class="text-text-muted">·</span>
+<span class="font-body-sm text-body-sm text-text-muted">Live Slippage Audit Running</span>
+</div>
+</div>
+<div class="flex items-center gap-3">
+<span class="font-label-sm text-label-sm uppercase tracking-wider text-text-muted">Detection Interval:</span>
+<span class="px-2.5 py-1 rounded-full bg-surface-container-low text-primary font-label-sm text-label-sm">Hourly Frequency</span>
+<button class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-surface-container-low hover:bg-surface-container text-on-surface font-label-md text-label-md transition-all" id="recalibrateBtn">
+<span class="material-symbols-outlined text-[16px] text-primary">sync_alt</span>
+<span>Recalibrate Thresholds</span>
+</button>
+</div>
+</div>
+</section>
+<!-- Main Viewport: Multi-column Bento Workspace + Right Basesheet Drawer -->
+<div class="w-full px-6 lg:px-8 pb-12 flex flex-col xl:flex-row gap-6 items-start">
+<!-- LEFT & CENTER: Radar Deck (Slippage Feed & Diagnostics) -->
+<div class="flex-1 w-full space-y-6">
+<!-- Slippage Radar Header Banner -->
+<div class="bg-surface rounded-xl p-6 shadow-sm relative overflow-hidden">
+<div class="absolute -right-16 -top-16 w-56 h-56 rounded-full bg-surface-container-low opacity-60 pointer-events-none blur-2xl"></div>
+<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative z-10">
+<div>
+<div class="flex items-center gap-2.5 mb-2">
+<span class="px-2.5 py-0.5 rounded-full bg-status-rolled/15 text-status-rolled font-label-sm text-label-sm uppercase tracking-wider">Agentic Watchdog</span>
+<span class="px-2.5 py-0.5 rounded-full bg-status-urgent/15 text-status-urgent font-label-sm text-label-sm font-bold">1 Cascade Alert</span>
+</div>
+<h1 class="font-headline-xl text-headline-xl text-on-surface tracking-tight leading-none">Slippage Radar</h1>
+<p class="font-body-md text-body-md text-text-muted mt-2 max-w-2xl">
+              Surfacing tasks pushed &gt;1 time. The autonomous agent catches silent schedule drift and broken downstream dependencies before critical milestones fail.
+            </p>
+</div>
+<div class="flex items-center gap-2 self-start sm:self-center">
+<button class="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-primary text-on-primary font-label-md text-label-md hover:bg-primary-container hover:text-on-primary-container shadow-sm transition-all">
+<span class="material-symbols-outlined text-[18px]">auto_fix_high</span>
+<span>Run Autonomous Triage</span>
+</button>
+</div>
+</div>
+<!-- Metric Pulse Cards (3-column) -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6 pt-6 bg-bg-canvas/50 -mx-6 -mb-6 p-6 rounded-b-xl">
+<!-- Metric 1 -->
+<div class="bg-surface p-4 rounded-xl shadow-sm flex items-center gap-4">
+<div class="w-12 h-12 rounded-xl bg-status-rolled/15 flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-status-rolled text-[26px]">history</span>
+</div>
+<div>
+<span class="font-headline-lg text-headline-lg text-on-surface font-extrabold leading-none">3</span>
+<div class="font-label-md text-label-md text-on-surface mt-0.5">Overdue / Rolled Tasks</div>
+<div class="font-label-sm text-label-sm text-text-muted">Total drift: +9 days accum.</div>
+</div>
+</div>
+<!-- Metric 2 -->
+<div class="bg-surface p-4 rounded-xl shadow-sm flex items-center gap-4">
+<div class="w-12 h-12 rounded-xl bg-status-urgent/15 flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-status-urgent text-[26px]">warning</span>
+</div>
+<div>
+<span class="font-headline-lg text-headline-lg text-status-urgent font-extrabold leading-none">1</span>
+<div class="font-label-md text-label-md text-on-surface mt-0.5">Critical Cascade Risk</div>
+<div class="font-label-sm text-label-sm text-status-urgent">Blocks founder sync &amp; legal deck</div>
+</div>
+</div>
+<!-- Metric 3 -->
+<div class="bg-surface p-4 rounded-xl shadow-sm flex items-center gap-4">
+<div class="w-12 h-12 rounded-xl bg-surface-container-low flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-primary text-[26px]">compress</span>
+</div>
+<div>
+<span class="font-headline-lg text-headline-lg text-primary font-extrabold leading-none">45m</span>
+<div class="font-label-md text-label-md text-on-surface mt-0.5">Time Reclaimable</div>
+<div class="font-label-sm text-label-sm text-text-muted">Via elastic compression</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Filter / Triage Tabs -->
+<div class="flex items-center justify-between overflow-x-auto pb-1 gap-2">
+<div class="flex items-center gap-2">
+<button class="px-4 py-2 rounded-xl bg-surface text-primary font-label-md text-label-md shadow-sm font-bold flex items-center gap-2">
+<span>All Slipped</span>
+<span class="px-2 py-0.5 rounded-full bg-surface-container-low text-primary text-[11px]">3</span>
+</button>
+<button class="px-4 py-2 rounded-xl text-on-surface-variant hover:bg-surface text-on-surface font-label-md text-label-md transition-all flex items-center gap-2">
+<span>Critical Cascade</span>
+<span class="px-2 py-0.5 rounded-full bg-status-urgent/15 text-status-urgent text-[11px] font-bold">1</span>
+</button>
+<button class="px-4 py-2 rounded-xl text-on-surface-variant hover:bg-surface text-on-surface font-label-md text-label-md transition-all flex items-center gap-2">
+<span>Elastic Options</span>
+<span class="px-2 py-0.5 rounded-full bg-surface-container-low text-primary text-[11px]">1</span>
+</button>
+<button class="px-4 py-2 rounded-xl text-on-surface-variant hover:bg-surface text-on-surface font-label-md text-label-md transition-all flex items-center gap-2">
+<span>Stale Backlog</span>
+<span class="px-2 py-0.5 rounded-full bg-surface-container-high text-text-muted text-[11px]">1</span>
+</button>
+</div>
+<div class="hidden sm:flex items-center gap-2 text-text-muted font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-[16px]">tune</span>
+<span>Sorted by Cascade Gravity</span>
+</div>
+</div>
+<!-- Intervention Task Cards -->
+<div class="space-y-4">
+<!-- CARD 1: Critical Selected Task (Blocks Downstream) -->
+<article class="relative bg-surface rounded-xl p-6 shadow-md transition-all group cursor-pointer" onclick="selectCard(1)">
+<!-- Left Status Indicator Bar -->
+<div class="absolute left-0 top-0 bottom-0 w-1.5 bg-status-urgent rounded-l-xl"></div>
+<div class="flex flex-col md:flex-row md:items-start justify-between gap-4">
+<div class="flex-1 space-y-3">
+<!-- Meta Badges -->
+<div class="flex flex-wrap items-center gap-2">
+<span class="px-2.5 py-1 rounded-full bg-status-urgent/15 text-status-urgent font-label-sm text-label-sm font-bold flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">crisis_alert</span>
+<span>PUSHED 3 TIMES — STILL REAL?</span>
+</span>
+<span class="px-2 py-0.5 rounded-full bg-surface-container-high text-on-surface font-label-sm text-label-sm">3d Cumulative Drift</span>
+<span class="flex items-center gap-1.5 font-label-sm text-label-sm text-text-muted">
+<span class="w-2 h-2 rounded-full bg-status-rolled"></span>
+<span>Financial &amp; Governance · Startup Alpha</span>
+</span>
+</div>
+<!-- Title & Context -->
+<div>
+<h3 class="font-headline-md text-headline-md text-on-surface tracking-tight group-hover:text-primary transition-colors">
+                  Update Cap Table &amp; Investor Pro-forma
+                </h3>
+<p class="font-body-sm text-body-sm text-text-muted mt-1">
+                  Reconcile SAFE note convertibles before the Series A board advisory session. Requires updated dilution schedules.
+                </p>
+</div>
+<!-- Cascade Alert Callout -->
+<div class="p-3.5 bg-status-urgent/10 rounded-xl flex items-start gap-3">
+<span class="material-symbols-outlined text-status-urgent text-[20px] shrink-0 mt-0.5">error_outline</span>
+<div class="flex-1">
+<div class="font-label-md text-label-md text-status-urgent font-bold">
+                    Cascade Risk Detected — Blocks 2 upcoming milestones
+                  </div>
+<div class="font-body-sm text-body-sm text-on-surface mt-0.5">
+                    ↳ Directly blocks <span class="font-semibold">Board slide financial appendix</span> (Due 2:30 PM today) &amp; <span class="font-semibold">Legal review distribution</span>.
+                  </div>
+</div>
+</div>
+<!-- Agent Recommendation -->
+<div class="p-3 bg-surface-container-low rounded-xl flex items-center gap-3">
+<span class="material-symbols-outlined text-primary text-[18px]">psychology</span>
+<span class="font-body-sm text-body-sm text-on-surface">
+<span class="font-bold text-primary">Watchdog Suggestion:</span> Inferred highest gravity task. Has slipped across 3 consecutive mornings. Today is the hard calendar ceiling.
+                </span>
+</div>
+</div>
+<!-- Inspect Indicator Badge -->
+<div class="shrink-0 flex md:flex-col items-center justify-between md:justify-start gap-2">
+<span class="px-3 py-1.5 rounded-xl bg-surface-container-low text-primary font-label-sm text-label-sm font-bold flex items-center gap-1.5">
+<span>Inspecting in drawer</span>
+<span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+</span>
+<span class="font-label-sm text-label-sm text-text-muted">Est. 45 min</span>
+</div>
+</div>
+<!-- Bottom Action Buttons Row -->
+<div class="mt-5 pt-4 flex flex-wrap items-center justify-between gap-3 bg-bg-canvas/40 -mx-6 -mb-6 px-6 py-3 rounded-b-xl">
+<div class="flex flex-wrap items-center gap-2">
+<button class="px-3.5 py-1.5 rounded-xl bg-primary text-on-primary font-label-md text-label-md hover:bg-primary-container transition-all flex items-center gap-1.5 shadow-sm">
+<span class="material-symbols-outlined text-[16px]">alarm_on</span>
+<span>Lock into 11:30 AM Window</span>
+</button>
+<button class="px-3.5 py-1.5 rounded-xl bg-surface-container-low text-primary font-label-md text-label-md hover:bg-surface-container transition-all flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[16px]">compress</span>
+<span>Shrink to 20m Elastic</span>
+</button>
+<button class="px-3.5 py-1.5 rounded-xl bg-surface text-on-surface-variant hover:text-on-surface font-label-md text-label-md shadow-sm transition-all flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[16px]">person_add</span>
+<span>Delegate to Marcus</span>
+</button>
+</div>
+<div class="flex items-center gap-2">
+<button class="p-2 rounded-xl text-text-muted hover:text-error hover:bg-error-container/20 transition-all" title="Archive / Drop">
+<span class="material-symbols-outlined text-[18px]">delete_sweep</span>
+</button>
+</div>
+</div>
+</article>
+<!-- CARD 2: Elastic Candidate -->
+<article class="relative bg-surface rounded-xl p-6 shadow-sm hover:shadow-md transition-all group cursor-pointer" onclick="selectCard(2)">
+<!-- Left Status Indicator Bar -->
+<div class="absolute left-0 top-0 bottom-0 w-1.5 bg-status-rolled rounded-l-xl"></div>
+<div class="flex flex-col md:flex-row md:items-start justify-between gap-4">
+<div class="flex-1 space-y-3">
+<!-- Meta Badges -->
+<div class="flex flex-wrap items-center gap-2">
+<span class="px-2.5 py-1 rounded-full bg-status-rolled/15 text-status-rolled font-label-sm text-label-sm font-bold flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">sync</span>
+<span>PUSHED 2 TIMES · Rolled from Tuesday</span>
+</span>
+<span class="px-2 py-0.5 rounded-full bg-surface-container-low text-primary font-label-sm text-label-sm">Non-blocking Path</span>
+<span class="flex items-center gap-1.5 font-label-sm text-label-sm text-text-muted">
+<span class="w-2 h-2 rounded-full bg-status-medium"></span>
+<span>Startup Beta · Tech Architecture</span>
+</span>
+</div>
+<!-- Title & Context -->
+<div>
+<h3 class="font-headline-md text-headline-md text-on-surface tracking-tight group-hover:text-primary transition-colors">
+                  Research Supabase vs Firebase Row-Level Security
+                </h3>
+<p class="font-body-sm text-body-sm text-text-muted mt-1">
+                  Evaluate multi-tenant isolation architectures for Beta tenant onboarding service.
+                </p>
+</div>
+<!-- Elastic Banner -->
+<div class="p-3 bg-surface-container-low/80 rounded-xl flex items-center gap-3">
+<span class="material-symbols-outlined text-primary text-[20px] shrink-0">open_in_full</span>
+<div class="flex-1">
+<div class="font-label-md text-label-md text-primary font-bold">
+                    Elastic Compression Available — Save 40 mins
+                  </div>
+<div class="font-body-sm text-body-sm text-on-surface">
+                    Task duration can safely collapse from <span class="font-semibold">60m down to a 20m</span> architectural summary review.
+                  </div>
+</div>
+</div>
+</div>
+<div class="shrink-0 flex items-center md:flex-col items-end gap-1">
+<span class="font-label-md text-label-md text-on-surface font-semibold">60m → 20m</span>
+<span class="font-label-sm text-label-sm text-text-muted">High Flexibility</span>
+</div>
+</div>
+<!-- Bottom Action Buttons Row -->
+<div class="mt-5 pt-4 flex flex-wrap items-center justify-between gap-3 bg-bg-canvas/30 -mx-6 -mb-6 px-6 py-3 rounded-b-xl">
+<div class="flex flex-wrap items-center gap-2">
+<button class="px-3.5 py-1.5 rounded-xl bg-surface text-on-surface hover:bg-surface-container-low font-label-md text-label-md shadow-sm transition-all flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[16px] text-primary">compress</span>
+<span>Compress &amp; Schedule Today (20m)</span>
+</button>
+<button class="px-3.5 py-1.5 rounded-xl bg-surface text-text-muted hover:text-on-surface font-label-md text-label-md shadow-sm transition-all flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[16px]">weekend</span>
+<span>Snooze to Saturday Deep Work</span>
+</button>
+</div>
+<span class="font-label-sm text-label-sm text-text-muted">Zero downstream blockers</span>
+</div>
+</article>
+<!-- CARD 3: Stale Personal Backlog Candidate for Pruning -->
+<article class="relative bg-surface rounded-xl p-6 shadow-sm hover:shadow-md transition-all group cursor-pointer" onclick="selectCard(3)">
+<!-- Left Status Indicator Bar -->
+<div class="absolute left-0 top-0 bottom-0 w-1.5 bg-status-medium rounded-l-xl"></div>
+<div class="flex flex-col md:flex-row md:items-start justify-between gap-4">
+<div class="flex-1 space-y-3">
+<!-- Meta Badges -->
+<div class="flex flex-wrap items-center gap-2">
+<span class="px-2.5 py-1 rounded-full bg-status-medium/15 text-status-medium font-label-sm text-label-sm font-bold flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">low_priority</span>
+<span>PUSHED 4 TIMES · Lingering</span>
+</span>
+<span class="flex items-center gap-1.5 font-label-sm text-label-sm text-text-muted">
+<span class="w-2 h-2 rounded-full bg-status-ontrack"></span>
+<span>Personal &amp; Wellness · Workspace</span>
+</span>
+</div>
+<!-- Title & Context -->
+<div>
+<h3 class="font-headline-md text-headline-md text-on-surface tracking-tight group-hover:text-primary transition-colors">
+                  Clean desk and organize physical tax receipts
+                </h3>
+<p class="font-body-sm text-body-sm text-text-muted mt-1">
+                  Categorize paper receipts from Q2 travel and hardware purchases.
+                </p>
+</div>
+<!-- Agent Pruning Suggestion -->
+<div class="p-3 bg-surface-container-high/40 rounded-xl flex items-center gap-3">
+<span class="material-symbols-outlined text-text-muted text-[18px]">psychology</span>
+<span class="font-body-sm text-body-sm text-on-surface">
+<span class="font-bold text-on-surface">Agent Suggestion:</span> Slipped 4 consecutive days without blocking any commitments. Consider archiving or delegating to scan assistant to unburden your cognitive queue.
+                </span>
+</div>
+</div>
+<div class="shrink-0 flex items-center md:flex-col items-end gap-1">
+<span class="font-label-md text-label-md text-text-muted">Low Energy</span>
+<span class="font-label-sm text-label-sm text-text-muted">15 min</span>
+</div>
+</div>
+<!-- Bottom Action Buttons Row -->
+<div class="mt-5 pt-4 flex flex-wrap items-center justify-between gap-3 bg-bg-canvas/30 -mx-6 -mb-6 px-6 py-3 rounded-b-xl">
+<div class="flex flex-wrap items-center gap-2">
+<button class="px-3.5 py-1.5 rounded-xl bg-error-container/40 text-on-error-container hover:bg-error-container font-label-md text-label-md transition-all flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[16px]">inventory_2</span>
+<span>Unburden: Archive Task</span>
+</button>
+<button class="px-3.5 py-1.5 rounded-xl bg-surface text-on-surface hover:bg-surface-container-low font-label-md text-label-md shadow-sm transition-all flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[16px]">nightlight</span>
+<span>Do Tonight Wind-Down (10m)</span>
+</button>
+</div>
+<span class="font-label-sm text-label-sm text-text-muted">Drift +4d</span>
+</div>
+</article>
+</div>
+<!-- Autonomous Watchdog Footnote Banner -->
+<div class="p-4 rounded-xl bg-surface flex items-center justify-between text-text-muted font-body-sm text-body-sm shadow-sm">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-status-rolled text-[18px]">security</span>
+<span>Slippage Rule active: Task flagged when pushed &gt; 2 times with downstream dependent items.</span>
+</div>
+<a class="font-label-md text-label-md text-primary hover:underline" href="#">Edit Audit Logic →</a>
+</div>
+</div>
+<!-- RIGHT: Inspector Basesheet Drawer (Outcrowd / ChronoTask Style) -->
+<aside class="w-full xl:w-[440px] shrink-0 bg-surface rounded-2xl shadow-xl p-6 transition-all duration-300 relative space-y-6" id="inspectorDrawer">
+<!-- Drawer Header Bar -->
+<div class="flex items-center justify-between pb-3 bg-bg-canvas/50 -mx-6 -mt-6 p-6 rounded-t-2xl">
+<div class="flex items-center gap-2">
+<button class="w-8 h-8 rounded-xl bg-surface text-text-muted hover:text-on-surface hover:bg-surface-container flex items-center justify-center transition-colors shadow-sm" id="closeDrawerBtn" title="Close Drawer">
+<span class="material-symbols-outlined text-[18px]">close</span>
+</button>
+<span class="font-label-sm text-label-sm uppercase tracking-wider text-text-muted">Task Slippage Audit</span>
+</div>
+<div class="flex items-center gap-1.5 text-text-muted">
+<button class="w-8 h-8 rounded-xl hover:bg-surface flex items-center justify-center transition-colors" title="Edit">
+<span class="material-symbols-outlined text-[18px]">edit</span>
+</button>
+<button class="w-8 h-8 rounded-xl hover:bg-surface flex items-center justify-center transition-colors" title="Share link">
+<span class="material-symbols-outlined text-[18px]">share</span>
+</button>
+<button class="w-8 h-8 rounded-xl hover:bg-surface flex items-center justify-center transition-colors" title="More options">
+<span class="material-symbols-outlined text-[18px]">more_vert</span>
+</button>
+</div>
+</div>
+<!-- Drawer Main Title & Status Badge -->
+<div>
+<div class="flex items-center gap-2 mb-2">
+<span class="px-2.5 py-0.5 rounded-full bg-status-urgent/15 text-status-urgent font-label-sm text-label-sm font-bold">Urgent (P1)</span>
+<span class="px-2.5 py-0.5 rounded-full bg-status-rolled/15 text-status-rolled font-label-sm text-label-sm font-semibold">Pushed 3x (3d drift)</span>
+</div>
+<h2 class="font-headline-lg text-headline-lg text-on-surface font-extrabold tracking-tight leading-snug">
+          Update Cap Table &amp; Investor Pro-forma
+        </h2>
+</div>
+<!-- Structured Metadata Attribute Grid -->
+<div class="space-y-3 p-4 rounded-xl bg-bg-canvas/60">
+<!-- Priority -->
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2 text-text-muted font-body-sm text-body-sm">
+<span class="material-symbols-outlined text-[18px]">priority_high</span>
+<span>Priority</span>
+</div>
+<span class="px-2.5 py-0.5 rounded-full bg-status-urgent text-on-error font-label-sm text-label-sm font-bold">Critical Level 8</span>
+</div>
+<!-- Status -->
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2 text-text-muted font-body-sm text-body-sm">
+<span class="material-symbols-outlined text-[18px]">category</span>
+<span>Domain</span>
+</div>
+<span class="px-2.5 py-0.5 rounded-full bg-surface-container-low text-primary font-label-sm text-label-sm font-bold">Financial · @alpha</span>
+</div>
+<!-- Due Date Slippage -->
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2 text-text-muted font-body-sm text-body-sm">
+<span class="material-symbols-outlined text-[18px]">calendar_today</span>
+<span>Original Due Date</span>
+</div>
+<span class="font-label-md text-label-md text-status-urgent font-semibold">Monday, Oct 1 (2d overdue)</span>
+</div>
+<!-- Suggested Slot -->
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2 text-text-muted font-body-sm text-body-sm">
+<span class="material-symbols-outlined text-[18px]">schedule</span>
+<span>AI Suggested Slot</span>
+</div>
+<span class="font-label-md text-label-md text-primary font-bold">Today, 11:30 AM – 12:15 PM</span>
+</div>
+<!-- Energy Profile -->
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2 text-text-muted font-body-sm text-body-sm">
+<span class="material-symbols-outlined text-[18px]">bolt</span>
+<span>Cognitive Load</span>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface">High (Requires Deep Focus)</span>
+</div>
+<!-- Assignee -->
+<div class="flex items-center justify-between pt-1">
+<div class="flex items-center gap-2 text-text-muted font-body-sm text-body-sm">
+<span class="material-symbols-outlined text-[18px]">person</span>
+<span>Owner</span>
+</div>
+<div class="flex items-center gap-2">
+<div class="w-6 h-6 rounded-full bg-primary flex items-center justify-center text-on-primary font-label-sm text-label-sm">ER</div>
+<span class="font-label-md text-label-md text-on-surface">Elena Rostova</span>
+</div>
+</div>
+</div>
+<!-- Narrative Context -->
+<div class="space-y-2">
+<span class="font-label-sm text-label-sm uppercase tracking-wider text-text-muted">Task Scope &amp; Brief</span>
+<p class="font-body-sm text-body-sm text-on-surface leading-relaxed">
+          Incorporate the two signed $250k SAFEs into the cap sheet model. Update pre-money valuation formulas to prepare for tomorrow morning's investor sync deck.
+        </p>
+</div>
+<!-- VISUAL SECTION: Downstream Cascade Flow -->
+<div class="space-y-3">
+<div class="flex items-center justify-between">
+<span class="font-label-sm text-label-sm uppercase tracking-wider text-text-muted">Downstream Cascade Impact</span>
+<span class="px-2 py-0.5 rounded-full bg-status-urgent/15 text-status-urgent font-label-sm text-label-sm font-bold">2 Blocked</span>
+</div>
+<div class="p-3.5 bg-bg-canvas/70 rounded-xl space-y-2.5">
+<!-- Root / Slipped Node -->
+<div class="flex items-center gap-2.5 p-2 bg-surface rounded-lg shadow-sm">
+<span class="w-2.5 h-2.5 rounded-full bg-status-urgent shrink-0"></span>
+<span class="font-label-md text-label-md text-on-surface font-bold flex-1 truncate">Cap Table Calculation</span>
+<span class="font-label-sm text-label-sm text-status-urgent font-bold">ORIGIN BLOCKED</span>
+</div>
+<!-- Downstream Child 1 -->
+<div class="flex items-center gap-2.5 pl-6 text-on-surface-variant">
+<span class="text-text-muted font-body-sm text-body-sm">↳</span>
+<div class="flex-1 flex items-center justify-between p-2 bg-surface/80 rounded-lg">
+<span class="font-body-sm text-body-sm text-on-surface truncate">Board slide financial appendix</span>
+<span class="font-label-sm text-label-sm text-status-urgent">Due 2:30 PM</span>
+</div>
+</div>
+<!-- Downstream Child 2 -->
+<div class="flex items-center gap-2.5 pl-10 text-on-surface-variant">
+<span class="text-text-muted font-body-sm text-body-sm">↳</span>
+<div class="flex-1 flex items-center justify-between p-2 bg-surface/80 rounded-lg">
+<span class="font-body-sm text-body-sm text-text-muted truncate">Investor PDF distribution (5 recipients)</span>
+<span class="font-label-sm text-label-sm text-text-muted">Stalled</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Audit Drift Timeline -->
+<div class="space-y-2.5">
+<span class="font-label-sm text-label-sm uppercase tracking-wider text-text-muted">Slippage Log (Drift Provenance)</span>
+<div class="space-y-2 text-body-sm font-body-sm text-on-surface">
+<div class="flex items-start gap-2.5">
+<div class="w-1.5 h-1.5 rounded-full bg-text-muted mt-2 shrink-0"></div>
+<div>
+<span class="font-semibold">Mon, Oct 1 (Original):</span> Slipped +24h due to emergency customer outage escalation.
+            </div>
+</div>
+<div class="flex items-start gap-2.5">
+<div class="w-1.5 h-1.5 rounded-full bg-status-rolled mt-2 shrink-0"></div>
+<div>
+<span class="font-semibold">Tue, Oct 2:</span> Pushed during morning triage to prioritize Series A pitch memo (+24h).
+            </div>
+</div>
+<div class="flex items-start gap-2.5">
+<div class="w-1.5 h-1.5 rounded-full bg-status-urgent mt-2 shrink-0"></div>
+<div>
+<span class="font-semibold text-status-urgent">Wed, Oct 3 (Today):</span> Tripped Slippage Radar. Watchdog flagged as cascade threat.
+            </div>
+</div>
+</div>
+</div>
+<!-- Resolution Selection Matrix -->
+<div class="space-y-2.5 pt-2">
+<span class="font-label-sm text-label-sm uppercase tracking-wider text-text-muted">Intervention Strategy</span>
+<label class="flex items-center gap-3 p-3 bg-surface-container-low rounded-xl cursor-pointer">
+<input checked="" class="w-4 h-4 text-primary focus:ring-primary accent-primary" name="resolutionStrategy" type="radio"/>
+<div class="flex-1">
+<div class="font-label-md text-label-md text-primary font-bold">Lock into 11:30 AM Focus Window (45m)</div>
+<div class="font-body-sm text-body-sm text-on-surface">Preempts cascade. Protects afternoon board slide distribution.</div>
+</div>
+</label>
+<label class="flex items-center gap-3 p-3 bg-bg-canvas hover:bg-surface-container-low/50 rounded-xl cursor-pointer transition-colors">
+<input class="w-4 h-4 text-primary focus:ring-primary accent-primary" name="resolutionStrategy" type="radio"/>
+<div class="flex-1">
+<div class="font-label-md text-label-md text-on-surface font-bold">Compress to 20m Elastic Minimum</div>
+<div class="font-body-sm text-body-sm text-text-muted">Only input top-line SAFE dilution; defer detailed model to Friday.</div>
+</div>
+</label>
+<label class="flex items-center gap-3 p-3 bg-bg-canvas hover:bg-surface-container-low/50 rounded-xl cursor-pointer transition-colors">
+<input class="w-4 h-4 text-primary focus:ring-primary accent-primary" name="resolutionStrategy" type="radio"/>
+<div class="flex-1">
+<div class="font-label-md text-label-md text-on-surface font-bold">Delegate to Finance Lead (@marcus)</div>
+<div class="font-body-sm text-body-sm text-text-muted">Agent drafts delegation ping with attached pro-forma spreadsheet.</div>
+</div>
+</label>
+</div>
+<!-- Action Confirmation Drawer Bottom -->
+<div class="space-y-2 pt-2">
+<button class="w-full py-3 px-4 rounded-xl bg-primary text-on-primary font-label-md text-label-md hover:bg-primary-container font-bold flex items-center justify-center gap-2 shadow-md transition-all" id="resolveBtn">
+<span class="material-symbols-outlined text-[20px]">task_alt</span>
+<span>Resolve Slippage &amp; Commit to Today</span>
+</button>
+<button class="w-full py-2.5 px-4 rounded-xl bg-surface hover:bg-bg-canvas text-text-muted hover:text-on-surface font-label-md text-label-md transition-all flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-[18px]">archive</span>
+<span>Archive / Drop Task from Radar</span>
+</button>
+</div>
+</aside>
+</div>
+<!-- Interactive JavaScript for micro-interactions -->
+<script>
+    function selectCard(cardNumber) {
+      const drawer = document.getElementById('inspectorDrawer');
+      if (drawer) {
+        drawer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        // subtle highlight animation
+        drawer.classList.add('ring-2', 'ring-primary/20');
+        setTimeout(() => {
+          drawer.classList.remove('ring-2', 'ring-primary/20');
+        }, 800);
+      }
+    }
+
+    const closeBtn = document.getElementById('closeDrawerBtn');
+    if (closeBtn) {
+      closeBtn.addEventListener('click', () => {
+        const drawer = document.getElementById('inspectorDrawer');
+        if (drawer) {
+          drawer.classList.toggle('hidden');
+        }
+      });
+    }
+
+    const resolveBtn = document.getElementById('resolveBtn');
+    if (resolveBtn) {
+      resolveBtn.addEventListener('click', () => {
+        resolveBtn.innerHTML = '<span class="material-symbols-outlined text-[20px]">check_circle</span><span>Scheduled for 11:30 AM!</span>';
+        resolveBtn.classList.remove('bg-primary');
+        resolveBtn.classList.add('bg-status-ontrack');
+        setTimeout(() => {
+          resolveBtn.innerHTML = '<span class="material-symbols-outlined text-[20px]">task_alt</span><span>Resolve Slippage &amp; Commit to Today</span>';
+          resolveBtn.classList.add('bg-primary');
+          resolveBtn.classList.remove('bg-status-ontrack');
+        }, 2500);
+      });
+    }
+
+    const recalibrateBtn = document.getElementById('recalibrateBtn');
+    if (recalibrateBtn) {
+      recalibrateBtn.addEventListener('click', () => {
+        recalibrateBtn.classList.add('animate-pulse');
+        setTimeout(() => recalibrateBtn.classList.remove('animate-pulse'), 1200);
+      });
+    }
+  </script>
+</div></main></div></body></html>

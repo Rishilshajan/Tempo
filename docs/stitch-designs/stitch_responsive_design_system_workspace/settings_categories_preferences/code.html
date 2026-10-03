@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/><meta content="mobile_tab" name="shell-type"/><link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;600;700;800&amp;display=swap" rel="stylesheet"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { colors: { "on-primary": "#ffffff", "surface-dim": "#cdded5", "inverse-on-surface": "#e3f5eb", "on-secondary": "#ffffff", "status-medium": "#F2B24C", "on-secondary-container": "#257123", "status-rolled": "#7C87D6", "on-secondary-fixed-variant": "#005308", "secondary-fixed-dim": "#8ad97d", "tertiary": "#006a3a", "outline-variant": "#bec9c1", "primary-fixed": "#a3f3cc", "status-ontrack": "#5DB87E", "secondary-container": "#a3f394", "surface-container": "#e0f2e9", "secondary-fixed": "#a5f697", "text-muted": "#5B6B62", "primary-fixed-dim": "#88d6b1", "error": "#ba1a1a", "surface-container-lowest": "#ffffff", "tertiary-fixed-dim": "#7ed99c", "inverse-surface": "#24342d", "on-tertiary-fixed": "#00210e", "surface-tint": "#156b4d", "on-background": "#101e19", "code-bg": "#1F2B26", "outline": "#6f7a73", "primary-container": "#338262", "on-primary-fixed-variant": "#005138", "on-primary-fixed": "#002114", "error-container": "#ffdad6", "surface-bright": "#ecfef4", "on-tertiary-fixed-variant": "#00522c", "tertiary-fixed": "#99f6b7", "tertiary-container": "#258450", "code-text": "#E8EFE9", "surface": "#FFFFFF", "surface-container-low": "#e6f8ee", "on-surface-variant": "#3f4943", "surface-container-highest": "#d5e7dd", "on-surface": "#101e19", "on-primary-container": "#f5fff7", "primary": "#11694a", "status-urgent": "#F0705A", "border-subtle": "#E7E5DF", "bg-canvas": "#F7F6F2", "on-tertiary": "#ffffff", "on-secondary-fixed": "#002201", "table-header": "#EEF3F0", "surface-variant": "#d5e7dd", "secondary": "#206d1f", "on-error": "#ffffff", "inverse-primary": "#88d6b1", "background": "#ecfef4", "on-error-container": "#93000a", "on-tertiary-container": "#f6fff4", "surface-container-high": "#dbece3" }, borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" }, spacing: { "space-lg": "1.5rem", "gutter-lg": "1.5rem", "space-md": "1rem", "gutter": "1rem", "space-xl": "2.25rem", "space-xs": "0.25rem", "margin-md": "1.5rem", "space-sm": "0.5rem", "margin-lg": "2.5rem", "margin": "1.25rem" }, fontFamily: { "label-sm": ["Figtree"], "headline-lg": ["Figtree"], "body-lead": ["Figtree"], "body-sm": ["Figtree"], "headline-xl": ["Figtree"], "label-md": ["Figtree"], "headline-xl-mobile": ["Figtree"], "headline-md": ["Figtree"], "body-md": ["Figtree"] }, fontSize: { "label-sm": ["0.6875rem", { "lineHeight": "0.9rem", "letterSpacing": "0.03em", "fontWeight": "700" }], "headline-lg": ["1.5rem", { "lineHeight": "2rem", "letterSpacing": "-0.02em", "fontWeight": "700" }], "body-lead": ["1.08rem", { "lineHeight": "1.75rem", "fontWeight": "400" }], "body-sm": ["0.875rem", { "lineHeight": "1.4rem", "fontWeight": "400" }], "headline-xl": ["2.6rem", { "lineHeight": "3.1rem", "letterSpacing": "-0.03em", "fontWeight": "800" }], "label-md": ["0.8125rem", { "lineHeight": "1.2rem", "letterSpacing": "0.01em", "fontWeight": "600" }], "headline-xl-mobile": ["2rem", { "lineHeight": "2.4rem", "letterSpacing": "-0.02em", "fontWeight": "800" }], "headline-md": ["1.15rem", { "lineHeight": "1.6rem", "letterSpacing": "-0.01em", "fontWeight": "700" }], "body-md": ["1rem", { "lineHeight": "1.65rem", "fontWeight": "400" }] } } } }</script><style>@layer base{html,body{width:100%;margin:0;padding:0;}body{overscroll-behavior-y:none;background-color:#F7F6F2;}.pb-safe{padding-bottom:env(safe-area-inset-bottom,0px);}.pt-safe{padding-top:env(safe-area-inset-top,0px);}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head><body class="bg-bg-canvas text-on-surface antialiased min-h-screen flex flex-col font-body-md"><header class="fixed top-0 w-full z-50 pt-safe bg-surface/85 backdrop-blur-xl shadow-[0_1px_8px_rgba(34,49,43,0.04)]"><div class="h-20 px-gutter flex items-center justify-between gap-space-sm"><div class="flex items-center gap-space-sm min-w-0"><img alt="Tasks Agentic Logo" class="h-8 w-auto object-contain flex-shrink-0" src="https://lh3.googleusercontent.com/aida/AEtjO1UzmqCuFCLUd3EztkGakEpAFvUtAdLtzeVoVnlxHkQYyhJ9aDA_3ymDB_q3o5x9qAn1Kyav-_9ER4ckKo_ELy7qEgqoOMAVsNbYkqfU4ggqjA0FPmmDVqYdj2-pJiAlZu_E1zf9N7Tqchbfbatk4xJx01DQAi0-XZeNEOPSxVJaBC7QojQTvP4dWJSTGglj8M21XXkUQiFcTS2ngkk6VyeI4ifycXqkgCy7VCYPWfFboYEb5yeP5xkD9L-w"/><div class="flex flex-col min-w-0"><div class="flex items-center gap-space-xs"><span class="font-headline-md text-headline-md text-on-surface font-bold tracking-tight truncate">Settings</span><span class="w-1.5 h-1.5 rounded-full bg-status-ontrack flex-shrink-0"></span></div><span class="font-label-sm text-label-sm text-text-muted truncate">Sage Focus · Personal &amp; Work Engine</span></div></div><div class="flex items-center gap-space-xs flex-shrink-0"><button aria-label="Audit &amp; Alerts" class="w-11 h-11 flex items-center justify-center rounded-xl hover:bg-table-header transition-colors text-on-surface-variant"><span class="material-symbols-outlined text-[22px]">tune</span></button><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center flex-shrink-0 shadow-[0_2px_6px_rgba(17,105,74,0.2)]"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></div></header><main class="flex-1 w-full bg-bg-canvas pt-20 pb-28 px-gutter flex flex-col"><div class="flex flex-col w-full pb-10 space-y-space-md">
+<!-- Subtitle & Context Note -->
+<div class="flex flex-col space-y-space-xs px-0.5">
+<div class="flex items-center justify-between">
+<span class="font-headline-md text-headline-md text-on-surface">Preferences &amp; Engine</span>
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-surface-container text-on-secondary-container font-label-sm text-label-sm">
+<span class="w-2 h-2 rounded-full bg-status-ontrack animate-pulse"></span>
+        Agent Active
+      </span>
+</div>
+<p class="font-body-sm text-body-sm text-text-muted">
+      Configure operational domains, productivity calibration, and auditable agent rules.
+    </p>
+</div>
+<!-- SECTION 1: CATEGORIES MANAGEMENT (M3 Spec) -->
+<section class="bg-surface rounded-xl p-space-md shadow-[0_1px_3px_rgba(34,49,43,0.05),0_8px_24px_rgba(34,49,43,0.04)] space-y-space-md">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-space-xs">
+<div class="w-8 h-8 rounded-lg bg-surface-container flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-[20px]">folder_special</span>
+</div>
+<div>
+<h2 class="font-headline-md text-headline-md text-on-surface">Categories &amp; Domains</h2>
+<p class="font-label-sm text-label-sm text-text-muted">Used by agent to triage, detect conflict, and group tasks</p>
+</div>
+</div>
+<button class="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-primary hover:bg-primary-container text-on-primary font-label-md text-label-md transition-all active:scale-95 shadow-sm" id="toggle-add-cat-btn">
+<span class="material-symbols-outlined text-[18px]">add</span>
+<span>Add</span>
+</button>
+</div>
+<!-- Active Categories List -->
+<div class="flex flex-col space-y-2" id="categories-container">
+<!-- Category 1 -->
+<div class="flex items-center justify-between p-3 rounded-lg bg-bg-canvas hover:bg-surface-container/60 transition-colors">
+<div class="flex items-center gap-3 min-w-0">
+<span class="w-3.5 h-3.5 rounded-full bg-primary flex-shrink-0 shadow-xs"></span>
+<div class="flex flex-col min-w-0">
+<div class="flex items-center gap-2">
+<span class="font-label-md text-label-md text-on-surface font-semibold truncate">Startup Alpha</span>
+<span class="px-2 py-0.5 rounded-full bg-primary-fixed text-on-primary-fixed font-label-sm text-label-sm">5 tasks</span>
+</div>
+<span class="font-label-sm text-label-sm text-text-muted truncate">Primary startup focus &amp; core sprints</span>
+</div>
+</div>
+<div class="flex items-center gap-1 flex-shrink-0">
+<button aria-label="Edit Startup Alpha" class="w-8 h-8 flex items-center justify-center rounded-lg text-text-muted hover:text-on-surface hover:bg-surface transition-colors">
+<span class="material-symbols-outlined text-[18px]">edit</span>
+</button>
+<button aria-label="Delete Startup Alpha" class="w-8 h-8 flex items-center justify-center rounded-lg text-text-muted hover:text-error hover:bg-error-container/40 transition-colors">
+<span class="material-symbols-outlined text-[18px]">delete_outline</span>
+</button>
+</div>
+</div>
+<!-- Category 2 -->
+<div class="flex items-center justify-between p-3 rounded-lg bg-bg-canvas hover:bg-surface-container/60 transition-colors">
+<div class="flex items-center gap-3 min-w-0">
+<span class="w-3.5 h-3.5 rounded-full bg-status-medium flex-shrink-0 shadow-xs"></span>
+<div class="flex flex-col min-w-0">
+<div class="flex items-center gap-2">
+<span class="font-label-md text-label-md text-on-surface font-semibold truncate">Startup Beta</span>
+<span class="px-2 py-0.5 rounded-full bg-surface-container text-on-surface-variant font-label-sm text-label-sm">3 tasks</span>
+</div>
+<span class="font-label-sm text-label-sm text-text-muted truncate">Advisory, systems architecture &amp; mentoring</span>
+</div>
+</div>
+<div class="flex items-center gap-1 flex-shrink-0">
+<button aria-label="Edit Startup Beta" class="w-8 h-8 flex items-center justify-center rounded-lg text-text-muted hover:text-on-surface hover:bg-surface transition-colors">
+<span class="material-symbols-outlined text-[18px]">edit</span>
+</button>
+<button aria-label="Delete Startup Beta" class="w-8 h-8 flex items-center justify-center rounded-lg text-text-muted hover:text-error hover:bg-error-container/40 transition-colors">
+<span class="material-symbols-outlined text-[18px]">delete_outline</span>
+</button>
+</div>
+</div>
+<!-- Category 3 -->
+<div class="flex items-center justify-between p-3 rounded-lg bg-bg-canvas hover:bg-surface-container/60 transition-colors">
+<div class="flex items-center gap-3 min-w-0">
+<span class="w-3.5 h-3.5 rounded-full bg-text-muted flex-shrink-0 shadow-xs"></span>
+<div class="flex flex-col min-w-0">
+<div class="flex items-center gap-2">
+<span class="font-label-md text-label-md text-on-surface font-semibold truncate">Financial</span>
+<span class="px-2 py-0.5 rounded-full bg-surface-container text-on-surface-variant font-label-sm text-label-sm">2 tasks</span>
+</div>
+<span class="font-label-sm text-label-sm text-text-muted truncate">Tax compliance, payroll &amp; forecasting</span>
+</div>
+</div>
+<div class="flex items-center gap-1 flex-shrink-0">
+<button aria-label="Edit Financial" class="w-8 h-8 flex items-center justify-center rounded-lg text-text-muted hover:text-on-surface hover:bg-surface transition-colors">
+<span class="material-symbols-outlined text-[18px]">edit</span>
+</button>
+<button aria-label="Delete Financial" class="w-8 h-8 flex items-center justify-center rounded-lg text-text-muted hover:text-error hover:bg-error-container/40 transition-colors">
+<span class="material-symbols-outlined text-[18px]">delete_outline</span>
+</button>
+</div>
+</div>
+<!-- Category 4 -->
+<div class="flex items-center justify-between p-3 rounded-lg bg-bg-canvas hover:bg-surface-container/60 transition-colors">
+<div class="flex items-center gap-3 min-w-0">
+<span class="w-3.5 h-3.5 rounded-full bg-status-ontrack flex-shrink-0 shadow-xs"></span>
+<div class="flex flex-col min-w-0">
+<div class="flex items-center gap-2">
+<span class="font-label-md text-label-md text-on-surface font-semibold truncate">Personal</span>
+<span class="px-2 py-0.5 rounded-full bg-secondary-container text-on-secondary-container font-label-sm text-label-sm">4 tasks</span>
+</div>
+<span class="font-label-sm text-label-sm text-text-muted truncate">Health habits, family logistics &amp; quick-wins</span>
+</div>
+</div>
+<div class="flex items-center gap-1 flex-shrink-0">
+<button aria-label="Edit Personal" class="w-8 h-8 flex items-center justify-center rounded-lg text-text-muted hover:text-on-surface hover:bg-surface transition-colors">
+<span class="material-symbols-outlined text-[18px]">edit</span>
+</button>
+<button aria-label="Delete Personal" class="w-8 h-8 flex items-center justify-center rounded-lg text-text-muted hover:text-error hover:bg-error-container/40 transition-colors">
+<span class="material-symbols-outlined text-[18px]">delete_outline</span>
+</button>
+</div>
+</div>
+<!-- Category 5 -->
+<div class="flex items-center justify-between p-3 rounded-lg bg-bg-canvas hover:bg-surface-container/60 transition-colors">
+<div class="flex items-center gap-3 min-w-0">
+<span class="w-3.5 h-3.5 rounded-full bg-status-rolled flex-shrink-0 shadow-xs"></span>
+<div class="flex flex-col min-w-0">
+<div class="flex items-center gap-2">
+<span class="font-label-md text-label-md text-on-surface font-semibold truncate">Learning &amp; Deep Work</span>
+<span class="px-2 py-0.5 rounded-full bg-surface-container text-on-surface-variant font-label-sm text-label-sm">1 task</span>
+</div>
+<span class="font-label-sm text-label-sm text-text-muted truncate">Elastic learning blocks &amp; tech papers</span>
+</div>
+</div>
+<div class="flex items-center gap-1 flex-shrink-0">
+<button aria-label="Edit Learning" class="w-8 h-8 flex items-center justify-center rounded-lg text-text-muted hover:text-on-surface hover:bg-surface transition-colors">
+<span class="material-symbols-outlined text-[18px]">edit</span>
+</button>
+<button aria-label="Delete Learning" class="w-8 h-8 flex items-center justify-center rounded-lg text-text-muted hover:text-error hover:bg-error-container/40 transition-colors">
+<span class="material-symbols-outlined text-[18px]">delete_outline</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Inline Add New Category Box (Expandable) -->
+<div class="p-3.5 rounded-xl bg-surface-container-low space-y-3" id="new-cat-panel">
+<div class="flex items-center justify-between">
+<span class="font-label-md text-label-md font-semibold text-on-surface">Create New Category</span>
+<span class="font-label-sm text-label-sm text-text-muted">Color tokens tag calendar and triage</span>
+</div>
+<div class="space-y-2">
+<input class="w-full px-3.5 py-2.5 rounded-lg bg-surface text-on-surface font-body-sm text-body-sm placeholder:text-text-muted/60 focus:outline-none focus:ring-2 focus:ring-primary shadow-xs" id="cat-name-input" placeholder="e.g. Investor Relations, Physical Health..." type="text"/>
+</div>
+<!-- Color Swatches Selection -->
+<div class="space-y-1.5">
+<span class="font-label-sm text-label-sm text-text-muted block">Theme Swatch</span>
+<div class="flex items-center gap-2.5 pt-0.5" id="color-swatches">
+<button aria-label="Sage Green" class="w-7 h-7 rounded-full bg-primary flex items-center justify-center text-on-primary ring-2 ring-primary ring-offset-2 ring-offset-surface-container-low transition-all" data-color="#11694a">
+<span class="material-symbols-outlined text-[16px]">check</span>
+</button>
+<button aria-label="Lime" class="w-7 h-7 rounded-full bg-secondary-fixed flex items-center justify-center text-on-secondary-fixed hover:scale-110 transition-transform" data-color="#a5f697">
+</button>
+<button aria-label="Coral" class="w-7 h-7 rounded-full bg-status-urgent flex items-center justify-center text-on-primary hover:scale-110 transition-transform" data-color="#F0705A">
+</button>
+<button aria-label="Amber" class="w-7 h-7 rounded-full bg-status-medium flex items-center justify-center text-on-primary hover:scale-110 transition-transform" data-color="#F2B24C">
+</button>
+<button aria-label="Teal Deep" class="w-7 h-7 rounded-full bg-tertiary flex items-center justify-center text-on-tertiary hover:scale-110 transition-transform" data-color="#006a3a">
+</button>
+<button aria-label="Slate" class="w-7 h-7 rounded-full bg-text-muted flex items-center justify-center text-on-primary hover:scale-110 transition-transform" data-color="#5B6B62">
+</button>
+<button aria-label="Lavender" class="w-7 h-7 rounded-full bg-status-rolled flex items-center justify-center text-on-primary hover:scale-110 transition-transform" data-color="#7C87D6">
+</button>
+</div>
+</div>
+<div class="flex items-center justify-end gap-2 pt-1">
+<button class="px-3.5 py-1.5 rounded-lg bg-surface hover:bg-surface-container text-on-surface font-label-md text-label-md transition-colors" id="cancel-cat-btn">
+          Reset
+        </button>
+<button class="px-4 py-1.5 rounded-lg bg-primary hover:bg-primary-container text-on-primary font-label-md text-label-md transition-all active:scale-95 shadow-sm" id="save-cat-btn">
+          Save Category
+        </button>
+</div>
+</div>
+</section>
+<!-- SECTION 2: PRODUCTIVITY WINDOW & CALIBRATION (Project Plan §4) -->
+<section class="bg-surface rounded-xl p-space-md shadow-[0_1px_3px_rgba(34,49,43,0.05),0_8px_24px_rgba(34,49,43,0.04)] space-y-space-md">
+<div class="flex items-center gap-space-xs">
+<div class="w-8 h-8 rounded-lg bg-surface-container flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-[20px]">wb_twilight</span>
+</div>
+<div>
+<h2 class="font-headline-md text-headline-md text-on-surface">Productivity Calibration</h2>
+<p class="font-label-sm text-label-sm text-text-muted">Morning bias &amp; elastic buffer controls</p>
+</div>
+</div>
+<!-- Agent Logic Explanatory Callout -->
+<div class="p-3 rounded-lg bg-surface-container-low flex items-start gap-2.5">
+<span class="material-symbols-outlined text-primary text-[20px] flex-shrink-0 mt-0.5">psychology</span>
+<p class="font-body-sm text-body-sm text-on-surface-variant">
+        The agent clusters high-cognitive milestones into your primary focus slot. Tasks scheduled outside this range trigger gentler timelines and warn of late-day mental fatigue.
+      </p>
+</div>
+<!-- Primary Focus Window -->
+<div class="space-y-2">
+<div class="flex items-center justify-between">
+<span class="font-label-md text-label-md font-semibold text-on-surface">Primary Focus Window</span>
+<span class="font-label-sm text-label-sm text-primary font-medium">3 hours / day</span>
+</div>
+<!-- Selection Pills -->
+<div class="grid grid-cols-2 gap-2">
+<button class="flex items-center justify-between p-2.5 rounded-xl bg-surface-container-low text-on-surface-variant ring-2 ring-primary bg-primary-fixed/20 text-left transition-all">
+<div class="flex flex-col">
+<span class="font-label-md text-label-md font-bold text-primary">9:00 AM – 12:00 PM</span>
+<span class="font-label-sm text-label-sm text-text-muted">Morning Bias (Active)</span>
+</div>
+<span class="material-symbols-outlined text-primary text-[20px]">radio_button_checked</span>
+</button>
+<button class="flex items-center justify-between p-2.5 rounded-xl bg-bg-canvas hover:bg-surface-container text-left transition-colors text-on-surface-variant">
+<div class="flex flex-col">
+<span class="font-label-md text-label-md font-semibold text-on-surface">1:30 PM – 4:30 PM</span>
+<span class="font-label-sm text-label-sm text-text-muted">Afternoon Flow</span>
+</div>
+<span class="material-symbols-outlined text-text-muted text-[20px]">radio_button_unchecked</span>
+</button>
+</div>
+</div>
+<!-- Elastic Buffer Cushion Toggle -->
+<div class="pt-2 flex items-center justify-between gap-3">
+<div class="flex flex-col min-w-0">
+<div class="flex items-center gap-1.5">
+<span class="font-label-md text-label-md font-semibold text-on-surface">Elastic Cushion Protection</span>
+<span class="material-symbols-outlined text-primary text-[16px]">compress</span>
+</div>
+<p class="font-body-sm text-body-sm text-text-muted">Hold 30–45m unassigned buffer before critical cascade deadlines.</p>
+</div>
+<!-- Custom Toggle -->
+<button aria-checked="true" class="w-12 h-6 bg-primary rounded-full relative p-0.5 transition-colors flex-shrink-0 cursor-pointer" onclick="this.classList.toggle('bg-primary'); this.classList.toggle('bg-outline-variant'); const dot=this.firstElementChild; dot.classList.toggle('translate-x-6'); dot.classList.toggle('translate-x-0');" role="switch">
+<span class="w-5 h-5 bg-surface rounded-full block shadow-sm transform translate-x-6 transition-transform"></span>
+</button>
+</div>
+</section>
+<!-- SECTION 3: ALERT & NOTIFICATION SCHEDULE (Project Plan §4 & Implementation Spec M3/M6) -->
+<section class="bg-surface rounded-xl p-space-md shadow-[0_1px_3px_rgba(34,49,43,0.05),0_8px_24px_rgba(34,49,43,0.04)] space-y-space-md">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-space-xs">
+<div class="w-8 h-8 rounded-lg bg-surface-container flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-[20px]">notifications_active</span>
+</div>
+<div>
+<h2 class="font-headline-md text-headline-md text-on-surface">Alert Schedule</h2>
+<p class="font-label-sm text-label-sm text-text-muted">Explicit time windows · Zero random interruptions</p>
+</div>
+</div>
+<button aria-label="Add Notification Slot" class="w-8 h-8 flex items-center justify-center rounded-lg bg-surface-container hover:bg-surface-container-high text-primary transition-colors">
+<span class="material-symbols-outlined text-[20px]">add</span>
+</button>
+</div>
+<div class="space-y-2">
+<!-- Briefing 1 -->
+<div class="flex items-center justify-between p-3 rounded-lg bg-bg-canvas">
+<div class="flex items-center gap-3">
+<div class="w-7 h-7 rounded-full bg-status-medium/15 flex items-center justify-center text-status-medium">
+<span class="material-symbols-outlined text-[18px]">wb_sunny</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md font-semibold text-on-surface">Morning Briefing</span>
+<span class="font-label-sm text-label-sm text-text-muted">Agent daily priority audit ready</span>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<span class="px-2.5 py-1 rounded-md bg-surface font-label-md text-label-md font-bold text-on-surface shadow-xs">08:30 AM</span>
+<span class="material-symbols-outlined text-primary text-[20px]">check_circle</span>
+</div>
+</div>
+<!-- Briefing 2 -->
+<div class="flex items-center justify-between p-3 rounded-lg bg-bg-canvas">
+<div class="flex items-center gap-3">
+<div class="w-7 h-7 rounded-full bg-primary/15 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-[18px]">timelapse</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md font-semibold text-on-surface">Midday Slippage Check</span>
+<span class="font-label-sm text-label-sm text-text-muted">Warns if morning anchor shifted</span>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<span class="px-2.5 py-1 rounded-md bg-surface font-label-md text-label-md font-bold text-on-surface shadow-xs">01:30 PM</span>
+<span class="material-symbols-outlined text-primary text-[20px]">check_circle</span>
+</div>
+</div>
+<!-- Briefing 3 -->
+<div class="flex items-center justify-between p-3 rounded-lg bg-bg-canvas">
+<div class="flex items-center gap-3">
+<div class="w-7 h-7 rounded-full bg-status-rolled/15 flex items-center justify-center text-status-rolled">
+<span class="material-symbols-outlined text-[18px]">bedtime</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md font-semibold text-on-surface">Evening Triage &amp; Rollforward</span>
+<span class="font-label-sm text-label-sm text-text-muted">Review deferred work &amp; set tomorrow</span>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<span class="px-2.5 py-1 rounded-md bg-surface font-label-md text-label-md font-bold text-on-surface shadow-xs">06:00 PM</span>
+<span class="material-symbols-outlined text-primary text-[20px]">check_circle</span>
+</div>
+</div>
+</div>
+</section>
+<!-- SECTION 4: AUDITABLE AGENT WARNING RULES (Spec §6 & §7, Plan §4) -->
+<section class="bg-surface rounded-xl p-space-md shadow-[0_1px_3px_rgba(34,49,43,0.05),0_8px_24px_rgba(34,49,43,0.04)] space-y-space-md">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-space-xs">
+<div class="w-8 h-8 rounded-lg bg-surface-container flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-[20px]">rule_folder</span>
+</div>
+<div>
+<h2 class="font-headline-md text-headline-md text-on-surface">Auditable Rules Engine</h2>
+<p class="font-label-sm text-label-sm text-text-muted">Transparent deterministic thresholds</p>
+</div>
+</div>
+<span class="px-2.5 py-0.5 rounded-full bg-primary-fixed text-on-primary-fixed font-label-sm text-label-sm font-semibold">
+        4 Active
+      </span>
+</div>
+<div class="p-3 rounded-lg bg-table-header/80 text-on-surface-variant flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[18px]">verified</span>
+<span class="font-label-sm text-label-sm">No Silent Magic: Inspect and calibrate every heuristic trigger.</span>
+</div>
+<!-- Rules List -->
+<div class="space-y-3">
+<!-- Rule 1: Cascade Risk -->
+<div class="p-3 rounded-lg bg-bg-canvas space-y-1.5">
+<div class="flex items-start justify-between gap-3">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-status-urgent text-[18px]">alt_route</span>
+<span class="font-label-md text-label-md font-semibold text-on-surface">Cascade Risk Trigger</span>
+</div>
+<button aria-checked="true" class="w-10 h-5 bg-primary rounded-full relative p-0.5 transition-colors flex-shrink-0 cursor-pointer" onclick="this.classList.toggle('bg-primary'); this.classList.toggle('bg-outline-variant'); const d=this.firstElementChild; d.classList.toggle('translate-x-5'); d.classList.toggle('translate-x-0');" role="switch">
+<span class="w-4 h-4 bg-surface rounded-full block shadow-sm transform translate-x-5 transition-transform"></span>
+</button>
+</div>
+<p class="font-body-sm text-body-sm text-text-muted">
+          Promote flexible upstream tasks to urgent if they block a downstream task with a fixed milestone within 24 hours.
+        </p>
+</div>
+<!-- Rule 2: Density Alert -->
+<div class="p-3 rounded-lg bg-bg-canvas space-y-1.5">
+<div class="flex items-start justify-between gap-3">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-status-medium text-[18px]">grain</span>
+<span class="font-label-md text-label-md font-semibold text-on-surface">Density &amp; Clustering Alert</span>
+</div>
+<button aria-checked="true" class="w-10 h-5 bg-primary rounded-full relative p-0.5 transition-colors flex-shrink-0 cursor-pointer" onclick="this.classList.toggle('bg-primary'); this.classList.toggle('bg-outline-variant'); const d=this.firstElementChild; d.classList.toggle('translate-x-5'); d.classList.toggle('translate-x-0');" role="switch">
+<span class="w-4 h-4 bg-surface rounded-full block shadow-sm transform translate-x-5 transition-transform"></span>
+</button>
+</div>
+<p class="font-body-sm text-body-sm text-text-muted">
+          Warn when &gt;2 high-focus cognitive blocks are scheduled in the same 3-hour window without a break.
+        </p>
+</div>
+<!-- Rule 3: Repeated Rollforward Watchdog -->
+<div class="p-3 rounded-lg bg-bg-canvas space-y-1.5">
+<div class="flex items-start justify-between gap-3">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-status-rolled text-[18px]">history_toggle_off</span>
+<span class="font-label-md text-label-md font-semibold text-on-surface">Repeated Rollforward Watchdog</span>
+</div>
+<button aria-checked="true" class="w-10 h-5 bg-primary rounded-full relative p-0.5 transition-colors flex-shrink-0 cursor-pointer" onclick="this.classList.toggle('bg-primary'); this.classList.toggle('bg-outline-variant'); const d=this.firstElementChild; d.classList.toggle('translate-x-5'); d.classList.toggle('translate-x-0');" role="switch">
+<span class="w-4 h-4 bg-surface rounded-full block shadow-sm transform translate-x-5 transition-transform"></span>
+</button>
+</div>
+<p class="font-body-sm text-body-sm text-text-muted">
+          Loudly highlight tasks postponed ≥2 consecutive days. Suggest decomposing or archiving into backlog.
+        </p>
+</div>
+<!-- Rule 4: Elastic Compression Policy -->
+<div class="p-3 rounded-lg bg-bg-canvas space-y-1.5">
+<div class="flex items-start justify-between gap-3">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[18px]">unfold_less</span>
+<span class="font-label-md text-label-md font-semibold text-on-surface">Elastic Compression Policy</span>
+</div>
+<button aria-checked="true" class="w-10 h-5 bg-primary rounded-full relative p-0.5 transition-colors flex-shrink-0 cursor-pointer" onclick="this.classList.toggle('bg-primary'); this.classList.toggle('bg-outline-variant'); const d=this.firstElementChild; d.classList.toggle('translate-x-5'); d.classList.toggle('translate-x-0');" role="switch">
+<span class="w-4 h-4 bg-surface rounded-full block shadow-sm transform translate-x-5 transition-transform"></span>
+</button>
+</div>
+<p class="font-body-sm text-body-sm text-text-muted">
+          Automatically offer shrinking elastic tasks to their minimum duration floor (e.g. 45m → 15m) during crunch.
+        </p>
+</div>
+</div>
+</section>
+<!-- SECTION 5: APPEARANCE & DATA ENGINE -->
+<section class="bg-surface rounded-xl p-space-md shadow-[0_1px_3px_rgba(34,49,43,0.05),0_8px_24px_rgba(34,49,43,0.04)] space-y-space-md">
+<div class="flex items-center gap-space-xs">
+<div class="w-8 h-8 rounded-lg bg-surface-container flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-[20px]">palette</span>
+</div>
+<div>
+<h2 class="font-headline-md text-headline-md text-on-surface">Appearance &amp; Sync State</h2>
+<p class="font-label-sm text-label-sm text-text-muted">Design system profile &amp; database backend</p>
+</div>
+</div>
+<!-- Theme Selection -->
+<div class="space-y-2">
+<span class="font-label-md text-label-md font-semibold text-on-surface">Theme Profile</span>
+<div class="grid grid-cols-3 gap-2">
+<button class="p-2.5 rounded-xl bg-surface-container-high text-on-surface flex flex-col items-center justify-center gap-1.5 shadow-xs">
+<span class="w-5 h-5 rounded-full bg-primary flex items-center justify-center text-on-primary">
+<span class="material-symbols-outlined text-[14px]">check</span>
+</span>
+<span class="font-label-sm text-label-sm font-bold">Sage Focus</span>
+</button>
+<button class="p-2.5 rounded-xl bg-bg-canvas hover:bg-surface-container text-text-muted flex flex-col items-center justify-center gap-1.5 transition-colors">
+<span class="w-5 h-5 rounded-full bg-border-subtle"></span>
+<span class="font-label-sm text-label-sm">Warm Calm</span>
+</button>
+<button class="p-2.5 rounded-xl bg-bg-canvas hover:bg-surface-container text-text-muted flex flex-col items-center justify-center gap-1.5 transition-colors">
+<span class="w-5 h-5 rounded-full bg-code-bg"></span>
+<span class="font-label-sm text-label-sm">Dark (Preview)</span>
+</button>
+</div>
+</div>
+<!-- Connection & Sync Info Card -->
+<div class="p-3.5 rounded-xl bg-bg-canvas space-y-2">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-status-ontrack"></span>
+<span class="font-label-md text-label-md font-semibold text-on-surface">Supabase Local Node</span>
+</div>
+<span class="font-label-sm text-label-sm text-text-muted font-mono">v1.2.4-fast</span>
+</div>
+<p class="font-body-sm text-body-sm text-text-muted">
+        15 tasks synced · Continuous audit active · Zero external telemetry.
+      </p>
+</div>
+<!-- Data Actions -->
+<div class="flex items-center gap-2 pt-1">
+<button class="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl bg-surface-container hover:bg-surface-container-high text-on-surface-variant font-label-md text-label-md transition-colors">
+<span class="material-symbols-outlined text-[18px]">download</span>
+<span>Export JSON</span>
+</button>
+<button class="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl bg-bg-canvas hover:bg-error-container/30 text-error font-label-md text-label-md transition-colors">
+<span class="material-symbols-outlined text-[18px]">restart_alt</span>
+<span>Reset Data</span>
+</button>
+</div>
+</section>
+</div>
+<script>
+  // Simple micro-interactions for Add Category
+  const toggleBtn = document.getElementById('toggle-add-cat-btn');
+  const catInput = document.getElementById('cat-name-input');
+  const saveBtn = document.getElementById('save-cat-btn');
+  const cancelBtn = document.getElementById('cancel-cat-btn');
+  const colorSwatches = document.querySelectorAll('#color-swatches button');
+  let selectedColor = '#11694a';
+
+  colorSwatches.forEach(btn => {
+    btn.addEventListener('click', () => {
+      colorSwatches.forEach(b => {
+        b.innerHTML = '';
+        b.classList.remove('ring-2', 'ring-primary', 'ring-offset-2', 'ring-offset-surface-container-low');
+      });
+      btn.innerHTML = '<span class="material-symbols-outlined text-[16px]">check</span>';
+      btn.classList.add('ring-2', 'ring-primary', 'ring-offset-2', 'ring-offset-surface-container-low');
+      selectedColor = btn.getAttribute('data-color');
+    });
+  });
+
+  saveBtn.addEventListener('click', () => {
+    const val = catInput.value.trim();
+    if (!val) {
+      catInput.focus();
+      return;
+    }
+    const container = document.getElementById('categories-container');
+    const newDiv = document.createElement('div');
+    newDiv.className = 'flex items-center justify-between p-3 rounded-lg bg-bg-canvas animate-fade-in';
+    newDiv.innerHTML = `
+      <div class="flex items-center gap-3 min-w-0">
+        <span class="w-3.5 h-3.5 rounded-full flex-shrink-0 shadow-xs" style="background-color: ${selectedColor}"></span>
+        <div class="flex flex-col min-w-0">
+          <div class="flex items-center gap-2">
+            <span class="font-label-md text-label-md text-on-surface font-semibold truncate">${val}</span>
+            <span class="px-2 py-0.5 rounded-full bg-surface-container text-on-surface-variant font-label-sm text-label-sm">0 tasks</span>
+          </div>
+          <span class="font-label-sm text-label-sm text-text-muted truncate">Custom triage domain</span>
+        </div>
+      </div>
+      <div class="flex items-center gap-1 flex-shrink-0">
+        <button class="w-8 h-8 flex items-center justify-center rounded-lg text-text-muted hover:text-on-surface hover:bg-surface transition-colors" aria-label="Edit">
+          <span class="material-symbols-outlined text-[18px]">edit</span>
+        </button>
+        <button class="w-8 h-8 flex items-center justify-center rounded-lg text-text-muted hover:text-error hover:bg-error-container/40 transition-colors" onclick="this.closest('.flex.items-center.justify-between').remove();" aria-label="Delete">
+          <span class="material-symbols-outlined text-[18px]">delete_outline</span>
+        </button>
+      </div>
+    `;
+    container.prepend(newDiv);
+    catInput.value = '';
+  });
+
+  cancelBtn.addEventListener('click', () => {
+    catInput.value = '';
+  });
+
+  toggleBtn.addEventListener('click', () => {
+    catInput.focus();
+    catInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  });
+</script></main><nav class="fixed bottom-0 w-full z-50 pb-safe bg-surface/90 backdrop-blur-xl shadow-[0_-2px_12px_rgba(34,49,43,0.05)]" data-active-classes="text-primary font-semibold"><div class="h-16 px-space-xs flex items-center justify-around relative max-w-lg mx-auto"><a class="flex flex-col items-center justify-center min-w-[56px] h-12 text-on-surface-variant transition-colors" data-path="today" href="#"><span class="material-symbols-outlined text-[22px]">wb_sunny</span><span class="font-label-sm text-label-sm mt-0.5">Today</span></a><a class="flex flex-col items-center justify-center min-w-[56px] h-12 text-on-surface-variant transition-colors" data-path="my-tasks" href="#"><span class="material-symbols-outlined text-[22px]">check_circle</span><span class="font-label-sm text-label-sm mt-0.5">My Tasks</span></a><div class="relative -top-5 flex flex-col items-center"><a class="w-14 h-14 rounded-full bg-primary hover:bg-primary-container text-on-primary flex items-center justify-center shadow-[0_4px_16px_rgba(17,105,74,0.35)] transition-transform active:scale-95" data-path="quick-capture" href="#"><span class="material-symbols-outlined text-[26px]">mic</span></a><span class="font-label-sm text-label-sm text-text-muted mt-1">Capture</span></div><a class="flex flex-col items-center justify-center min-w-[56px] h-12 text-on-surface-variant transition-colors" data-path="rolled" href="#"><span class="material-symbols-outlined text-[22px]">history</span><span class="font-label-sm text-label-sm mt-0.5">Rolled</span></a><a aria-current="page" class="flex flex-col items-center justify-center min-w-[56px] h-12 transition-colors text-primary font-semibold" data-path="settings" href="#"><span class="material-symbols-outlined text-[22px]">settings</span><span class="font-label-sm text-label-sm mt-0.5">Settings</span></a></div></nav></body></html>

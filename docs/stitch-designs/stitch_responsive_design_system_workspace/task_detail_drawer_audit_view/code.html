@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/><meta content="mobile_stack" name="shell-type"/><link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;600;700;800&amp;display=swap" rel="stylesheet"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { colors: { "on-primary": "#ffffff", "surface-dim": "#cdded5", "inverse-on-surface": "#e3f5eb", "on-secondary": "#ffffff", "status-medium": "#F2B24C", "on-secondary-container": "#257123", "status-rolled": "#7C87D6", "on-secondary-fixed-variant": "#005308", "secondary-fixed-dim": "#8ad97d", "tertiary": "#006a3a", "outline-variant": "#bec9c1", "primary-fixed": "#a3f3cc", "status-ontrack": "#5DB87E", "secondary-container": "#a3f394", "surface-container": "#e0f2e9", "secondary-fixed": "#a5f697", "text-muted": "#5B6B62", "primary-fixed-dim": "#88d6b1", "error": "#ba1a1a", "surface-container-lowest": "#ffffff", "tertiary-fixed-dim": "#7ed99c", "inverse-surface": "#24342d", "on-tertiary-fixed": "#00210e", "surface-tint": "#156b4d", "on-background": "#101e19", "code-bg": "#1F2B26", "outline": "#6f7a73", "primary-container": "#338262", "on-primary-fixed-variant": "#005138", "on-primary-fixed": "#002114", "error-container": "#ffdad6", "surface-bright": "#ecfef4", "on-tertiary-fixed-variant": "#00522c", "tertiary-fixed": "#99f6b7", "tertiary-container": "#258450", "code-text": "#E8EFE9", "surface": "#FFFFFF", "surface-container-low": "#e6f8ee", "on-surface-variant": "#3f4943", "surface-container-highest": "#d5e7dd", "on-surface": "#101e19", "on-primary-container": "#f5fff7", "primary": "#11694a", "status-urgent": "#F0705A", "border-subtle": "#E7E5DF", "bg-canvas": "#F7F6F2", "on-tertiary": "#ffffff", "on-secondary-fixed": "#002201", "table-header": "#EEF3F0", "surface-variant": "#d5e7dd", "secondary": "#206d1f", "on-error": "#ffffff", "inverse-primary": "#88d6b1", "background": "#ecfef4", "on-error-container": "#93000a", "on-tertiary-container": "#f6fff4", "surface-container-high": "#dbece3" }, borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" }, spacing: { "space-lg": "1.5rem", "gutter-lg": "1.5rem", "space-md": "1rem", "gutter": "1rem", "space-xl": "2.25rem", "space-xs": "0.25rem", "margin-md": "1.5rem", "space-sm": "0.5rem", "margin-lg": "2.5rem", "margin": "1.25rem" }, fontFamily: { "label-sm": ["Figtree"], "headline-lg": ["Figtree"], "body-lead": ["Figtree"], "body-sm": ["Figtree"], "headline-xl": ["Figtree"], "label-md": ["Figtree"], "headline-xl-mobile": ["Figtree"], "headline-md": ["Figtree"], "body-md": ["Figtree"] }, fontSize: { "label-sm": ["0.6875rem", { "lineHeight": "0.9rem", "letterSpacing": "0.03em", "fontWeight": "700" }], "headline-lg": ["1.5rem", { "lineHeight": "2rem", "letterSpacing": "-0.02em", "fontWeight": "700" }], "body-lead": ["1.08rem", { "lineHeight": "1.75rem", "fontWeight": "400" }], "body-sm": ["0.875rem", { "lineHeight": "1.4rem", "fontWeight": "400" }], "headline-xl": ["2.6rem", { "lineHeight": "3.1rem", "letterSpacing": "-0.03em", "fontWeight": "800" }], "label-md": ["0.8125rem", { "lineHeight": "1.2rem", "letterSpacing": "0.01em", "fontWeight": "600" }], "headline-xl-mobile": ["2rem", { "lineHeight": "2.4rem", "letterSpacing": "-0.02em", "fontWeight": "800" }], "headline-md": ["1.15rem", { "lineHeight": "1.6rem", "letterSpacing": "-0.01em", "fontWeight": "700" }], "body-md": ["1rem", { "lineHeight": "1.65rem", "fontWeight": "400" }] } } } }</script><style>@layer base{html,body{width:100%;margin:0;padding:0;}body{overscroll-behavior-y:none;background-color:#F7F6F2;}.pb-safe{padding-bottom:env(safe-area-inset-bottom,0px);}.pt-safe{padding-top:env(safe-area-inset-top,0px);}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head><body class="bg-bg-canvas text-on-surface antialiased min-h-screen flex flex-col font-body-md"><header class="fixed top-0 w-full z-50 pt-safe bg-surface/85 backdrop-blur-xl shadow-[0_1px_8px_rgba(34,49,43,0.04)]"><div class="h-16 px-gutter flex items-center justify-between gap-space-sm"><div class="flex items-center gap-space-xs"><button aria-label="Go back" class="w-11 h-11 flex items-center justify-center rounded-xl hover:bg-table-header transition-colors text-on-surface" onclick="history.back()"><span class="material-symbols-outlined text-[24px]">arrow_back</span></button><img alt="Tasks Agentic Logo" class="h-7 w-auto object-contain flex-shrink-0" src="https://lh3.googleusercontent.com/aida/AEtjO1UzmqCuFCLUd3EztkGakEpAFvUtAdLtzeVoVnlxHkQYyhJ9aDA_3ymDB_q3o5x9qAn1Kyav-_9ER4ckKo_ELy7qEgqoOMAVsNbYkqfU4ggqjA0FPmmDVqYdj2-pJiAlZu_E1zf9N7Tqchbfbatk4xJx01DQAi0-XZeNEOPSxVJaBC7QojQTvP4dWJSTGglj8M21XXkUQiFcTS2ngkk6VyeI4ifycXqkgCy7VCYPWfFboYEb5yeP5xkD9L-w"/><h1 class="font-headline-md text-headline-md text-on-surface font-bold tracking-tight truncate ml-1">Task Detail</h1></div><div class="flex items-center gap-space-xs"><button aria-label="More options" class="w-11 h-11 flex items-center justify-center rounded-xl hover:bg-table-header transition-colors text-on-surface-variant"><span class="material-symbols-outlined text-[22px]">more_vert</span></button><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center flex-shrink-0 shadow-[0_2px_6px_rgba(17,105,74,0.2)]"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></div></header><main class="flex-1 w-full bg-bg-canvas pt-16 pb-safe px-gutter flex flex-col"><div class="flex flex-col w-full pb-10">
+<!-- Interactive Ambient Backdrop Overlay for Drawer Presence -->
+<div class="fixed inset-0 bg-inverse-surface/30 backdrop-blur-[6px] z-40 transition-opacity"></div>
+<!-- Mobile Bottom Sheet / Drawer Modal Surface -->
+<div class="relative z-50 w-full bg-surface rounded-t-[28px] shadow-2xl flex flex-col pt-3 pb-8 -mt-2">
+<!-- Sheet Drag Handle Pill & Quick Close Header -->
+<div class="w-full flex flex-col items-center px-gutter pt-1 pb-3">
+<div class="w-12 h-1.5 bg-outline-variant/60 rounded-full mb-3 cursor-grab active:cursor-grabbing"></div>
+<div class="w-full flex items-center justify-between">
+<!-- Category Chip with Organic Dot -->
+<div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-surface-container text-on-surface">
+<span class="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
+<span class="font-label-md text-label-md tracking-wide">Startup Alpha</span>
+</div>
+<!-- Action / Close Pill Button -->
+<button aria-label="Close Drawer" class="w-9 h-9 rounded-full bg-table-header hover:bg-surface-variant flex items-center justify-center text-on-surface-variant transition-colors" onclick="history.back()">
+<span class="material-symbols-outlined text-[20px]">close</span>
+</button>
+</div>
+</div>
+<!-- Scrollable Drawer Body Area -->
+<div class="px-gutter flex flex-col gap-5">
+<!-- Editable Task Title Block -->
+<div class="flex flex-col gap-1.5">
+<div class="flex items-start justify-between gap-3 group">
+<h2 class="font-headline-lg text-headline-lg text-on-surface font-extrabold tracking-tight leading-snug">
+            Finalize Series A Term Sheet with Legal
+          </h2>
+<button class="w-8 h-8 rounded-lg bg-surface-container flex items-center justify-center text-text-muted hover:text-primary transition-colors flex-shrink-0 mt-0.5" title="Edit title">
+<span class="material-symbols-outlined text-[18px]">edit</span>
+</button>
+</div>
+<p class="font-body-sm text-body-sm text-text-muted flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[16px] text-tertiary">psychology</span>
+          Agent parsed from Slack sync • Delegated task #402
+        </p>
+</div>
+<!-- Status & Dual-Priority Grid -->
+<div class="grid grid-cols-1 gap-2.5">
+<!-- Interactive Status Picker Card -->
+<div class="p-3.5 bg-surface-container-low rounded-xl flex items-center justify-between">
+<div class="flex items-center gap-2.5">
+<span class="material-symbols-outlined text-primary text-[22px]">pending</span>
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm uppercase tracking-wider text-text-muted">Lifecycle State</span>
+<span class="font-headline-md text-headline-md text-on-surface" id="statusLabel">In Progress</span>
+</div>
+</div>
+<div class="relative">
+<select class="appearance-none bg-surface text-on-surface font-label-md text-label-md py-1.5 pl-3 pr-8 rounded-lg shadow-sm focus:outline-none cursor-pointer" id="statusSelect" onchange="document.getElementById('statusLabel').textContent = this.options[this.selectedIndex].text">
+<option value="not_started">Not Started</option>
+<option selected="" value="in_progress">In Progress</option>
+<option value="done">Done</option>
+<option value="rolled_forward">Rolled-forward</option>
+</select>
+<span class="material-symbols-outlined pointer-events-none absolute right-2 top-2 text-[18px] text-text-muted">expand_more</span>
+</div>
+</div>
+<!-- Layered Priority Intelligence Card -->
+<div class="p-3.5 bg-surface-container-low rounded-xl flex flex-col gap-2">
+<div class="flex items-center justify-between">
+<span class="font-label-sm text-label-sm uppercase tracking-wider text-text-muted">Priority Reasoning</span>
+<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-status-medium/15 text-status-medium font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-[13px]" style="font-variation-settings: 'FILL' 1;">star</span>
+              Important (User Declared)
+            </span>
+</div>
+<!-- Inferred Urgency Agent Banner -->
+<div class="p-2.5 bg-status-urgent/10 rounded-lg flex items-center gap-2">
+<span class="material-symbols-outlined text-status-urgent text-[18px] flex-shrink-0">warning_amber</span>
+<p class="font-label-md text-label-md text-status-urgent font-medium leading-tight">
+              Inferred Urgent: Blocks Founder Call tomorrow 09:00 AM
+            </p>
+</div>
+</div>
+</div>
+<!-- Elastic Time & Pressure Detection Engine -->
+<div class="p-4 bg-surface-container-low rounded-2xl flex flex-col gap-3.5">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[20px]">schedule</span>
+<span class="font-headline-md text-headline-md text-on-surface">Time &amp; Dynamics</span>
+</div>
+<!-- On-track indicator pill -->
+<div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-status-ontrack/15 text-primary font-label-sm text-label-sm">
+<span class="w-1.5 h-1.5 rounded-full bg-status-ontrack"></span>
+            Pressure: On-track
+          </div>
+</div>
+<div class="grid grid-cols-2 gap-3 pt-1">
+<div class="bg-surface p-3 rounded-xl flex flex-col gap-0.5 shadow-sm">
+<span class="font-label-sm text-label-sm text-text-muted">Scheduled Date</span>
+<span class="font-label-md text-label-md text-on-surface font-bold">Today, Oct 14</span>
+<span class="font-label-sm text-label-sm text-tertiary flex items-center gap-1 mt-0.5">
+<span class="material-symbols-outlined text-[14px]">alarm</span> Before 11:30 AM
+            </span>
+</div>
+<div class="bg-surface p-3 rounded-xl flex flex-col gap-0.5 shadow-sm">
+<span class="font-label-sm text-label-sm text-text-muted">Estimated Duration</span>
+<span class="font-headline-md text-headline-md text-on-surface font-extrabold">45 mins</span>
+<span class="font-label-sm text-label-sm text-text-muted">Floor: 20m minimum</span>
+</div>
+</div>
+<!-- Elastic Collapse Toggle Pill -->
+<div class="bg-surface p-3 rounded-xl flex items-center justify-between shadow-sm">
+<div class="flex items-center gap-2.5">
+<div class="w-8 h-8 rounded-lg bg-surface-container flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-[18px]">compress</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md text-on-surface font-semibold">Elastic Scheduling</span>
+<span class="font-label-sm text-label-sm text-text-muted">Collapse to 20m during calendar crunches</span>
+</div>
+</div>
+<!-- Custom Ambient Toggle -->
+<button class="w-11 h-6 rounded-full bg-primary p-0.5 transition-colors relative flex items-center" id="elasticToggleBtn" onclick="toggleElastic()">
+<span class="w-5 h-5 rounded-full bg-surface transform translate-x-5 transition-transform shadow" id="elasticPill"></span>
+</button>
+</div>
+</div>
+<!-- Visual Slippage & Rollforward Status -->
+<div class="p-3.5 bg-surface-container rounded-xl flex items-center justify-between">
+<div class="flex items-center gap-2.5">
+<div class="w-8 h-8 rounded-lg bg-surface flex items-center justify-center text-status-rolled">
+<span class="material-symbols-outlined text-[18px]">history</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md text-on-surface font-semibold">Slippage History</span>
+<span class="font-label-sm text-label-sm text-text-muted">Rollforward count: 0 (Freshly created today)</span>
+</div>
+</div>
+<span class="font-label-sm text-label-sm px-2 py-0.5 rounded-md bg-status-ontrack/20 text-on-secondary-container">0x Drift</span>
+</div>
+<!-- Agentic Dependency Graph -->
+<div class="flex flex-col gap-2.5">
+<span class="font-label-sm text-label-sm uppercase tracking-wider text-text-muted">Relational Dependencies</span>
+<div class="flex flex-col gap-2">
+<!-- Depends On Block -->
+<div class="p-3 bg-surface-container-low rounded-xl flex flex-col gap-1.5">
+<span class="font-label-sm text-label-sm text-text-muted flex items-center gap-1 font-semibold">
+<span class="material-symbols-outlined text-[16px] text-status-ontrack">link</span>
+              Prerequisite: Depends on
+            </span>
+<div class="flex items-center justify-between pl-5">
+<span class="font-body-sm text-body-sm text-on-surface">Clean cap table review</span>
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-surface-container text-on-surface font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-[14px] text-status-ontrack">check_circle</span>
+                Done
+              </span>
+</div>
+</div>
+<!-- Blocks Block -->
+<div class="p-3 bg-surface-container-low rounded-xl flex flex-col gap-2">
+<span class="font-label-sm text-label-sm text-text-muted flex items-center gap-1 font-semibold">
+<span class="material-symbols-outlined text-[16px] text-status-urgent">arrow_outward</span>
+              Critical path: Blocks next actions
+            </span>
+<div class="flex flex-col gap-1.5 pl-5">
+<div class="flex items-center justify-between">
+<span class="font-body-sm text-body-sm text-on-surface">➔ Seed pitch deck v2 updating</span>
+<span class="font-label-sm text-label-sm text-text-muted">Waiting</span>
+</div>
+<div class="flex items-center justify-between">
+<span class="font-body-sm text-body-sm text-on-surface">➔ Board slide distribution (5 recipients)</span>
+<span class="font-label-sm text-label-sm text-status-urgent font-medium">Stalled</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Sub-steps Interactive Checklist -->
+<div class="flex flex-col gap-2.5 pt-1">
+<div class="flex items-center justify-between">
+<span class="font-label-sm text-label-sm uppercase tracking-wider text-text-muted">Deconstructed Milestones</span>
+<span class="font-label-sm text-label-sm text-primary font-bold" id="substepProgress">1 of 3 resolved</span>
+</div>
+<div class="flex flex-col gap-2">
+<!-- Step 1 (Checked) -->
+<label class="p-3 bg-surface-container-low hover:bg-surface-container rounded-xl flex items-center gap-3 transition-colors cursor-pointer select-none">
+<input checked="" class="w-5 h-5 rounded accent-primary cursor-pointer" onchange="updateStepCounter()" type="checkbox"/>
+<span class="font-body-sm text-body-sm text-text-muted line-through">Review clause 4.2 liquidation preference</span>
+</label>
+<!-- Step 2 -->
+<label class="p-3 bg-surface-container-low hover:bg-surface-container rounded-xl flex items-center gap-3 transition-colors cursor-pointer select-none">
+<input class="w-5 h-5 rounded accent-primary cursor-pointer" onchange="updateStepCounter()" type="checkbox"/>
+<span class="font-body-sm text-body-sm text-on-surface font-medium">Confirm option pool reservation (12%)</span>
+</label>
+<!-- Step 3 -->
+<label class="p-3 bg-surface-container-low hover:bg-surface-container rounded-xl flex items-center gap-3 transition-colors cursor-pointer select-none">
+<input class="w-5 h-5 rounded accent-primary cursor-pointer" onchange="updateStepCounter()" type="checkbox"/>
+<span class="font-body-sm text-body-sm text-on-surface font-medium">Ping external counsel for sign-off</span>
+</label>
+</div>
+</div>
+<!-- Context Snapshot Card -->
+<div class="p-4 bg-surface-container-low rounded-2xl flex flex-col gap-3">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[20px]">description</span>
+<span class="font-headline-md text-headline-md text-on-surface">Legal Attachment Context</span>
+</div>
+<div class="w-full h-32 rounded-xl overflow-hidden relative shadow-sm">
+<img class="w-full h-full object-cover" data-alt="Close up warm macro photograph of typed venture capital legal contracts and investment agreements resting on a natural warm wood desk with fountain pen in soft atmospheric daylight" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCueYBsEOCR1iU72r4EJ_DcGCYRPswUDeaLZgww6LlSylDelfs-EEiNwAhT6gk30rU6zpzN9evWHJpJAloYcIXaa5bSuALZYzs-Tu2D_2_TJQ_nmYWwT0esXjne8bP8FIqUxBAqBxmJlYWGzsz34AbSzSHuXhhLVmta2fCvbRmRhUsDorlqztGUOoaBut2IUGA1DC72ZMqhAj0c7KmpGFlE2q4xhryHuqw8o9IDfPYbk8GEKyyBPyyGkw"/>
+<div class="absolute inset-0 bg-gradient-to-t from-inverse-surface/80 via-transparent to-transparent flex items-end p-2.5">
+<span class="font-label-sm text-label-sm text-on-primary font-medium flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">attachment</span> term_sheet_v4_draft.pdf (1.4MB)
+            </span>
+</div>
+</div>
+</div>
+</div>
+<!-- Bottom Sticky Sticky Action Drawer Footer -->
+<div class="sticky bottom-0 left-0 right-0 pt-4 pb-2 px-gutter mt-6 bg-surface/95 backdrop-blur-md flex flex-col gap-2.5">
+<div class="flex items-center gap-2.5">
+<!-- Voice / NL Natural Editor Button -->
+<button class="w-13 h-13 px-4 py-3 rounded-xl bg-table-header hover:bg-surface-container text-on-surface flex items-center justify-center transition-all flex-shrink-0 active:scale-95" id="voiceBtn" onclick="triggerVoiceCapture()" title="Edit via Voice">
+<span class="material-symbols-outlined text-[22px] text-primary" id="voiceIcon">mic</span>
+</button>
+<!-- Primary Complete CTA -->
+<button class="flex-1 py-3 px-5 rounded-xl bg-primary hover:bg-primary-container text-on-primary font-headline-md text-headline-md font-bold flex items-center justify-center gap-2 shadow-md hover:shadow-lg transition-all active:scale-[0.98]" id="completeBtn" onclick="toggleTaskCompletion()">
+<span class="material-symbols-outlined text-[20px]" id="completeIcon">check_circle</span>
+<span id="completeLabel">Mark as Completed</span>
+</button>
+</div>
+<!-- Ambient hint beneath CTAs -->
+<p class="font-label-sm text-label-sm text-center text-text-muted">
+        Pressing complete unblocks 2 dependent items on your roadmap
+      </p>
+</div>
+</div>
+<!-- Micro-interaction Client Script -->
+<script>
+    let isElasticActive = true;
+    function toggleElastic() {
+      isElasticActive = !isElasticActive;
+      const pill = document.getElementById('elasticPill');
+      const btn = document.getElementById('elasticToggleBtn');
+      if (isElasticActive) {
+        pill.classList.remove('translate-x-0');
+        pill.classList.add('translate-x-5');
+        btn.classList.remove('bg-surface-variant');
+        btn.classList.add('bg-primary');
+      } else {
+        pill.classList.remove('translate-x-5');
+        pill.classList.add('translate-x-0');
+        btn.classList.remove('bg-primary');
+        btn.classList.add('bg-surface-variant');
+      }
+    }
+
+    function updateStepCounter() {
+      const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+      let checkedCount = 0;
+      checkboxes.forEach(cb => {
+        const textSpan = cb.parentElement.querySelector('span');
+        if (cb.checked) {
+          checkedCount++;
+          textSpan.classList.add('line-through', 'text-text-muted');
+          textSpan.classList.remove('text-on-surface', 'font-medium');
+        } else {
+          textSpan.classList.remove('line-through', 'text-text-muted');
+          textSpan.classList.add('text-on-surface', 'font-medium');
+        }
+      });
+      document.getElementById('substepProgress').textContent = `${checkedCount} of ${checkboxes.length} resolved`;
+    }
+
+    let isCompleted = false;
+    function toggleTaskCompletion() {
+      isCompleted = !isCompleted;
+      const label = document.getElementById('completeLabel');
+      const statusSelect = document.getElementById('statusSelect');
+      const statusLabel = document.getElementById('statusLabel');
+      const btn = document.getElementById('completeBtn');
+
+      if (isCompleted) {
+        label.textContent = 'Completed!';
+        btn.classList.replace('bg-primary', 'bg-tertiary-container');
+        statusSelect.value = 'done';
+        statusLabel.textContent = 'Done';
+      } else {
+        label.textContent = 'Mark as Completed';
+        btn.classList.replace('bg-tertiary-container', 'bg-primary');
+        statusSelect.value = 'in_progress';
+        statusLabel.textContent = 'In Progress';
+      }
+    }
+
+    let isListening = false;
+    function triggerVoiceCapture() {
+      isListening = !isListening;
+      const mic = document.getElementById('voiceIcon');
+      const voiceBtn = document.getElementById('voiceBtn');
+      if (isListening) {
+        mic.textContent = 'graphic_eq';
+        mic.classList.add('animate-pulse');
+        voiceBtn.classList.replace('bg-table-header', 'bg-secondary-container');
+      } else {
+        mic.textContent = 'mic';
+        mic.classList.remove('animate-pulse');
+        voiceBtn.classList.replace('bg-secondary-container', 'bg-table-header');
+      }
+    }
+  </script>
+</div></main></body></html>
