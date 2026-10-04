@@ -1,5 +1,5 @@
 import "server-only";
-import { and, count, desc, eq, isNull } from "drizzle-orm";
+import { and, asc, count, desc, eq, isNull } from "drizzle-orm";
 
 import { db } from "@/db";
 import { domains, tasks, appSettings } from "@/db/schema";
@@ -33,7 +33,10 @@ export function todayLabel(): string {
 }
 
 export async function getDomains(): Promise<Domain[]> {
-  return db.select().from(domains).orderBy(desc(domains.createdAt));
+  return db
+    .select()
+    .from(domains)
+    .orderBy(asc(domains.sortOrder), asc(domains.createdAt));
 }
 
 /** The single app_settings row - lazily created with defaults on first read. */

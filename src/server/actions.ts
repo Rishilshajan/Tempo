@@ -1,6 +1,6 @@
 "use server";
 
-import { eq } from "drizzle-orm";
+import { asc, eq, max } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 
 import { db } from "@/db";
@@ -16,6 +16,7 @@ import {
   updateTaskSchema,
   moveStatusSchema,
   updateSettingsSchema,
+  reorderDomainsSchema,
   type CreateDomainInput,
   type CreateTaskInput,
   type UpdateTaskInput,
@@ -60,6 +61,9 @@ export async function createDomain(
   if (!tag) return { ok: false, error: "Could not derive a tag from the name" };
 
   try {
+    const [order] = await db
+      .select({ maxSortOrder: max(domains.sortOrder) })
+      .from(domains);
     const [row] = await db
       .insert(domains)
       .values({
@@ -71,6 +75,7 @@ export async function createDomain(
         purpose: purpose ?? null,
         morningBias,
         allowElastic,
+        sortOrder: (order.maxSortOrder ?? -1) + 1,
       })
       .returning();
     log.success("Domain created", { id: row.id, tag: row.tag });
@@ -85,6 +90,42 @@ export async function createDomain(
     }
     log.error("createDomain failed", e instanceof Error ? e.message : e);
     return { ok: false, error: "Could not create the domain" };
+  }
+}
+
+export async function reorderDomains(
+  ids: string[],
+): Promise<ActionResult<null>> {
+  const parsed = reorderDomainsSchema.safeParse(ids);
+  if (!parsed.success) {
+    log.warn("reorderDomains validation failed", parsed.error.issues);
+    return { ok: false, error: firstError(parsed.error.issues) };
+  }
+
+  try {
+    await db.transaction(async (tx) => {
+      const current = await tx
+        .select({ id: domains.id })
+        .from(domains)
+        .orderBy(asc(domains.sortOrder), asc(domains.createdAt));
+      const currentIds = new Set(current.map((domain) => domain.id));
+      if (
+        current.length !== parsed.data.length ||
+        parsed.data.some((id) => !currentIds.has(id))
+      ) {
+        throw new Error("Domain list changed while saving its order");
+      }
+
+      for (const [sortOrder, id] of parsed.data.entries()) {
+        await tx.update(domains).set({ sortOrder }).where(eq(domains.id, id));
+      }
+    });
+    log.success("Domain order updated", { count: parsed.data.length });
+    refresh();
+    return { ok: true, data: null };
+  } catch (e) {
+    log.error("reorderDomains failed", e instanceof Error ? e.message : e);
+    return { ok: false, error: "Could not save the domain order" };
   }
 }
 

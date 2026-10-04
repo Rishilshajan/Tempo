@@ -35,6 +35,11 @@ export const updateDomainSchema = createDomainSchema.partial().extend({
   id: z.string().min(1),
 });
 
+export const reorderDomainsSchema = z
+  .array(z.string().uuid())
+  .max(100)
+  .refine((ids) => new Set(ids).size === ids.length, "Domain IDs must be unique");
+
 /* -------------------------------- tasks -------------------------------- */
 
 const baseTaskSchema = z.object({

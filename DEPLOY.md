@@ -37,27 +37,37 @@ Required in production:
 | `VAPID_SUBJECT` | `mailto:you@domain` |
 | `ANTHROPIC_API_KEY` | only needed for the Phase-4 AI layer |
 
-## 2. Redeploy so the env takes effect
+## 2. Apply database migrations
 
-```bash
-vercel --prod
-```
-
-## 3. Database migrations
-
-The app uses your existing Supabase database, so all tables already exist.
-Only when pointing at a fresh database:
+Apply pending migrations to the existing Supabase database before deploying
+code changes that depend on them:
 
 ```bash
 npm run db:migrate
+```
+
+## 3. Redeploy so the env and schema changes take effect
+
+```bash
+vercel --prod
 ```
 
 ## 4. Schedule the background jobs (Supabase → SQL editor)
 
 Rollforward already runs as a pure-SQL `pg_cron` job (`tempo-rollforward`) — leave it.
 
-Notifications must call the HTTP endpoint (web push needs the Node runtime), so
-enable `pg_net` once and schedule `tempo-notify` with your **real** `CRON_SECRET`:
+Push notifications are temporarily paused; do not schedule `tempo-notify` until
+the service worker is re-enabled. The endpoint currently returns a paused
+response without querying the database. To stop the existing minute-by-minute
+Vercel invocations as well, run this in the Supabase SQL editor:
+
+```sql
+select cron.unschedule('tempo-notify');
+```
+
+When push notifications are re-enabled, notifications must call the HTTP
+endpoint (web push needs the Node runtime), so enable `pg_net` once and schedule
+`tempo-notify` with your **real** `CRON_SECRET`:
 
 ```sql
 create extension if not exists pg_net;
@@ -70,8 +80,8 @@ select cron.schedule('tempo-notify', '* * * * *', $$
 $$);
 ```
 
-Runs every minute; only sends when the current minute matches a user alert time.
-A unique slot in `notification_log` prevents double-sends.
+When active, this runs every minute; only sends when the current minute matches
+a user alert time. A unique slot in `notification_log` prevents double-sends.
 
 To inspect or remove jobs later:
 
@@ -84,13 +94,17 @@ select cron.unschedule('tempo-notify');
 
 ```bash
 SECRET="PASTE_YOUR_CRON_SECRET"
+curl -i https://tempo.vercel.app/api/health
 curl -s -o /dev/null -w "today: %{http_code}\n"            https://tempo.vercel.app/today
 curl -s -o /dev/null -w "manifest: %{http_code}\n"         https://tempo.vercel.app/manifest.webmanifest
 curl -s -o /dev/null -w "notify(no secret): %{http_code}\n" -X POST https://tempo.vercel.app/api/cron/notify
 curl -s -X POST https://tempo.vercel.app/api/cron/notify -H "x-cron-secret: $SECRET"
 ```
 
-Expect `200`, `200`, `401`, then `{"ok":true,...}`.
+The health endpoint returns `200` and `{"status":"ok",...}` when the database
+and required schema are available, otherwise `503` with the failed check names.
+The remaining checks expect `200`, `200`, `401`, then the paused notification
+response.
 
 ## 6. Install the PWA + enable push
 
@@ -98,7 +112,7 @@ Expect `200`, `200`, `401`, then `{"ok":true,...}`.
 2. **iPhone:** Share → *Add to Home Screen*, then launch from the Home Screen
    (iOS only allows web push for an installed PWA, iOS 16.4+).
    **Android:** Chrome → *Install app*.
-3. In the app: **Settings → Notifications → Enable**, grant permission,
-   tap **Send test**.
+3. Push notifications are currently paused in the app. When re-enabled, use
+   **Settings → Notifications → Enable**, grant permission, and tap **Send test**.
 4. Add at least one **alert time** in Settings (e.g. `09:00`) — otherwise the
-   minute-ly cron correctly sends nothing.
+   minute-by-minute cron correctly sends nothing.

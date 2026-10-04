@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Figtree, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { AppToaster } from "@/components/app/app-toaster";
-import { PwaRegister } from "@/components/app/pwa-register";
+import { ServiceWorkerCleanup } from "@/components/app/service-worker-cleanup";
 
 const figtree = Figtree({
   variable: "--font-figtree",
@@ -44,7 +44,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <body className="min-h-full flex flex-col">
         {children}
         <AppToaster />
-        <PwaRegister />
+        <ServiceWorkerCleanup />
       </body>
     </html>
   );

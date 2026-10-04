@@ -41,6 +41,7 @@ export const domains = pgTable("domains", {
   purpose: text("purpose"), // semantic anchor / scope
   morningBias: boolean("morning_bias").default(true).notNull(),
   allowElastic: boolean("allow_elastic").default(true).notNull(),
+  sortOrder: integer("sort_order").default(0).notNull(),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 });

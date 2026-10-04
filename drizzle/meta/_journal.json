@@ -29,6 +29,13 @@
       "when": 1791021493410,
       "tag": "0003_stormy_raza",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1791099562253,
+      "tag": "0004_solid_eternals",
+      "breakpoints": true
     }
   ]
 }
