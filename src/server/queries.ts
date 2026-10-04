@@ -1,9 +1,32 @@
 import "server-only";
-import { and, asc, count, desc, eq, isNull } from "drizzle-orm";
+import { cache } from "react";
+import { and, asc, count, desc, eq, sql, type SQL } from "drizzle-orm";
 
 import { db } from "@/db";
 import { domains, tasks, appSettings } from "@/db/schema";
+import { log } from "@/lib/logger";
 import type { Task, Domain, AppSettings } from "@/db/schema";
+
+export async function withDbTiming<T>(
+  name: string,
+  operation: () => Promise<T>,
+): Promise<T> {
+  const startedAt = Date.now();
+  let outcome: "ok" | "error" = "ok";
+  log.info("Database query started", { name });
+  try {
+    return await operation();
+  } catch (error) {
+    outcome = "error";
+    throw error;
+  } finally {
+    log.info("Database query finished", {
+      name,
+      outcome,
+      durationMs: Date.now() - startedAt,
+    });
+  }
+}
 
 /**
  * Today as YYYY-MM-DD in the app's timezone - the single source of "today".
@@ -32,20 +55,24 @@ export function todayLabel(): string {
   }).format(new Date());
 }
 
-export async function getDomains(): Promise<Domain[]> {
-  return db
-    .select()
-    .from(domains)
-    .orderBy(asc(domains.sortOrder), asc(domains.createdAt));
-}
+export const getDomains = cache(async (): Promise<Domain[]> => {
+  return withDbTiming("domains", () =>
+    db
+      .select()
+      .from(domains)
+      .orderBy(asc(domains.sortOrder), asc(domains.createdAt)),
+  );
+});
 
 /** The single app_settings row - lazily created with defaults on first read. */
-export async function getAppSettings(): Promise<AppSettings> {
-  const rows = await db.select().from(appSettings).limit(1);
-  if (rows[0]) return rows[0];
-  const [created] = await db.insert(appSettings).values({}).returning();
-  return created;
-}
+export const getAppSettings = cache(async (): Promise<AppSettings> => {
+  return withDbTiming("app_settings", async () => {
+    const rows = await db.select().from(appSettings).limit(1);
+    if (rows[0]) return rows[0];
+    const [created] = await db.insert(appSettings).values({}).returning();
+    return created;
+  });
+});
 
 export type TaskFilter = {
   status?: Task["status"];
@@ -54,16 +81,18 @@ export type TaskFilter = {
 };
 
 export async function getTasks(filter: TaskFilter = {}): Promise<Task[]> {
-  const where = [];
+  const where: SQL[] = [];
   if (filter.status) where.push(eq(tasks.status, filter.status));
   if (filter.date) where.push(eq(tasks.date, filter.date));
   if (filter.domainId) where.push(eq(tasks.domainId, filter.domainId));
 
-  return db
-    .select()
-    .from(tasks)
-    .where(where.length ? and(...where) : undefined)
-    .orderBy(desc(tasks.createdAt));
+  return withDbTiming("tasks", () =>
+    db
+      .select()
+      .from(tasks)
+      .where(where.length ? and(...where) : undefined)
+      .orderBy(desc(tasks.createdAt)),
+  );
 }
 
 export type NavCounts = {
@@ -73,22 +102,39 @@ export type NavCounts = {
   uncategorized: number;
 };
 
-export async function getTaskCounts(): Promise<NavCounts> {
-  const today = todayISO();
-  const [all, rolled, todayCount, uncategorized] = await Promise.all([
-    db.select({ n: count() }).from(tasks),
-    db
-      .select({ n: count() })
-      .from(tasks)
-      .where(eq(tasks.status, "rolled_forward")),
-    db.select({ n: count() }).from(tasks).where(eq(tasks.date, today)),
-    db.select({ n: count() }).from(tasks).where(isNull(tasks.domainId)),
-  ]);
+export type TaskDashboardSummary = NavCounts & {
+  activeToday: number;
+};
 
-  return {
-    all: all[0]?.n ?? 0,
-    rolled: rolled[0]?.n ?? 0,
-    today: todayCount[0]?.n ?? 0,
-    uncategorized: uncategorized[0]?.n ?? 0,
-  };
+export const getTaskDashboardSummary = cache(
+  async (): Promise<TaskDashboardSummary> => {
+    const today = todayISO();
+    return withDbTiming("task_dashboard_summary", async () => {
+      const [summary] = await db
+        .select({
+          all: count(),
+          rolled: sql<number>`count(*) filter (where ${tasks.status} = 'rolled_forward')`.mapWith(
+            Number,
+          ),
+          today: sql<number>`count(*) filter (where ${tasks.date} = ${today})`.mapWith(
+            Number,
+          ),
+          uncategorized: sql<number>`count(*) filter (where ${tasks.domainId} is null)`.mapWith(
+            Number,
+          ),
+          activeToday: sql<number>`count(*) filter (where ${tasks.date} = ${today} and ${tasks.status} <> 'done')`.mapWith(
+            Number,
+          ),
+        })
+        .from(tasks);
+
+      return summary;
+    });
+  },
+);
+
+export async function getTaskCounts(): Promise<NavCounts> {
+  const { all, rolled, today, uncategorized } =
+    await getTaskDashboardSummary();
+  return { all, rolled, today, uncategorized };
 }

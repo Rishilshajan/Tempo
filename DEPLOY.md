@@ -40,7 +40,8 @@ Required in production:
 ## 2. Apply database migrations
 
 Apply pending migrations to the existing Supabase database before deploying
-code changes that depend on them:
+code changes that depend on them. This creates indexes used by the Today,
+domain, rolled-task, and notification queries:
 
 ```bash
 npm run db:migrate

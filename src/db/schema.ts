@@ -10,7 +10,9 @@ import {
   timestamp,
   jsonb,
   uniqueIndex,
+  index,
 } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
 
 /* ----------------------------- enums ----------------------------- */
 
@@ -31,44 +33,59 @@ export const taskStatusEnum = pgEnum("task_status", [
    User-created categories (@alpha, @beta, ...). Starts EMPTY -
    nothing is seeded; the user creates their own.                   */
 
-export const domains = pgTable("domains", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  name: text("name").notNull(),
-  tag: text("tag").notNull().unique(), // e.g. "alpha" -> displayed as @alpha
-  color: text("color").notNull(), // hex
-  emoji: text("emoji"), // legacy
-  glyph: text("glyph"), // Lucide glyph key (e.g. "rocket")
-  purpose: text("purpose"), // semantic anchor / scope
-  morningBias: boolean("morning_bias").default(true).notNull(),
-  allowElastic: boolean("allow_elastic").default(true).notNull(),
-  sortOrder: integer("sort_order").default(0).notNull(),
-  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
-  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
-});
+export const domains = pgTable(
+  "domains",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    name: text("name").notNull(),
+    tag: text("tag").notNull().unique(), // e.g. "alpha" -> displayed as @alpha
+    color: text("color").notNull(), // hex
+    emoji: text("emoji"), // legacy
+    glyph: text("glyph"), // Lucide glyph key (e.g. "rocket")
+    purpose: text("purpose"), // semantic anchor / scope
+    morningBias: boolean("morning_bias").default(true).notNull(),
+    allowElastic: boolean("allow_elastic").default(true).notNull(),
+    sortOrder: integer("sort_order").default(0).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [index("domains_order_idx").on(t.sortOrder, t.createdAt)],
+);
 
 /* ----------------------------- tasks ----------------------------- */
 
-export const tasks = pgTable("tasks", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  title: text("title").notNull(),
-  description: text("description"),
-  domainId: uuid("domain_id").references(() => domains.id, {
-    onDelete: "set null",
-  }),
-  importance: importanceEnum("importance").default("flexible").notNull(),
-  inferredImportant: boolean("inferred_important").default(false).notNull(),
-  status: taskStatusEnum("status").default("not_started").notNull(),
-  date: date("date"),
-  scheduledStart: time("scheduled_start"), // e.g. "09:00"
-  scheduledEnd: time("scheduled_end"), // e.g. "10:30"
-  timeHint: text("time_hint"), // "before noon", "by 2pm"
-  durationMin: integer("duration_min"),
-  minDurationMin: integer("min_duration_min"), // elastic floor
-  isElastic: boolean("is_elastic").default(true).notNull(),
-  rollforwardCount: integer("rollforward_count").default(0).notNull(),
-  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
-  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
-});
+export const tasks = pgTable(
+  "tasks",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    title: text("title").notNull(),
+    description: text("description"),
+    domainId: uuid("domain_id").references(() => domains.id, {
+      onDelete: "set null",
+    }),
+    importance: importanceEnum("importance").default("flexible").notNull(),
+    inferredImportant: boolean("inferred_important").default(false).notNull(),
+    status: taskStatusEnum("status").default("not_started").notNull(),
+    date: date("date"),
+    scheduledStart: time("scheduled_start"), // e.g. "09:00"
+    scheduledEnd: time("scheduled_end"), // e.g. "10:30"
+    timeHint: text("time_hint"), // "before noon", "by 2pm"
+    durationMin: integer("duration_min"),
+    minDurationMin: integer("min_duration_min"), // elastic floor
+    isElastic: boolean("is_elastic").default(true).notNull(),
+    rollforwardCount: integer("rollforward_count").default(0).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [
+    index("tasks_date_created_idx").on(t.date, t.createdAt),
+    index("tasks_status_created_idx").on(t.status, t.createdAt),
+    index("tasks_domain_id_idx").on(t.domainId),
+    index("tasks_escalation_idx")
+      .on(t.rollforwardCount)
+      .where(sql`${t.rollforwardCount} >= 3 and ${t.status} <> 'done'`),
+  ],
+);
 
 /* ------------------------- task_milestones -----------------------
    Deconstructed sub-steps of a task (generated or manual).         */

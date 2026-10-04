@@ -22,6 +22,8 @@ const client =
   postgres(connectionString, {
     max: 1,
     prepare: false,
+    connect_timeout: 10,
+    idle_timeout: 20,
   });
 
 if (process.env.NODE_ENV !== "production") {

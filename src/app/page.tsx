@@ -6,7 +6,7 @@ import Image from "next/image";
 
 import { log } from "@/lib/logger";
 
-const SPLASH_MS = 3000;
+const SPLASH_MS = 800;
 
 export default function ColdStartSplash() {
   const router = useRouter();
