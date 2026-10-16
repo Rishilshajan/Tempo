@@ -119,7 +119,7 @@ export function DomainManager({ domains }: { domains: Domain[] }) {
                 setDraggedId(null);
               }}
               onDragEnd={() => setDraggedId(null)}
-              className={`flex items-center gap-3 rounded-xl border border-border bg-background p-3 ${
+              className={`flex items-center gap-2 rounded-xl border border-border bg-background p-3 ${
                 draggedId === d.id ? "opacity-50" : ""
               }`}
             >
@@ -134,10 +134,10 @@ export function DomainManager({ domains }: { domains: Domain[] }) {
                 <DomainIcon domain={d} />
               </span>
               <div className="min-w-0 flex-1">
-                <div className="truncate text-sm font-semibold text-foreground">
+                <div className="text-sm font-semibold break-words text-foreground">
                   {d.name}
                 </div>
-                <div className="font-mono text-xs text-muted-foreground">
+                <div className="font-mono text-xs break-all text-muted-foreground">
                   @{d.tag}
                 </div>
               </div>
@@ -146,7 +146,7 @@ export function DomainManager({ domains }: { domains: Domain[] }) {
                   moveDomain(d.id, orderedDomains[index - 1]?.id ?? d.id)
                 }
                 disabled={pending || index === 0}
-                className="rounded-lg p-2 text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-40"
+                className="shrink-0 rounded-lg p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-40"
                 aria-label={`Move ${d.name} up`}
                 title="Move up"
               >
@@ -157,7 +157,7 @@ export function DomainManager({ domains }: { domains: Domain[] }) {
                   moveDomain(d.id, orderedDomains[index + 1]?.id ?? d.id)
                 }
                 disabled={pending || index === orderedDomains.length - 1}
-                className="rounded-lg p-2 text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-40"
+                className="shrink-0 rounded-lg p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-40"
                 aria-label={`Move ${d.name} down`}
                 title="Move down"
               >
@@ -166,7 +166,7 @@ export function DomainManager({ domains }: { domains: Domain[] }) {
               <button
                 onClick={() => openEdit(d)}
                 disabled={pending}
-                className="rounded-lg p-2 text-muted-foreground hover:bg-muted hover:text-foreground"
+                className="shrink-0 rounded-lg p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground"
                 aria-label="Edit domain"
               >
                 <Pencil className="size-4" />
@@ -174,7 +174,7 @@ export function DomainManager({ domains }: { domains: Domain[] }) {
               <button
                 onClick={() => remove(d)}
                 disabled={pending}
-                className="rounded-lg p-2 text-muted-foreground hover:bg-urgent/10 hover:text-urgent"
+                className="shrink-0 rounded-lg p-1.5 text-muted-foreground hover:bg-urgent/10 hover:text-urgent"
                 aria-label="Delete domain"
               >
                 <Trash2 className="size-4" />

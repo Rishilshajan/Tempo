@@ -12,6 +12,13 @@ const hex = z
   .string()
   .regex(/^#([0-9a-fA-F]{6})$/, "Use a 6-digit hex colour, e.g. #4C9A78");
 
+/** Shared field validators. */
+const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Use YYYY-MM-DD");
+const time24 = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Use HH:MM (24h)");
+
+/** Max task/subtask length: 10,000 hours (large, long-running work). */
+const MAX_DURATION_MIN = 10_000 * 60;
+
 /* ------------------------------- domains ------------------------------- */
 
 export const createDomainSchema = z.object({
@@ -54,35 +61,75 @@ const baseTaskSchema = z.object({
     .optional()
     .nullable(),
   timeHint: z.string().trim().max(60).optional().nullable(),
-  durationMin: z.coerce.number().int().positive().max(1440).optional().nullable(),
+  // Structured time window (24h "HH:MM"). scheduledEnd is the "finish by".
+  scheduledStart: time24.optional().nullable(),
+  scheduledEnd: time24.optional().nullable(),
+  durationMin: z.coerce
+    .number()
+    .int()
+    .positive()
+    .max(MAX_DURATION_MIN)
+    .optional()
+    .nullable(),
   minDurationMin: z.coerce
     .number()
     .int()
     .positive()
-    .max(1440)
+    .max(MAX_DURATION_MIN)
     .optional()
     .nullable(),
   isElastic: z.boolean().optional(),
+  // Thread continuity.
+  threadId: z.string().uuid().optional().nullable(),
+  parentTaskId: z.string().uuid().optional().nullable(),
 });
+
+/** Finish must be strictly after start when both are set (HH:MM sorts correctly). */
+const timeWindowOk = (d: {
+  scheduledStart?: string | null;
+  scheduledEnd?: string | null;
+}) => !d.scheduledStart || !d.scheduledEnd || d.scheduledEnd > d.scheduledStart;
+const TIME_WINDOW_ERR = {
+  message: "Finish time must be after the start time",
+  path: ["scheduledEnd"] as PropertyKey[],
+};
 
 export const milestoneInputSchema = z.object({
   title: z.string().trim().min(1, "Step title is required").max(200),
-  durationEstMin: z.coerce.number().int().positive().max(1440).default(15),
+  description: z.string().trim().max(1000).optional().nullable(),
+  date: isoDate.optional().nullable(),
+  scheduledTime: time24.optional().nullable(),
+  durationEstMin: z.coerce
+    .number()
+    .int()
+    .positive()
+    .max(MAX_DURATION_MIN)
+    .default(15),
+  isCompleted: z.boolean().optional(),
 });
 
-export const createTaskSchema = baseTaskSchema.extend({
-  milestones: z.array(milestoneInputSchema).max(20).optional(),
-});
+export const createTaskSchema = baseTaskSchema
+  .extend({
+    milestones: z.array(milestoneInputSchema).max(50).optional(),
+  })
+  .refine(timeWindowOk, TIME_WINDOW_ERR);
 
-export const updateTaskSchema = baseTaskSchema.partial().extend({
-  id: z.string().min(1),
-});
+export const updateTaskSchema = baseTaskSchema
+  .partial()
+  .extend({ id: z.string().min(1) })
+  .refine(timeWindowOk, TIME_WINDOW_ERR);
 
 export type MilestoneInput = z.input<typeof milestoneInputSchema>;
 
 export const moveStatusSchema = z.object({
   id: z.string().min(1),
   status: z.enum(TASK_STATUS),
+});
+
+/** Re-date a task (manual reschedule, e.g. "move to tomorrow"). */
+export const moveDateSchema = z.object({
+  id: z.string().min(1),
+  date: isoDate,
 });
 
 /* ------------------------------ settings ------------------------------ */

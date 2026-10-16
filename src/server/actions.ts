@@ -1,20 +1,35 @@
 "use server";
 
-import { asc, eq, max } from "drizzle-orm";
+import { and, asc, desc, eq, max } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 
 import { db } from "@/db";
-import { domains, tasks, appSettings, taskMilestones } from "@/db/schema";
-import type { Task, Domain, AppSettings, TaskMilestone } from "@/db/schema";
+import {
+  domains,
+  tasks,
+  threads,
+  appSettings,
+  taskMilestones,
+  taskNotes,
+  notificationReads,
+} from "@/db/schema";
+import { requireUserId } from "@/server/auth";
+import type { Task, Domain, AppSettings, TaskMilestone, TaskNote } from "@/db/schema";
 import { log } from "@/lib/logger";
 import { rollforwardTasks } from "@/server/rollforward";
-import { todayISO } from "@/server/queries";
+import {
+  todayISO,
+  getThreadWithTasks,
+  getTasks,
+  type TaskFilter,
+} from "@/server/queries";
 import {
   createDomainSchema,
   updateDomainSchema,
   createTaskSchema,
   updateTaskSchema,
   moveStatusSchema,
+  moveDateSchema,
   updateSettingsSchema,
   reorderDomainsSchema,
   type CreateDomainInput,
@@ -61,12 +76,15 @@ export async function createDomain(
   if (!tag) return { ok: false, error: "Could not derive a tag from the name" };
 
   try {
+    const userId = await requireUserId();
     const [order] = await db
       .select({ maxSortOrder: max(domains.sortOrder) })
-      .from(domains);
+      .from(domains)
+      .where(eq(domains.userId, userId));
     const [row] = await db
       .insert(domains)
       .values({
+        userId,
         name,
         tag,
         color,
@@ -103,10 +121,12 @@ export async function reorderDomains(
   }
 
   try {
+    const userId = await requireUserId();
     await db.transaction(async (tx) => {
       const current = await tx
         .select({ id: domains.id })
         .from(domains)
+        .where(eq(domains.userId, userId))
         .orderBy(asc(domains.sortOrder), asc(domains.createdAt));
       const currentIds = new Set(current.map((domain) => domain.id));
       if (
@@ -117,7 +137,10 @@ export async function reorderDomains(
       }
 
       for (const [sortOrder, id] of parsed.data.entries()) {
-        await tx.update(domains).set({ sortOrder }).where(eq(domains.id, id));
+        await tx
+          .update(domains)
+          .set({ sortOrder })
+          .where(and(eq(domains.id, id), eq(domains.userId, userId)));
       }
     });
     log.success("Domain order updated", { count: parsed.data.length });
@@ -137,10 +160,11 @@ export async function updateDomain(
     return { ok: false, error: firstError(parsed.error.issues) };
   const { id, ...rest } = parsed.data;
   try {
+    const userId = await requireUserId();
     const [row] = await db
       .update(domains)
       .set({ ...rest, updatedAt: new Date() })
-      .where(eq(domains.id, id))
+      .where(and(eq(domains.id, id), eq(domains.userId, userId)))
       .returning();
     if (!row) return { ok: false, error: "Domain not found" };
     log.success("Domain updated", { id });
@@ -154,7 +178,10 @@ export async function updateDomain(
 
 export async function deleteDomain(id: string): Promise<ActionResult<null>> {
   try {
-    await db.delete(domains).where(eq(domains.id, id));
+    const userId = await requireUserId();
+    await db
+      .delete(domains)
+      .where(and(eq(domains.id, id), eq(domains.userId, userId)));
     log.success("Domain deleted", { id });
     refresh();
     return { ok: true, data: null };
@@ -175,6 +202,7 @@ export async function createTask(
     return { ok: false, error: firstError(parsed.error.issues) };
   }
   try {
+    const userId = await requireUserId();
     const { milestones, ...taskData } = parsed.data;
     // Task + its milestones are one unit of work: if the milestone insert
     // fails we must not leave an orphaned task behind.
@@ -183,6 +211,7 @@ export async function createTask(
         .insert(tasks)
         .values({
           ...taskData,
+          userId,
           domainId: taskData.domainId ?? null,
           // Default to today so quick-added tasks land on Today and participate
           // in rollforward. Clearing the date later makes a task "unscheduled".
@@ -193,8 +222,13 @@ export async function createTask(
         await tx.insert(taskMilestones).values(
           milestones.map((m, i) => ({
             taskId: created.id,
+            userId,
             title: m.title,
+            description: m.description ?? null,
+            date: m.date ?? null,
+            scheduledTime: m.scheduledTime ?? null,
             durationEstMin: m.durationEstMin,
+            isCompleted: m.isCompleted ?? false,
             sortOrder: i,
           })),
         );
@@ -222,10 +256,16 @@ export async function updateTask(
     return { ok: false, error: firstError(parsed.error.issues) };
   const { id, ...rest } = parsed.data;
   try {
+    const userId = await requireUserId();
+    // Keep completedAt in sync with status when status is part of the update.
+    const completedPatch =
+      rest.status === undefined
+        ? {}
+        : { completedAt: rest.status === "done" ? new Date() : null };
     const [row] = await db
       .update(tasks)
-      .set({ ...rest, updatedAt: new Date() })
-      .where(eq(tasks.id, id))
+      .set({ ...rest, ...completedPatch, updatedAt: new Date() })
+      .where(and(eq(tasks.id, id), eq(tasks.userId, userId)))
       .returning();
     if (!row) return { ok: false, error: "Task not found" };
     log.success("Task updated", { id });
@@ -246,10 +286,15 @@ export async function moveTaskStatus(
   if (!parsed.success)
     return { ok: false, error: firstError(parsed.error.issues) };
   try {
+    const userId = await requireUserId();
     const [row] = await db
       .update(tasks)
-      .set({ status: parsed.data.status, updatedAt: new Date() })
-      .where(eq(tasks.id, parsed.data.id))
+      .set({
+        status: parsed.data.status,
+        completedAt: parsed.data.status === "done" ? new Date() : null,
+        updatedAt: new Date(),
+      })
+      .where(and(eq(tasks.id, parsed.data.id), eq(tasks.userId, userId)))
       .returning();
     if (!row) return { ok: false, error: "Task not found" };
     log.event("Task status moved", { id, status });
@@ -261,9 +306,234 @@ export async function moveTaskStatus(
   }
 }
 
+/**
+ * One-tap complete toggle (card checkbox). `done` -> status done + stamp
+ * completedAt; un-done -> back to not_started and clear the stamp.
+ */
+export async function toggleTaskDone(
+  id: string,
+  done: boolean,
+): Promise<ActionResult<Task>> {
+  try {
+    const userId = await requireUserId();
+    const [row] = await db
+      .update(tasks)
+      .set({
+        status: done ? "done" : "not_started",
+        completedAt: done ? new Date() : null,
+        updatedAt: new Date(),
+      })
+      .where(and(eq(tasks.id, id), eq(tasks.userId, userId)))
+      .returning();
+    if (!row) return { ok: false, error: "Task not found" };
+    log.event("Task done toggled", { id, done });
+    refresh();
+    return { ok: true, data: row };
+  } catch (e) {
+    log.error("toggleTaskDone failed", e instanceof Error ? e.message : e);
+    return { ok: false, error: "Could not update the task" };
+  }
+}
+
+/** Add `days` calendar days to a YYYY-MM-DD string (UTC math, tz-safe). */
+function addDaysISO(iso: string, days: number): string {
+  const [y, m, d] = iso.split("-").map(Number);
+  const dt = new Date(Date.UTC(y, m - 1, d));
+  dt.setUTCDate(dt.getUTCDate() + days);
+  return dt.toISOString().slice(0, 10);
+}
+
+/**
+ * Manually re-date a task. This is a DELIBERATE reschedule, so it does NOT
+ * bump rollforwardCount - only the automatic past-due job counts as slippage.
+ */
+export async function moveTaskToDate(
+  id: string,
+  date: string,
+): Promise<ActionResult<Task>> {
+  const parsed = moveDateSchema.safeParse({ id, date });
+  if (!parsed.success)
+    return { ok: false, error: firstError(parsed.error.issues) };
+  try {
+    const userId = await requireUserId();
+    const [row] = await db
+      .update(tasks)
+      .set({ date: parsed.data.date, updatedAt: new Date() })
+      .where(and(eq(tasks.id, parsed.data.id), eq(tasks.userId, userId)))
+      .returning();
+    if (!row) return { ok: false, error: "Task not found" };
+    log.event("Task re-dated", { id, date: parsed.data.date });
+    refresh();
+    return { ok: true, data: row };
+  } catch (e) {
+    log.error("moveTaskToDate failed", e instanceof Error ? e.message : e);
+    return { ok: false, error: "Could not reschedule the task" };
+  }
+}
+
+/** Convenience: push a task to tomorrow (manual, not counted as slippage). */
+export async function moveTaskToTomorrow(id: string): Promise<ActionResult<Task>> {
+  return moveTaskToDate(id, addDaysISO(todayISO(), 1));
+}
+
+/* ------------------------------- threads ------------------------------- */
+
+export type FollowUpContext = {
+  threadId: string;
+  threadTitle: string;
+  parentTaskId: string;
+  prefill: {
+    title: string;
+    domainId: string | null;
+    description: string | null;
+    importance: Task["importance"];
+  };
+};
+
+/**
+ * Start a follow-up for a task: ensure it belongs to a thread (creating one
+ * titled after the task if needed), optionally complete it, and return the
+ * context the Create sheet pre-fills the successor with. Powers both
+ * "Complete & add follow-up" (complete: true) and "Add to thread".
+ */
+export async function startThreadFollowUp(
+  taskId: string,
+  opts: { complete: boolean },
+): Promise<ActionResult<FollowUpContext>> {
+  try {
+    const userId = await requireUserId();
+    const result = await db.transaction(async (tx) => {
+      const [task] = await tx
+        .select()
+        .from(tasks)
+        .where(and(eq(tasks.id, taskId), eq(tasks.userId, userId)));
+      if (!task) return null;
+
+      if (opts.complete) {
+        await tx
+          .update(tasks)
+          .set({ status: "done", completedAt: new Date(), updatedAt: new Date() })
+          .where(and(eq(tasks.id, taskId), eq(tasks.userId, userId)));
+      }
+
+      // Ensure a thread.
+      let threadId = task.threadId;
+      let threadTitle = task.title;
+      if (threadId) {
+        const [t] = await tx
+          .select({ title: threads.title })
+          .from(threads)
+          .where(and(eq(threads.id, threadId), eq(threads.userId, userId)));
+        if (t) threadTitle = t.title;
+      } else {
+        const [created] = await tx
+          .insert(threads)
+          .values({ userId, title: task.title })
+          .returning({ id: threads.id, title: threads.title });
+        threadId = created.id;
+        threadTitle = created.title;
+        await tx
+          .update(tasks)
+          .set({ threadId, updatedAt: new Date() })
+          .where(and(eq(tasks.id, taskId), eq(tasks.userId, userId)));
+      }
+
+      // Carry the task's latest note (its output) into the follow-up context.
+      const [lastNote] = await tx
+        .select({ body: taskNotes.body })
+        .from(taskNotes)
+        .where(and(eq(taskNotes.taskId, taskId), eq(taskNotes.userId, userId)))
+        .orderBy(desc(taskNotes.createdAt))
+        .limit(1);
+      const carriedDescription =
+        [
+          task.description,
+          lastNote ? `↳ From "${task.title}": ${lastNote.body}` : null,
+        ]
+          .filter(Boolean)
+          .join("\n\n") || null;
+
+      return {
+        threadId,
+        threadTitle,
+        parentTaskId: task.id,
+        prefill: {
+          title: task.title,
+          domainId: task.domainId,
+          description: carriedDescription,
+          importance: task.importance,
+        },
+      } satisfies FollowUpContext;
+    });
+
+    if (!result) return { ok: false, error: "Task not found" };
+    log.event("Thread follow-up started", {
+      taskId,
+      threadId: result.threadId,
+      completed: opts.complete,
+    });
+    refresh();
+    return { ok: true, data: result };
+  } catch (e) {
+    log.error("startThreadFollowUp failed", e instanceof Error ? e.message : e);
+    return { ok: false, error: "Could not start a follow-up" };
+  }
+}
+
+/** Client-callable fetch of a thread + its tasks (for the drawer panel). */
+export async function getThread(threadId: string) {
+  return getThreadWithTasks(threadId);
+}
+
+/** Client-callable task page fetch for "load more" pagination. */
+export async function fetchTasksPage(filter: TaskFilter): Promise<Task[]> {
+  return getTasks(filter);
+}
+
+/** Rename a thread. */
+export async function renameThread(
+  id: string,
+  title: string,
+): Promise<ActionResult<null>> {
+  const trimmed = title.trim();
+  if (!trimmed) return { ok: false, error: "Thread needs a title" };
+  try {
+    const userId = await requireUserId();
+    await db
+      .update(threads)
+      .set({ title: trimmed.slice(0, 120), updatedAt: new Date() })
+      .where(and(eq(threads.id, id), eq(threads.userId, userId)));
+    refresh();
+    return { ok: true, data: null };
+  } catch (e) {
+    log.error("renameThread failed", e instanceof Error ? e.message : e);
+    return { ok: false, error: "Could not rename the thread" };
+  }
+}
+
+/** Close or reopen a thread. */
+export async function setThreadStatus(
+  id: string,
+  status: "active" | "closed",
+): Promise<ActionResult<null>> {
+  try {
+    const userId = await requireUserId();
+    await db
+      .update(threads)
+      .set({ status, updatedAt: new Date() })
+      .where(and(eq(threads.id, id), eq(threads.userId, userId)));
+    refresh();
+    return { ok: true, data: null };
+  } catch (e) {
+    log.error("setThreadStatus failed", e instanceof Error ? e.message : e);
+    return { ok: false, error: "Could not update the thread" };
+  }
+}
+
 export async function deleteTask(id: string): Promise<ActionResult<null>> {
   try {
-    await db.delete(tasks).where(eq(tasks.id, id));
+    const userId = await requireUserId();
+    await db.delete(tasks).where(and(eq(tasks.id, id), eq(tasks.userId, userId)));
     log.success("Task deleted", { id });
     refresh();
     return { ok: true, data: null };
@@ -282,15 +552,23 @@ export async function updateAppSettings(
   if (!parsed.success)
     return { ok: false, error: firstError(parsed.error.issues) };
   try {
-    const existing = await db.select({ id: appSettings.id }).from(appSettings).limit(1);
+    const userId = await requireUserId();
+    const existing = await db
+      .select({ id: appSettings.id })
+      .from(appSettings)
+      .where(eq(appSettings.userId, userId))
+      .limit(1);
     const id = existing[0]?.id;
     const [row] = id
       ? await db
           .update(appSettings)
           .set({ ...parsed.data, updatedAt: new Date() })
-          .where(eq(appSettings.id, id))
+          .where(and(eq(appSettings.id, id), eq(appSettings.userId, userId)))
           .returning()
-      : await db.insert(appSettings).values(parsed.data).returning();
+      : await db
+          .insert(appSettings)
+          .values({ ...parsed.data, userId })
+          .returning();
     log.success("Settings updated", parsed.data);
     refresh();
     return { ok: true, data: row };
@@ -303,28 +581,57 @@ export async function updateAppSettings(
 /* ------------------------------ milestones ----------------------------- */
 
 export async function getMilestones(taskId: string): Promise<TaskMilestone[]> {
+  const userId = await requireUserId();
   return db
     .select()
     .from(taskMilestones)
-    .where(eq(taskMilestones.taskId, taskId))
+    .where(
+      and(eq(taskMilestones.taskId, taskId), eq(taskMilestones.userId, userId)),
+    )
     .orderBy(taskMilestones.sortOrder);
 }
 
 /** Replace all of a task's milestones with the given list (ordered). */
 export async function setMilestones(
   taskId: string,
-  items: { title: string; durationEstMin: number; isCompleted: boolean }[],
+  items: {
+    title: string;
+    description?: string | null;
+    date?: string | null;
+    scheduledTime?: string | null;
+    durationEstMin: number;
+    isCompleted: boolean;
+  }[],
 ): Promise<ActionResult<null>> {
   try {
+    const userId = await requireUserId();
+    // Only operate on a task the user owns.
+    const [owned] = await db
+      .select({ id: tasks.id })
+      .from(tasks)
+      .where(and(eq(tasks.id, taskId), eq(tasks.userId, userId)))
+      .limit(1);
+    if (!owned) return { ok: false, error: "Task not found" };
     // Replace-in-place must be atomic: a failed insert after the delete would
     // otherwise wipe every subtask with no way to recover them.
     await db.transaction(async (tx) => {
-      await tx.delete(taskMilestones).where(eq(taskMilestones.taskId, taskId));
+      await tx
+        .delete(taskMilestones)
+        .where(
+          and(
+            eq(taskMilestones.taskId, taskId),
+            eq(taskMilestones.userId, userId),
+          ),
+        );
       if (items.length) {
         await tx.insert(taskMilestones).values(
           items.map((m, i) => ({
             taskId,
+            userId,
             title: m.title,
+            description: m.description ?? null,
+            date: m.date ?? null,
+            scheduledTime: m.scheduledTime ?? null,
             durationEstMin: m.durationEstMin,
             isCompleted: m.isCompleted,
             sortOrder: i,
@@ -341,10 +648,118 @@ export async function setMilestones(
   }
 }
 
+/* ------------------------------ task notes ----------------------------- */
+
+const MAX_NOTE = 5000;
+
+/** A task's notes/output log, newest first (client-callable, like getMilestones). */
+export async function getTaskNotes(taskId: string): Promise<TaskNote[]> {
+  const userId = await requireUserId();
+  return db
+    .select()
+    .from(taskNotes)
+    .where(and(eq(taskNotes.taskId, taskId), eq(taskNotes.userId, userId)))
+    .orderBy(desc(taskNotes.createdAt));
+}
+
+/** Append a note/output entry to a task. */
+export async function addTaskNote(
+  taskId: string,
+  body: string,
+): Promise<ActionResult<TaskNote>> {
+  const text = body.trim();
+  if (!text) return { ok: false, error: "Note can't be empty" };
+  if (text.length > MAX_NOTE) return { ok: false, error: "Note is too long" };
+  try {
+    const userId = await requireUserId();
+    const [owned] = await db
+      .select({ id: tasks.id })
+      .from(tasks)
+      .where(and(eq(tasks.id, taskId), eq(tasks.userId, userId)))
+      .limit(1);
+    if (!owned) return { ok: false, error: "Task not found" };
+    const [row] = await db
+      .insert(taskNotes)
+      .values({ taskId, userId, body: text })
+      .returning();
+    log.success("Task note added", { taskId, id: row.id });
+    refresh();
+    return { ok: true, data: row };
+  } catch (e) {
+    log.error("addTaskNote failed", e instanceof Error ? e.message : e);
+    return { ok: false, error: "Could not save the note" };
+  }
+}
+
+/** Edit a note entry. */
+export async function updateTaskNote(
+  id: string,
+  body: string,
+): Promise<ActionResult<TaskNote>> {
+  const text = body.trim();
+  if (!text) return { ok: false, error: "Note can't be empty" };
+  if (text.length > MAX_NOTE) return { ok: false, error: "Note is too long" };
+  try {
+    const userId = await requireUserId();
+    const [row] = await db
+      .update(taskNotes)
+      .set({ body: text, updatedAt: new Date() })
+      .where(and(eq(taskNotes.id, id), eq(taskNotes.userId, userId)))
+      .returning();
+    if (!row) return { ok: false, error: "Note not found" };
+    refresh();
+    return { ok: true, data: row };
+  } catch (e) {
+    log.error("updateTaskNote failed", e instanceof Error ? e.message : e);
+    return { ok: false, error: "Could not update the note" };
+  }
+}
+
+/** Delete a note entry. */
+export async function deleteTaskNote(id: string): Promise<ActionResult<null>> {
+  try {
+    const userId = await requireUserId();
+    await db
+      .delete(taskNotes)
+      .where(and(eq(taskNotes.id, id), eq(taskNotes.userId, userId)));
+    refresh();
+    return { ok: true, data: null };
+  } catch (e) {
+    log.error("deleteTaskNote failed", e instanceof Error ? e.message : e);
+    return { ok: false, error: "Could not delete the note" };
+  }
+}
+
+/* --------------------------- notifications ----------------------------- */
+
+/**
+ * Persist read flags for in-app notifications (per account). Notifications are
+ * derived live from task state, so we store which notification ids the user has
+ * read; the feed hides them. Idempotent via the (user_id, notification_id) index.
+ */
+export async function markNotificationsRead(
+  ids: string[],
+): Promise<ActionResult<null>> {
+  if (!ids.length) return { ok: true, data: null };
+  try {
+    const userId = await requireUserId();
+    await db
+      .insert(notificationReads)
+      .values(ids.map((notificationId) => ({ userId, notificationId })))
+      .onConflictDoNothing();
+    refresh();
+    return { ok: true, data: null };
+  } catch (e) {
+    log.error("markNotificationsRead failed", e instanceof Error ? e.message : e);
+    return { ok: false, error: "Could not update notifications" };
+  }
+}
+
 /** Manual trigger for the rollforward job (same logic as the nightly cron). */
 export async function runRollforwardNow(): Promise<ActionResult<number>> {
   try {
-    const moved = await rollforwardTasks();
+    const userId = await requireUserId();
+    const moved = await rollforwardTasks(userId);
     refresh();
     return { ok: true, data: moved };
   } catch (e) {

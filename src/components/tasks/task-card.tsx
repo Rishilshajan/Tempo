@@ -1,13 +1,24 @@
 "use client";
 
 import { useTransition } from "react";
-import { Clock, Flag, Minimize2, ChevronDown, Check } from "lucide-react";
+import {
+  Clock,
+  Flag,
+  Minimize2,
+  ChevronDown,
+  Check,
+  Circle,
+  CircleCheck,
+  CalendarArrowUp,
+  Spline,
+  StickyNote,
+} from "lucide-react";
 import { toast } from "sonner";
 
 import type { Task, Domain } from "@/db/schema";
 import { cn } from "@/lib/utils";
 import { formatDuration, STATUS_META, BOARD_COLUMNS } from "@/lib/task-ui";
-import { moveTaskStatus } from "@/server/actions";
+import { moveTaskStatus, toggleTaskDone, moveTaskToTomorrow } from "@/server/actions";
 import { log } from "@/lib/logger";
 import { DomainIcon } from "@/components/domains/domain-icon";
 import {
@@ -21,14 +32,21 @@ export function TaskCard({
   task,
   domain,
   onOpen,
+  noteCount = 0,
 }: {
   task: Task;
   domain?: Domain | null;
   onOpen: (task: Task) => void;
+  noteCount?: number;
 }) {
   const [pending, startTransition] = useTransition();
   const duration = formatDuration(task.durationMin);
   const isDone = task.status === "done";
+
+  // Prefer the structured time window; fall back to the free-text hint.
+  const start = task.scheduledStart?.slice(0, 5);
+  const end = task.scheduledEnd?.slice(0, 5);
+  const timeLabel = start && end ? `${start}–${end}` : end ? `by ${end}` : start ?? task.timeHint;
 
   const changeStatus = (s: Task["status"]) => {
     if (s === task.status) return;
@@ -40,6 +58,24 @@ export function TaskCard({
       } else {
         toast.success("Status updated");
       }
+    });
+  };
+
+  const toggleDone = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    startTransition(async () => {
+      const res = await toggleTaskDone(task.id, !isDone);
+      if (!res.ok) toast.error(res.error);
+      else toast.success(isDone ? "Marked not started" : "Task completed");
+    });
+  };
+
+  const pushTomorrow = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    startTransition(async () => {
+      const res = await moveTaskToTomorrow(task.id);
+      if (!res.ok) toast.error(res.error);
+      else toast.success("Moved to tomorrow");
     });
   };
 
@@ -95,6 +131,16 @@ export function TaskCard({
             <Minimize2 className="size-3" /> Shrink {task.minDurationMin}m
           </span>
         )}
+        {task.threadId && (
+          <span className="inline-flex items-center gap-0.5 rounded-full bg-rolledforward/10 px-2 py-0.5 text-[11px] font-semibold text-rolledforward">
+            <Spline className="size-3" /> Thread
+          </span>
+        )}
+        {noteCount > 0 && (
+          <span className="inline-flex items-center gap-0.5 rounded-full bg-muted px-2 py-0.5 text-[11px] font-semibold text-muted-foreground">
+            <StickyNote className="size-3" /> {noteCount}
+          </span>
+        )}
         {task.rollforwardCount > 0 && (
           <span
             className={cn(
@@ -111,28 +157,43 @@ export function TaskCard({
         )}
       </div>
 
-      <div className="mt-2 space-y-0.5">
-        <h4
-          className={cn(
-            "text-sm font-bold leading-snug text-foreground",
-            isDone && "text-muted-foreground line-through",
-          )}
+      <div className="mt-2 flex items-start gap-2.5">
+        <button
+          type="button"
+          onClick={toggleDone}
+          disabled={pending}
+          aria-label={isDone ? "Mark not done" : "Mark done"}
+          className="mt-0.5 shrink-0 transition-transform active:scale-90 disabled:opacity-50"
         >
-          {task.title}
-        </h4>
-        {task.description && (
-          <p className="line-clamp-2 text-[13px] text-muted-foreground">
-            {task.description}
-          </p>
-        )}
+          {isDone ? (
+            <CircleCheck className="size-5 text-ontrack" />
+          ) : (
+            <Circle className="size-5 text-muted-foreground/50 hover:text-primary" />
+          )}
+        </button>
+        <div className="min-w-0 flex-1 space-y-0.5">
+          <h4
+            className={cn(
+              "text-sm font-bold leading-snug text-foreground",
+              isDone && "text-muted-foreground line-through",
+            )}
+          >
+            {task.title}
+          </h4>
+          {task.description && (
+            <p className="line-clamp-2 text-[13px] text-muted-foreground">
+              {task.description}
+            </p>
+          )}
+        </div>
       </div>
 
       <div className="mt-3 flex items-center justify-between gap-2">
         <div className="flex items-center gap-3 text-[12px] text-muted-foreground">
-          {task.timeHint && (
+          {timeLabel && (
             <span className="inline-flex items-center gap-1">
               <Clock className="size-3.5 text-primary" />
-              {task.timeHint}
+              {timeLabel}
             </span>
           )}
           {duration && (
@@ -142,6 +203,18 @@ export function TaskCard({
           )}
         </div>
 
+        <div className="flex shrink-0 items-center gap-1.5">
+        {/* Move to tomorrow (manual reschedule) */}
+        <button
+          type="button"
+          onClick={pushTomorrow}
+          disabled={pending}
+          aria-label="Move to tomorrow"
+          title="Move to tomorrow"
+          className="inline-flex items-center rounded-lg border border-border bg-card p-1.5 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground disabled:opacity-50"
+        >
+          <CalendarArrowUp className="size-3.5" />
+        </button>
         {/* Status dropdown (replaces Start / Complete) */}
         <DropdownMenu>
           <DropdownMenuTrigger
@@ -174,6 +247,7 @@ export function TaskCard({
             ))}
           </DropdownMenuContent>
         </DropdownMenu>
+        </div>
       </div>
     </div>
   );

@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tempo — Authentication Architecture</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#F7F6F2; --surface:#FFFFFF; --text:#22312B; --muted:#5b6b62;
+    --sage:#4C9A78; --lime:#7BC96F;
+    --urgent:#F0705A; --medium:#F2B24C; --ontrack:#5DB87E; --rolled:#7C87D6;
+    --border:#e7e5df; --shadow:0 1px 3px rgba(34,49,43,.06),0 8px 24px rgba(34,49,43,.05);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:'Figtree',system-ui,sans-serif;background:var(--bg);
+    color:var(--text);line-height:1.65;-webkit-font-smoothing:antialiased;}
+  .wrap{max-width:920px;margin:0 auto;padding:0 20px 80px}
+  header.hero{background:linear-gradient(135deg,var(--sage),var(--lime));color:#fff;
+    padding:56px 20px 48px;margin-bottom:40px;}
+  header.hero .inner{max-width:920px;margin:0 auto}
+  .badge{display:inline-block;background:rgba(255,255,255,.2);padding:5px 14px;
+    border-radius:999px;font-size:13px;font-weight:600;letter-spacing:.3px;margin-bottom:16px}
+  h1{font-size:2.6rem;font-weight:800;margin:0 0 10px;letter-spacing:-.5px}
+  .hero p{font-size:1.15rem;margin:0;opacity:.95;font-weight:500;max-width:680px}
+  .meta{margin-top:20px;font-size:14px;opacity:.9}
+  .meta span{margin-right:18px}
+  h2{font-size:1.5rem;font-weight:700;margin:48px 0 8px;letter-spacing:-.3px;
+    padding-bottom:10px;border-bottom:2px solid var(--border)}
+  h2 .num{color:var(--sage);font-weight:800;margin-right:8px}
+  h3{font-size:1.15rem;font-weight:700;margin:28px 0 6px}
+  p{margin:12px 0}
+  .lead{font-size:1.08rem}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:16px;
+    padding:22px 24px;box-shadow:var(--shadow);margin:18px 0}
+  .callout{background:#fff;border-left:4px solid var(--sage);border-radius:0 12px 12px 0;
+    padding:16px 20px;margin:18px 0;box-shadow:var(--shadow)}
+  .callout.accent{border-left-color:var(--lime)}
+  .callout.warn{border-left-color:var(--urgent)}
+  table{width:100%;border-collapse:collapse;margin:16px 0;font-size:14.5px;
+    background:var(--surface);border-radius:12px;overflow:hidden;box-shadow:var(--shadow)}
+  th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--border);vertical-align:top}
+  th{background:#eef3f0;font-weight:700;color:var(--text)}
+  tr:last-child td{border-bottom:none}
+  code{background:#eef1ef;padding:2px 7px;border-radius:6px;font-size:13px;
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+  pre{background:#1f2b26;color:#e8efe9;padding:18px 20px;border-radius:12px;overflow:auto;
+    font-size:13px;line-height:1.55;box-shadow:var(--shadow)}
+  pre code{background:none;color:inherit;padding:0}
+  ul,ol{margin:12px 0;padding-left:22px}
+  li{margin:6px 0}
+  .tag{display:inline-block;padding:2px 9px;border-radius:999px;font-size:11px;
+    font-weight:700;letter-spacing:.3px;color:#fff}
+  .tag.pub{background:var(--medium)} .tag.prot{background:var(--sage)}
+  .rec{background:var(--sage);color:#fff;font-size:11px;font-weight:700;
+    padding:2px 9px;border-radius:999px;letter-spacing:.3px}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .toc{columns:2;font-size:14.5px}
+  @media(max-width:680px){.grid2{grid-template-columns:1fr}.toc{columns:1}h1{font-size:2rem}}
+  footer{text-align:center;color:var(--muted);font-size:13px;margin-top:60px;
+    padding-top:24px;border-top:1px solid var(--border)}
+</style>
+</head>
+<body>
+<header class="hero">
+  <div class="inner">
+    <span class="badge">TEMPO · ARCHITECTURE</span>
+    <h1>Authentication Architecture</h1>
+    <p>How Tempo authenticates users and isolates their data — Supabase Auth (JWT) with
+       HttpOnly cookie sessions, a proxy refresh layer, a Data Access Layer, and
+       per-user scoping across the whole Drizzle/Postgres model.</p>
+    <div class="meta">
+      <span><strong>Author:</strong> developer@levich.co</span>
+      <span><strong>Phase:</strong> 1 — Auth &amp; Multi-user Foundation</span>
+      <span><strong>Status:</strong> Design — ready to build</span>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <div class="card">
+    <strong>Contents</strong>
+    <div class="toc">
+      <ol>
+        <li><a href="#decisions">Decisions at a glance</a></li>
+        <li><a href="#tokens">Token model (JWT + refresh)</a></li>
+        <li><a href="#storage">Where tokens live (cookies)</a></li>
+        <li><a href="#lifecycle">Request lifecycle</a></li>
+        <li><a href="#proxy">Proxy vs DAL (two-tier)</a></li>
+        <li><a href="#files">Component / file map</a></li>
+        <li><a href="#validation">Email &amp; password validation</a></li>
+        <li><a href="#errors">Error handling (toasts)</a></li>
+        <li><a href="#routes">Route map &amp; splash</a></li>
+        <li><a href="#datamodel">Data model &amp; scoping</a></li>
+        <li><a href="#migration">Migration &amp; backfill</a></li>
+        <li><a href="#security">Security considerations</a></li>
+        <li><a href="#env">Environment variables</a></li>
+        <li><a href="#sequence">Build sequence</a></li>
+      </ol>
+    </div>
+  </div>
+
+  <h2 id="decisions"><span class="num">1</span>Decisions at a glance</h2>
+  <p class="lead">Every row below is a locked decision for Phase 1. The substance of this
+    phase is not the token plumbing (Supabase owns that) — it is <strong>identity + data isolation</strong>.</p>
+  <table>
+    <tr><th>Concern</th><th>Decision</th><th>Why</th></tr>
+    <tr><td>Auth provider</td><td>Supabase Auth (GoTrue)</td><td>DB is already Supabase Postgres; no second vendor; RLS available later</td></tr>
+    <tr><td>Token type</td><td><strong>JWT</strong> access token + rotating refresh token</td><td>Stateless, signature-verifiable identity; no custom session table</td></tr>
+    <tr><td>Token storage</td><td>HttpOnly, Secure, SameSite cookies (via <code>@supabase/ssr</code>)</td><td>Immune to XSS token theft; auto-sent to every Server Component / Action</td></tr>
+    <tr><td>Login method</td><td>Email + password (email confirmation on)</td><td>Phase-1 scope; OAuth/magic-link are additive later</td></tr>
+    <tr><td>Edge gate</td><td><code>proxy.ts</code> — optimistic redirect only</td><td>Next 16 renamed middleware→proxy; runs on every prefetch, so no DB calls</td></tr>
+    <tr><td>Enforcement</td><td>App-level scoping in a Data Access Layer</td><td>Every Drizzle query filters by the verified <code>userId</code></td></tr>
+    <tr><td>Validation</td><td>Shared Zod schema, run on client <em>and</em> server</td><td>Instant UX feedback + never trust the client</td></tr>
+    <tr><td>Error surface</td><td>Sonner toasts</td><td>Already wired; matches product's low-friction feel</td></tr>
+  </table>
+
+  <h2 id="tokens"><span class="num">2</span>Token model — yes, it is JWT-based</h2>
+  <p>Supabase Auth issues <strong>two</strong> credentials on a successful sign-in:</p>
+  <table>
+    <tr><th>Token</th><th>What it is</th><th>Lifetime</th><th>Role</th></tr>
+    <tr><td><strong>Access token</strong></td><td>Signed <strong>JWT</strong> — <code>sub</code> (user UUID), <code>email</code>, <code>role</code>, <code>exp</code>, <code>aud</code></td><td>~1 hour</td><td>Proves identity on every request</td></tr>
+    <tr><td><strong>Refresh token</strong></td><td>Opaque, single-use, <strong>rotating</strong> string</td><td>Days (configurable)</td><td>Mints a fresh access token when the old one expires</td></tr>
+  </table>
+  <p>The access token is a genuine JWT (<code>header.payload.signature</code>) signed by the
+    project's key. Because the signature is verifiable, the server trusts the
+    <code>userId</code> inside it <strong>without a database lookup</strong>. We never issue our own
+    JWT, never hash passwords ourselves, and never maintain a session table — GoTrue does all of that.</p>
+  <div class="callout accent">
+    <strong>Rotation:</strong> each use of the refresh token invalidates it and issues a new
+    one. A stolen refresh token is therefore detectable (reuse → the whole family is revoked).
+  </div>
+
+  <h2 id="storage"><span class="num">3</span>Where the tokens live — cookies, not localStorage</h2>
+  <p>This is the decision that makes <code>@supabase/ssr</code> necessary. Tokens are written to
+    <strong>HttpOnly, Secure, SameSite=Lax</strong> cookies (chunked across several cookies when large),
+    not to browser <code>localStorage</code>.</p>
+  <ul>
+    <li><strong>HttpOnly</strong> → client-side JS cannot read them → XSS cannot exfiltrate the session.</li>
+    <li><strong>Secure</strong> → only sent over HTTPS.</li>
+    <li>Cookies ride along with every request automatically, so Server Components, Server
+      Actions and Route Handlers all see the session with zero manual header passing.</li>
+  </ul>
+
+  <h2 id="lifecycle"><span class="num">4</span>Request lifecycle</h2>
+<pre><code>SIGN-UP / LOGIN  (Server Action, 'use server')
+  form ──▶ Zod re-validate (server) ──▶ supabase.auth.signInWithPassword()
+        ◀── access JWT + refresh token
+        @supabase/ssr writes HttpOnly cookies
+        redirect('/today')
+
+EVERY SUBSEQUENT REQUEST
+  browser sends cookies
+   └─▶ proxy.ts  (optimistic, Node runtime, runs on all matched routes)
+         • refresh the session if the access token is near expiry
+           (rotate refresh token → rewrite cookies on the response)
+         • no session + protected route  → redirect('/login')
+         • has session + /login|/signup   → redirect('/today')
+   └─▶ Server Component / Server Action
+         • DAL: requireUser() → supabase.auth.getUser()  ← VERIFIES the JWT
+         • returns the trusted userId
+         • Drizzle query filtered by userId   ← app-level data isolation
+
+LOGOUT  (Server Action)
+  supabase.auth.signOut()  → cookies cleared  → redirect('/login')</code></pre>
+
+  <h2 id="proxy"><span class="num">5</span>Two-tier enforcement: Proxy (optimistic) vs DAL (secure)</h2>
+  <p>Next.js 16 guidance (and this repo's pinned docs) is explicit: the proxy is a convenience
+    gate, <em>not</em> the security boundary. Authorization must happen close to the data.</p>
+  <div class="grid2">
+    <div class="card">
+      <h3><span class="tag pub">OPTIMISTIC</span> proxy.ts</h3>
+      <ul>
+        <li>Reads the session cookie only — <strong>no DB calls</strong> (runs on every prefetch).</li>
+        <li>Refreshes expiring tokens and rewrites cookies.</li>
+        <li>Redirects unauthenticated users away from protected routes and authenticated users away from auth pages.</li>
+        <li>Renamed from <code>middleware.ts</code>; exports <code>proxy</code> + <code>config.matcher</code>.</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3><span class="tag prot">SECURE</span> Data Access Layer</h3>
+      <ul>
+        <li><code>requireUser()</code> calls <code>supabase.auth.getUser()</code> which <strong>verifies the JWT</strong>.</li>
+        <li>Wrapped in React <code>cache()</code> → one verification per render pass.</li>
+        <li>Called inside every protected query and <strong>every Server Action</strong> (treat actions as public endpoints).</li>
+        <li>Returns the <code>userId</code> that scopes all Drizzle queries.</li>
+      </ul>
+    </div>
+  </div>
+  <div class="callout warn">
+    <strong>getUser() vs getSession():</strong> <code>getSession()</code> merely decodes the cookie —
+    fast but <em>spoofable on the server</em>. The DAL always uses <code>getUser()</code>/<code>getClaims()</code>,
+    which validate the signature. Never gate data on <code>getSession()</code> alone.
+  </div>
+
+  <h2 id="files"><span class="num">6</span>Component / file map</h2>
+  <table>
+    <tr><th>File</th><th>Responsibility</th></tr>
+    <tr><td><code>src/lib/supabase/server.ts</code></td><td><code>createServerClient</code> bound to <code>next/headers</code> cookies (Server Components / Actions)</td></tr>
+    <tr><td><code>src/lib/supabase/client.ts</code></td><td><code>createBrowserClient</code> for client form components</td></tr>
+    <tr><td><code>src/lib/supabase/proxy.ts</code></td><td>Session-refresh helper (<code>getAll</code>/<code>setAll</code> cookie bridge) used by the proxy</td></tr>
+    <tr><td><code>proxy.ts</code> (root)</td><td>Optimistic auth gate + token refresh; <code>config.matcher</code></td></tr>
+    <tr><td><code>src/server/auth.ts</code></td><td><strong>DAL</strong>: <code>requireUser()</code>, <code>getOptionalUser()</code> — single source of verified <code>userId</code></td></tr>
+    <tr><td><code>src/server/auth-actions.ts</code></td><td><code>signup</code>, <code>login</code>, <code>logout</code>, <code>requestPasswordReset</code>, <code>updatePassword</code></td></tr>
+    <tr><td><code>src/lib/validation/auth.ts</code></td><td>Shared Zod schemas (email + password rules)</td></tr>
+    <tr><td><code>src/app/(auth)/login/page.tsx</code></td><td>Login page + form (toast errors)</td></tr>
+    <tr><td><code>src/app/(auth)/signup/page.tsx</code></td><td>Signup page + form</td></tr>
+    <tr><td><code>src/app/(auth)/forgot-password/page.tsx</code></td><td>Request reset link</td></tr>
+    <tr><td><code>src/app/(auth)/reset-password/page.tsx</code></td><td>Set new password after email link</td></tr>
+    <tr><td><code>src/app/auth/confirm/route.ts</code></td><td>Route Handler for email confirmation / recovery token exchange</td></tr>
+  </table>
+
+  <h2 id="validation"><span class="num">7</span>Email &amp; password validation</h2>
+  <p>One Zod schema, imported by both the client form (instant feedback) and the Server Action
+    (authoritative). Rules as specified:</p>
+  <table>
+    <tr><th>Field</th><th>Rule</th><th>Zod</th></tr>
+    <tr><td>Email</td><td>Valid email format</td><td><code>z.email()</code></td></tr>
+    <tr><td>Password</td><td>Min 8 characters</td><td><code>.min(8)</code></td></tr>
+    <tr><td>Password</td><td>≥1 uppercase</td><td><code>.regex(/[A-Z]/)</code></td></tr>
+    <tr><td>Password</td><td>≥1 lowercase</td><td><code>.regex(/[a-z]/)</code></td></tr>
+    <tr><td>Password</td><td>≥1 digit</td><td><code>.regex(/[0-9]/)</code></td></tr>
+    <tr><td>Password</td><td>≥1 special character</td><td><code>.regex(/[^A-Za-z0-9]/)</code></td></tr>
+  </table>
+<pre><code>// src/lib/validation/auth.ts
+export const passwordSchema = z
+  .string()
+  .min(8, "At least 8 characters")
+  .regex(/[A-Z]/, "One uppercase letter")
+  .regex(/[a-z]/, "One lowercase letter")
+  .regex(/[0-9]/, "One number")
+  .regex(/[^A-Za-z0-9]/, "One special character");
+
+export const credentialsSchema = z.object({
+  email: z.email("Enter a valid email"),
+  password: passwordSchema,
+});</code></pre>
+
+  <h2 id="errors"><span class="num">8</span>Error handling — toasts</h2>
+  <p>Auth Server Actions return the codebase's existing discriminated union
+    <code>ActionResult&lt;T&gt; = {ok:true,data} | {ok:false,error}</code>. The client form fires a
+    Sonner <code>toast.error(result.error)</code> on failure and <code>toast.success(...)</code> on success.
+    Validation failures short-circuit before any Supabase call. Supabase errors
+    (wrong password, unconfirmed email, duplicate account) are mapped to friendly copy.</p>
+
+  <h2 id="routes"><span class="num">9</span>Route map &amp; splash behaviour</h2>
+  <table>
+    <tr><th>Route</th><th>Access</th><th>Notes</th></tr>
+    <tr><td><code>/</code> (splash)</td><td><span class="tag pub">PUBLIC</span></td><td>Branded loading screen → routes to <code>/today</code> if session, else <code>/login</code></td></tr>
+    <tr><td><code>/login</code>, <code>/signup</code>, <code>/forgot-password</code>, <code>/reset-password</code></td><td><span class="tag pub">PUBLIC</span></td><td>Redirect to <code>/today</code> if already authenticated</td></tr>
+    <tr><td><code>/auth/confirm</code></td><td><span class="tag pub">PUBLIC</span></td><td>Token exchange handler (email confirm / recovery)</td></tr>
+    <tr><td><code>/today</code>, <code>/my-tasks</code>, <code>/calendar</code>, <code>/rolled</code>, <code>/batch-triage</code>, <code>/settings</code></td><td><span class="tag prot">PROTECTED</span></td><td>Proxy redirects anon → <code>/login</code>; each read scoped by <code>userId</code></td></tr>
+    <tr><td><code>/api/cron/*</code></td><td>SERVICE</td><td>Guarded by <code>CRON_SECRET</code>; runs per-user internally</td></tr>
+  </table>
+
+  <h2 id="datamodel"><span class="num">10</span>Data model &amp; per-user scoping</h2>
+  <p>The current schema is single-user (no <code>user_id</code> anywhere). Phase 1 adds a
+    <code>userId uuid</code> (= Supabase <code>auth.users.id</code>) to every ownership root and threads it
+    through every query and action.</p>
+  <table>
+    <tr><th>Table</th><th>Change</th></tr>
+    <tr><td><code>domains</code>, <code>tasks</code>, <code>push_subscriptions</code>, <code>warning_rules</code></td><td>Add <code>user_id</code> NOT NULL; indexes lead with <code>user_id</code></td></tr>
+    <tr><td><code>app_settings</code></td><td>Add <code>user_id</code> + UNIQUE → one settings row <em>per user</em> (was one global row)</td></tr>
+    <tr><td><code>task_milestones</code>, <code>dependencies</code></td><td><strong>Denormalize</strong> <code>user_id</code> onto both — every scoped query becomes a trivial <code>eq(userId)</code> and cross-user edges are impossible</td></tr>
+    <tr><td><code>notification_log</code></td><td>Add <code>user_id</code>; UNIQUE on <code>(user_id, slot)</code> so send-once is per user</td></tr>
+  </table>
+  <div class="callout">
+    <strong>Why app-level, not RLS (yet):</strong> Drizzle connects with the service connection
+    string, which bypasses Postgres Row-Level Security. Scoping in the DAL is explicit and testable
+    now; RLS is added later as defense-in-depth once the user JWT is routed to the DB layer.
+  </div>
+
+  <h2 id="migration"><span class="num">11</span>Migration &amp; backfill strategy</h2>
+  <ol>
+    <li><strong>Migration A</strong> — add <code>user_id</code> as <em>nullable</em> to every table (non-destructive; app keeps running).</li>
+    <li><strong>Sign up</strong> — create the first real account; note its UUID.</li>
+    <li><strong>Backfill</strong> — one-time <code>UPDATE … SET user_id = &lt;uuid&gt; WHERE user_id IS NULL</code> across all tables, claiming existing single-user data.</li>
+    <li><strong>Migration B</strong> — flip <code>user_id</code> to <code>NOT NULL</code> and swap in the user-scoped indexes.</li>
+  </ol>
+  <div class="callout warn"><strong>Generated, not auto-applied.</strong> Migrations are produced with
+    <code>drizzle-kit generate</code> and reviewed before <code>db:migrate</code> runs against Supabase.</div>
+
+  <h2 id="security"><span class="num">12</span>Security considerations</h2>
+  <ul>
+    <li><strong>XSS</strong> → HttpOnly cookies mean injected JS can't read the session.</li>
+    <li><strong>CSRF</strong> → SameSite=Lax cookies + Server Actions' same-origin POST model.</li>
+    <li><strong>Server trust</strong> → authorization decisions only ever use verified <code>getUser()</code>, never <code>getSession()</code>.</li>
+    <li><strong>Key hygiene</strong> → only the <code>anon</code> key is public (<code>NEXT_PUBLIC_</code>); the service-role key is never shipped to the client.</li>
+    <li><strong>Least data</strong> → DAL returns only the fields a caller needs (DTO discipline); sensitive JWT fields never cross to the client.</li>
+    <li><strong>Action hardening</strong> → every mutating Server Action calls <code>requireUser()</code> first and scopes writes by <code>userId</code>.</li>
+  </ul>
+
+  <h2 id="env"><span class="num">13</span>Environment variables</h2>
+  <table>
+    <tr><th>Variable</th><th>Scope</th><th>Use</th></tr>
+    <tr><td><code>NEXT_PUBLIC_SUPABASE_URL</code></td><td>public</td><td>Project URL for both clients</td></tr>
+    <tr><td><code>NEXT_PUBLIC_SUPABASE_ANON_KEY</code></td><td>public</td><td>Anon key — safe in the browser</td></tr>
+    <tr><td><code>DATABASE_URL</code></td><td>server</td><td>Drizzle/Postgres connection (service)</td></tr>
+    <tr><td><code>APP_TIMEZONE</code></td><td>server</td><td>Day-boundary for Today/rollforward/briefing</td></tr>
+  </table>
+  <p>Supabase dashboard: enable <strong>Email</strong> provider, set <strong>Site URL</strong> and
+    <strong>Redirect URLs</strong> (include <code>/auth/confirm</code>).</p>
+
+  <h2 id="sequence"><span class="num">14</span>Build sequence</h2>
+  <ol>
+    <li>Install <code>@supabase/ssr</code> + <code>@supabase/supabase-js</code>.</li>
+    <li>Supabase client helpers + <code>proxy.ts</code> + <code>requireUser()</code> DAL.</li>
+    <li>Zod auth schemas + auth Server Actions.</li>
+    <li>Auth pages/forms with toast handling.</li>
+    <li>Wire the splash screen to route by session.</li>
+    <li>Schema migration (A) + backfill + migration (B).</li>
+    <li>Scope every query/action in <code>queries.ts</code>, <code>actions.ts</code>, <code>notifications-feed.ts</code>, <code>notify.ts</code>, <code>rollforward.ts</code> by <code>userId</code>.</li>
+  </ol>
+
+  <footer>
+    Tempo — Authentication Architecture · Phase 1 · keeps your day in rhythm
+  </footer>
+</div>
+</body>
+</html>

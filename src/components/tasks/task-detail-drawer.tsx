@@ -4,14 +4,15 @@ import { useEffect, useMemo, useState, useTransition } from "react";
 import {
   Trash2,
   ChevronsDownUp,
-  Plus,
-  X,
-  Circle,
   CircleCheck,
+  CalendarArrowUp,
+  Spline,
+  Circle,
+  Plus,
 } from "lucide-react";
 import { toast } from "sonner";
 
-import type { Task, Domain } from "@/db/schema";
+import type { Task, Domain, Thread } from "@/db/schema";
 import {
   Sheet,
   SheetContent,
@@ -38,11 +39,25 @@ import {
   deleteTask,
   getMilestones,
   setMilestones,
+  toggleTaskDone,
+  moveTaskToTomorrow,
+  startThreadFollowUp,
+  getThread,
+  type FollowUpContext,
 } from "@/server/actions";
 import { log } from "@/lib/logger";
 import { cn } from "@/lib/utils";
 import { useIsDesktop } from "@/hooks/use-is-desktop";
 import { DatePicker } from "@/components/ui/date-picker";
+import { TimePicker } from "@/components/ui/time-picker";
+import {
+  SubtaskEditor,
+  subtasksToPayload,
+  fromMinutes,
+  toMinutes,
+  type SubtaskDraft,
+} from "@/components/tasks/subtask-editor";
+import { TaskNotes } from "@/components/tasks/task-notes";
 
 const NO_DOMAIN = "__none__";
 
@@ -56,18 +71,31 @@ const STATUS_ITEMS: Record<string, string> = Object.fromEntries(
   TASK_STATUS.map((s) => [s, STATUS_META[s].label]),
 );
 
-type Step = { title: string; durationEstMin: string; isCompleted: boolean };
+/** "2026-10-16" -> "16 Oct 26". */
+function fmtDate(iso: string | null): string {
+  if (!iso) return "No date";
+  const [y, m, d] = iso.split("-").map(Number);
+  return new Date(y, m - 1, d).toLocaleDateString("en-GB", {
+    day: "2-digit",
+    month: "short",
+    year: "2-digit",
+  });
+}
 
 export function TaskDetailDrawer({
   task,
   domains,
   open,
   onOpenChange,
+  onFollowUp,
+  onSelectTask,
 }: {
   task: Task | null;
   domains: Domain[];
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onFollowUp?: (ctx: FollowUpContext) => void;
+  onSelectTask?: (task: Task) => void;
 }) {
   const isDesktop = useIsDesktop();
   const domainItems = useMemo(() => {
@@ -76,6 +104,9 @@ export function TaskDetailDrawer({
     return m;
   }, [domains]);
   const [pending, startTransition] = useTransition();
+  const [thread, setThread] = useState<{ thread: Thread; tasks: Task[] } | null>(
+    null,
+  );
   const [form, setForm] = useState({
     title: "",
     description: "",
@@ -83,12 +114,14 @@ export function TaskDetailDrawer({
     status: "not_started" as Task["status"],
     importance: "flexible" as Task["importance"],
     date: "",
-    timeHint: "",
-    durationMin: "",
+    scheduledStart: "",
+    scheduledEnd: "",
+    durationEst: "",
+    durationUnit: "min" as "min" | "hr",
     minDurationMin: "15",
     isElastic: true,
   });
-  const [steps, setSteps] = useState<Step[]>([]);
+  const [subtasks, setSubtasks] = useState<SubtaskDraft[]>([]);
 
   const shrinkAllowed = useMemo(() => {
     const d = domains.find((x) => x.id === form.domainId);
@@ -113,22 +146,38 @@ export function TaskDetailDrawer({
       status: task.status,
       importance: task.importance,
       date: task.date ?? "",
-      timeHint: task.timeHint ?? "",
-      durationMin: task.durationMin ? String(task.durationMin) : "",
+      scheduledStart: task.scheduledStart?.slice(0, 5) ?? "",
+      scheduledEnd: task.scheduledEnd?.slice(0, 5) ?? "",
+      durationEst: task.durationMin ? fromMinutes(task.durationMin).value : "",
+      durationUnit: task.durationMin ? fromMinutes(task.durationMin).unit : "min",
       minDurationMin: task.minDurationMin ? String(task.minDurationMin) : "15",
       isElastic: task.isElastic,
     });
     let cancelled = false;
     getMilestones(task.id).then((ms) => {
       if (cancelled) return;
-      setSteps(
-        ms.map((m) => ({
-          title: m.title,
-          durationEstMin: String(m.durationEstMin),
-          isCompleted: m.isCompleted,
-        })),
+      setSubtasks(
+        ms.map((m) => {
+          const d = fromMinutes(m.durationEstMin);
+          return {
+            title: m.title,
+            description: m.description ?? "",
+            date: m.date ?? "",
+            scheduledTime: m.scheduledTime?.slice(0, 5) ?? "",
+            durationEst: d.value,
+            durationUnit: d.unit,
+            isCompleted: m.isCompleted,
+          };
+        }),
       );
     });
+    // Load the thread chain (if any).
+    setThread(null);
+    if (task.threadId) {
+      getThread(task.threadId).then((t) => {
+        if (!cancelled) setThread(t);
+      });
+    }
     return () => {
       cancelled = true;
     };
@@ -136,12 +185,31 @@ export function TaskDetailDrawer({
 
   if (!task) return null;
 
-  const addStep = () =>
-    setSteps((s) => [...s, { title: "", durationEstMin: "15", isCompleted: false }]);
-  const updateStep = (i: number, patch: Partial<Step>) =>
-    setSteps((s) => s.map((x, idx) => (idx === i ? { ...x, ...patch } : x)));
-  const removeStep = (i: number) =>
-    setSteps((s) => s.filter((_, idx) => idx !== i));
+  const isDone = form.status === "done";
+  const currentId = task.id;
+
+  const completeAndFollowUp = () => {
+    startTransition(async () => {
+      const res = await startThreadFollowUp(task.id, { complete: true });
+      if (!res.ok) {
+        toast.error(res.error);
+        return;
+      }
+      toast.success("Completed — add the follow-up");
+      onFollowUp?.(res.data);
+    });
+  };
+
+  const addToThread = () => {
+    startTransition(async () => {
+      const res = await startThreadFollowUp(task.id, { complete: false });
+      if (!res.ok) {
+        toast.error(res.error);
+        return;
+      }
+      onFollowUp?.(res.data);
+    });
+  };
 
   const save = () => {
     startTransition(async () => {
@@ -153,8 +221,11 @@ export function TaskDetailDrawer({
         status: form.status,
         importance: form.importance,
         date: form.date || null,
-        timeHint: form.timeHint || null,
-        durationMin: form.durationMin ? Number(form.durationMin) : null,
+        scheduledStart: form.scheduledStart || null,
+        scheduledEnd: form.scheduledEnd || null,
+        durationMin: form.durationEst
+          ? toMinutes(form.durationEst, form.durationUnit)
+          : null,
         isElastic: shrinkAllowed && form.isElastic,
         minDurationMin:
           shrinkAllowed && form.isElastic && form.minDurationMin
@@ -166,15 +237,32 @@ export function TaskDetailDrawer({
         toast.error(res.error);
         return;
       }
-      const clean = steps
-        .filter((m) => m.title.trim())
-        .map((m) => ({
-          title: m.title.trim(),
-          durationEstMin: Number(m.durationEstMin) || 15,
-          isCompleted: m.isCompleted,
-        }));
-      await setMilestones(task.id, clean);
+      await setMilestones(task.id, subtasksToPayload(subtasks));
       toast.success("Task saved");
+      onOpenChange(false);
+    });
+  };
+
+  const complete = () => {
+    startTransition(async () => {
+      const res = await toggleTaskDone(task.id, !isDone);
+      if (!res.ok) {
+        toast.error(res.error);
+        return;
+      }
+      setForm((f) => ({ ...f, status: isDone ? "not_started" : "done" }));
+      toast.success(isDone ? "Marked not started" : "Task completed");
+    });
+  };
+
+  const pushTomorrow = () => {
+    startTransition(async () => {
+      const res = await moveTaskToTomorrow(task.id);
+      if (!res.ok) {
+        toast.error(res.error);
+        return;
+      }
+      toast.success("Moved to tomorrow");
       onOpenChange(false);
     });
   };
@@ -196,14 +284,89 @@ export function TaskDetailDrawer({
         side={isDesktop ? "right" : "bottom"}
         className={cn(
           "flex flex-col gap-0",
-          isDesktop ? "w-full sm:max-w-md" : "max-h-[90vh] rounded-t-2xl",
+          isDesktop ? "w-full sm:max-w-xl" : "max-h-[90vh] rounded-t-2xl",
         )}
       >
+        {/* Mobile grab handle */}
+        {!isDesktop && (
+          <div className="flex shrink-0 justify-center pb-1 pt-2.5">
+            <span className="h-1.5 w-10 rounded-full bg-muted-foreground/25" />
+          </div>
+        )}
         <SheetHeader>
           <SheetTitle>Task details</SheetTitle>
         </SheetHeader>
 
         <div className="flex-1 space-y-4 overflow-y-auto px-4 pb-4">
+          {/* Thread timeline */}
+          {thread && thread.tasks.length > 1 && (
+            <div className="rounded-xl bg-rolledforward/5 p-3 ring-1 ring-rolledforward/20">
+              <div className="mb-2 flex items-center gap-2">
+                <Spline className="size-4 shrink-0 text-rolledforward" />
+                <span className="flex-1 truncate text-sm font-semibold text-foreground">
+                  {thread.thread.title}
+                </span>
+                <span className="shrink-0 text-[11px] font-medium text-muted-foreground">
+                  {thread.tasks.length} tasks
+                </span>
+              </div>
+              <ol className="space-y-0.5">
+                {thread.tasks.map((t) => {
+                  const done = t.status === "done";
+                  const isCurrent = t.id === currentId;
+                  return (
+                    <li key={t.id}>
+                      <button
+                        type="button"
+                        disabled={isCurrent}
+                        onClick={() => onSelectTask?.(t)}
+                        className={cn(
+                          "flex w-full items-start gap-2 rounded-lg px-2 py-1.5 text-left transition-colors",
+                          isCurrent ? "bg-rolledforward/10" : "hover:bg-secondary",
+                        )}
+                      >
+                        {done ? (
+                          <CircleCheck className="mt-0.5 size-4 shrink-0 text-ontrack" />
+                        ) : (
+                          <Circle
+                            className={cn(
+                              "mt-0.5 size-4 shrink-0",
+                              isCurrent ? "text-rolledforward" : "text-muted-foreground",
+                            )}
+                          />
+                        )}
+                        <span className="min-w-0 flex-1">
+                          <span
+                            className={cn(
+                              "block truncate text-[13px]",
+                              done
+                                ? "text-muted-foreground line-through"
+                                : "font-medium text-foreground",
+                            )}
+                          >
+                            {t.title}
+                          </span>
+                          <span className="block text-[11px] text-muted-foreground">
+                            {fmtDate(t.date)}
+                            {isCurrent ? " · current" : ""}
+                          </span>
+                        </span>
+                      </button>
+                    </li>
+                  );
+                })}
+              </ol>
+              <button
+                type="button"
+                onClick={addToThread}
+                disabled={pending}
+                className="mt-1 flex items-center gap-1 px-2 text-xs font-semibold text-rolledforward hover:underline disabled:opacity-50"
+              >
+                <Plus className="size-3.5" /> Add task to thread
+              </button>
+            </div>
+          )}
+
           <div className="space-y-1.5">
             <Label htmlFor="t-title">Title</Label>
             <Input
@@ -304,27 +467,62 @@ export function TaskDetailDrawer({
               />
             </div>
 
-            <div className="space-y-1.5">
-              <Label htmlFor="t-hint">Time hint</Label>
-              <Input
-                id="t-hint"
-                placeholder="before noon"
-                value={form.timeHint}
-                onChange={(e) => setForm({ ...form, timeHint: e.target.value })}
-              />
+            <div className="col-span-2 space-y-1.5">
+              <Label>Time window</Label>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="min-w-0 space-y-1">
+                  <span className="block text-xs font-medium text-muted-foreground">
+                    Start
+                  </span>
+                  <TimePicker
+                    value={form.scheduledStart}
+                    onChange={(v) => setForm({ ...form, scheduledStart: v })}
+                    placeholder="Start time"
+                    ariaLabel="Start time"
+                  />
+                </div>
+                <div className="min-w-0 space-y-1">
+                  <span className="block text-xs font-medium text-muted-foreground">
+                    Finish by
+                  </span>
+                  <TimePicker
+                    value={form.scheduledEnd}
+                    onChange={(v) => setForm({ ...form, scheduledEnd: v })}
+                    placeholder="Finish time"
+                    ariaLabel="Finish by"
+                  />
+                </div>
+              </div>
             </div>
 
-            <div className="space-y-1.5">
-              <Label htmlFor="t-dur">Duration (min)</Label>
-              <Input
-                id="t-dur"
-                type="number"
-                min={1}
-                value={form.durationMin}
-                onChange={(e) =>
-                  setForm({ ...form, durationMin: e.target.value })
-                }
-              />
+            <div className="col-span-2 space-y-1.5">
+              <Label htmlFor="t-dur">Estimated duration</Label>
+              <div className="flex items-center gap-1.5">
+                <Input
+                  id="t-dur"
+                  type="number"
+                  min={1}
+                  placeholder="45"
+                  value={form.durationEst}
+                  onChange={(e) =>
+                    setForm({ ...form, durationEst: e.target.value })
+                  }
+                  className="flex-1"
+                />
+                <button
+                  type="button"
+                  onClick={() =>
+                    setForm({
+                      ...form,
+                      durationUnit: form.durationUnit === "hr" ? "min" : "hr",
+                    })
+                  }
+                  className="flex h-8 w-14 shrink-0 items-center justify-center rounded-lg border border-input text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+                  aria-label="Toggle unit (min/hr)"
+                >
+                  {form.durationUnit}
+                </button>
+              </div>
             </div>
           </div>
 
@@ -374,91 +572,72 @@ export function TaskDetailDrawer({
           </div>
 
           {/* Subtasks */}
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <Label className="text-[11px] uppercase tracking-wider text-muted-foreground">
-                Subtasks ({steps.length})
-              </Label>
-              <button
-                onClick={addStep}
-                className="flex items-center gap-1 text-xs font-semibold text-primary hover:underline"
-              >
-                <Plus className="size-3.5" /> Add Step
-              </button>
-            </div>
-            {steps.length === 0 ? (
-              <p className="rounded-lg border border-dashed border-border px-3 py-2 text-xs text-muted-foreground">
-                No subtasks yet.
-              </p>
-            ) : (
-              <div className="space-y-2">
-                {steps.map((m, i) => (
-                  <div
-                    key={i}
-                    className="flex items-center gap-2 rounded-lg border border-border bg-card px-2.5 py-2"
-                  >
-                    <button
-                      type="button"
-                      onClick={() =>
-                        updateStep(i, { isCompleted: !m.isCompleted })
-                      }
-                      aria-label="Toggle complete"
-                    >
-                      {m.isCompleted ? (
-                        <CircleCheck className="size-4 text-ontrack" />
-                      ) : (
-                        <Circle className="size-4 text-muted-foreground" />
-                      )}
-                    </button>
-                    <input
-                      value={m.title}
-                      onChange={(e) => updateStep(i, { title: e.target.value })}
-                      placeholder="Describe this step"
-                      className={cn(
-                        "flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground/60",
-                        m.isCompleted && "text-muted-foreground line-through",
-                      )}
-                    />
-                    <div className="flex items-center gap-1 rounded-md bg-muted px-2 py-1">
-                      <input
-                        type="number"
-                        min={1}
-                        value={m.durationEstMin}
-                        onChange={(e) =>
-                          updateStep(i, { durationEstMin: e.target.value })
-                        }
-                        className="w-8 bg-transparent text-right text-xs outline-none"
-                        aria-label="Step minutes"
-                      />
-                      <span className="text-[11px] text-muted-foreground">
-                        min
-                      </span>
-                    </div>
-                    <button
-                      onClick={() => removeStep(i)}
-                      className="text-muted-foreground hover:text-urgent"
-                      aria-label="Remove step"
-                    >
-                      <X className="size-4" />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
+          <SubtaskEditor value={subtasks} onChange={setSubtasks} />
+
+          {/* Notes & Output */}
+          <TaskNotes taskId={task.id} />
+        </div>
+
+        {/* Quick lifecycle actions */}
+        <div className="flex flex-col gap-2 border-t border-border px-4 py-2.5">
+          <div className="flex items-center gap-2">
+            <Button
+              variant={isDone ? "secondary" : "default"}
+              size="lg"
+              onClick={complete}
+              disabled={pending}
+              className="flex-1"
+            >
+              <CircleCheck className="size-4" />
+              {isDone ? "Completed" : "Mark complete"}
+            </Button>
+            <Button
+              variant="outline"
+              size="lg"
+              onClick={pushTomorrow}
+              disabled={pending}
+            >
+              <CalendarArrowUp className="size-4" /> Tomorrow
+            </Button>
+          </div>
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <Button
+              variant="outline"
+              size="lg"
+              onClick={addToThread}
+              disabled={pending}
+              className="sm:flex-1"
+            >
+              <Plus className="size-4" /> Add follow-up
+            </Button>
+            <Button
+              variant="outline"
+              size="lg"
+              onClick={completeAndFollowUp}
+              disabled={pending}
+              className="sm:flex-1"
+            >
+              <Spline className="size-4" /> Complete &amp; follow-up
+            </Button>
           </div>
         </div>
 
-        <SheetFooter className="flex-row items-center justify-between gap-2 border-t border-border">
+        <SheetFooter
+          className={cn(
+            "flex-row items-center justify-between gap-2 border-t border-border",
+            !isDesktop && "pb-[calc(env(safe-area-inset-bottom)+1rem)]",
+          )}
+        >
           <Button
             variant="ghost"
-            size="sm"
+            size="lg"
             onClick={remove}
             disabled={pending}
             className="text-urgent hover:text-urgent"
           >
             <Trash2 className="size-4" /> Delete
           </Button>
-          <Button onClick={save} disabled={pending || !form.title.trim()}>
+          <Button size="lg" onClick={save} disabled={pending || !form.title.trim()}>
             Save
           </Button>
         </SheetFooter>

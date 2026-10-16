@@ -6,17 +6,19 @@ import {
   getDomains,
   getAppSettings,
   getTaskDashboardSummary,
+  getTaskNoteCounts,
   todayISO,
 } from "@/server/queries";
 import { buildBriefing } from "@/server/briefing";
 
 export default async function TodayPage() {
   const today = todayISO();
-  const [todays, domains, settings, summary] = await Promise.all([
+  const [todays, domains, settings, summary, noteCounts] = await Promise.all([
     getTasks({ date: today }),
     getDomains(),
     getAppSettings(),
     getTaskDashboardSummary(),
+    getTaskNoteCounts(),
   ]);
 
   if (summary.all === 0) return <EmptyState domains={domains} />;
@@ -33,6 +35,7 @@ export default async function TodayPage() {
         domains={domains}
         title="Today"
         initialView="list"
+        noteCounts={noteCounts}
       />
     </div>
   );

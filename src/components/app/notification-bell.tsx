@@ -1,7 +1,8 @@
 "use client";
 
+import { useState, useTransition } from "react";
 import Link from "next/link";
-import { Bell } from "lucide-react";
+import { Bell, CheckCheck } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import {
@@ -10,6 +11,7 @@ import {
   DropdownMenuContent,
 } from "@/components/ui/dropdown-menu";
 import type { AppNotification } from "@/server/notifications-feed";
+import { markNotificationsRead } from "@/server/actions";
 
 const TONE: Record<AppNotification["tone"], string> = {
   urgent: "bg-urgent",
@@ -18,7 +20,23 @@ const TONE: Record<AppNotification["tone"], string> = {
 };
 
 export function NotificationBell({ items }: { items: AppNotification[] }) {
-  const count = items.length;
+  // The feed already excludes read notifications (persisted per account).
+  // `dismissed` is an optimistic layer so clicking/clearing feels instant
+  // while the server action + revalidation catches up.
+  const [dismissed, setDismissed] = useState<Set<string>>(new Set());
+  const [, startTransition] = useTransition();
+
+  const visible = items.filter((n) => !dismissed.has(n.id));
+  const count = visible.length;
+
+  const markRead = (ids: string[]) => {
+    if (!ids.length) return;
+    setDismissed((prev) => new Set([...prev, ...ids]));
+    startTransition(() => {
+      void markNotificationsRead(ids);
+    });
+  };
+  const clearAll = () => markRead(visible.map((n) => n.id));
 
   return (
     <DropdownMenu>
@@ -39,8 +57,18 @@ export function NotificationBell({ items }: { items: AppNotification[] }) {
         collisionPadding={12}
         className="w-[calc(100vw-1.5rem)] p-0 sm:w-80"
       >
-        <div className="border-b border-border px-3 py-2.5 text-sm font-bold text-foreground">
-          Notifications
+        <div className="flex items-center justify-between border-b border-border px-3 py-2.5">
+          <span className="text-sm font-bold text-foreground">Notifications</span>
+          {count > 0 && (
+            <button
+              type="button"
+              onClick={clearAll}
+              className="flex items-center gap-1 text-xs font-semibold text-primary transition-colors hover:text-primary/80"
+            >
+              <CheckCheck className="size-3.5" />
+              Clear all
+            </button>
+          )}
         </div>
         {count === 0 ? (
           <div className="px-3 py-8 text-center text-sm text-muted-foreground">
@@ -48,10 +76,11 @@ export function NotificationBell({ items }: { items: AppNotification[] }) {
           </div>
         ) : (
           <div className="max-h-80 overflow-y-auto">
-            {items.map((n) => (
+            {visible.map((n) => (
               <Link
                 key={n.id}
                 href={n.href}
+                onClick={() => markRead([n.id])}
                 className="flex gap-2.5 border-b border-border/60 px-3 py-2.5 last:border-0 hover:bg-secondary"
               >
                 <span

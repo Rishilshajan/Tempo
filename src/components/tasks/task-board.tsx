@@ -10,25 +10,27 @@ export function TaskBoard({
   domainMap,
   onOpen,
   columns = BOARD_COLUMNS,
+  noteCounts = {},
 }: {
   tasks: Task[];
   domainMap: Map<string, Domain>;
   onOpen: (task: Task) => void;
   columns?: Task["status"][];
+  noteCounts?: Record<string, number>;
 }) {
   const byStatus = new Map<Task["status"], Task[]>();
   for (const col of columns) byStatus.set(col, []);
   for (const t of tasks) byStatus.get(t.status)?.push(t);
 
   return (
-    <div className="-mx-4 flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-4 lg:mx-0 lg:snap-none lg:px-0">
+    <div className="flex flex-col gap-6 lg:flex-row lg:gap-4 lg:overflow-x-auto lg:pb-4">
       {columns.map((col) => {
         const meta = STATUS_META[col];
         const items = byStatus.get(col) ?? [];
         return (
           <div
             key={col}
-            className="flex w-[84vw] max-w-[320px] shrink-0 snap-center flex-col gap-3 lg:w-72"
+            className="flex w-full shrink-0 flex-col gap-3 lg:w-[22rem]"
           >
             <div className="flex items-center gap-2 px-1">
               <span className={cn("size-2.5 rounded-full", meta.dot)} />
@@ -46,6 +48,7 @@ export function TaskBoard({
                 task={t}
                 domain={t.domainId ? domainMap.get(t.domainId) : null}
                 onOpen={onOpen}
+                noteCount={noteCounts[t.id] ?? 0}
               />
             ))}
 

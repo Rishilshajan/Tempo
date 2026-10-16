@@ -117,3 +117,31 @@ response.
    **Settings → Notifications → Enable**, grant permission, and tap **Send test**.
 4. Add at least one **alert time** in Settings (e.g. `09:00`) — otherwise the
    minute-by-minute cron correctly sends nothing.
+
+## Database connection (production)
+
+- Use the Supabase **transaction pooler** (port **6543**) for serverless
+  (Vercel) deployments — `prepare: false` is already set for it. The session
+  pooler (`5432`) holds a connection per client and is better for a single
+  long-running server.
+- Pool size is configurable via `DB_POOL_MAX` (default 10) and
+  `DB_IDLE_TIMEOUT` seconds (default 180). On serverless, keep `DB_POOL_MAX`
+  modest (e.g. 3–5) so concurrent function instances don't exhaust the pool.
+- Deploy in / point at the **same region** as the database to minimise
+  per-query round-trip latency.
+
+## Cron (GitHub Actions)
+
+The nightly **rollforward** is driven by a GitHub Actions workflow
+(`.github/workflows/rollforward.yml`) that POSTs to `/api/cron/rollforward`
+daily at 01:00 UTC — host-agnostic, so it works wherever Tempo is deployed.
+
+Set two **repository secrets** (Settings → Secrets and variables → Actions):
+
+- `APP_URL` — the deployed base URL, e.g. `https://tempo.yourdomain.com`
+- `CRON_SECRET` — must match the deployed `CRON_SECRET` env var; the route
+  verifies it as `Authorization: Bearer <CRON_SECRET>`.
+
+Trigger it manually anytime from **Actions → Nightly rollforward → Run
+workflow**. GitHub's scheduler is UTC, can lag a few minutes, and pauses after
+~60 days of repo inactivity — all fine for an idempotent nightly job.

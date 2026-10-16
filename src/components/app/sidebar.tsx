@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useState, useTransition } from "react";
-import { Plus, PlusCircle, User, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+import { Plus, PlusCircle, User, MoreHorizontal, Pencil, Trash2, LogOut } from "lucide-react";
 import { toast } from "sonner";
 
 import { cn } from "@/lib/utils";
@@ -17,6 +17,7 @@ import { CreateTaskDialog } from "@/components/tasks/create-task-dialog";
 import { DomainFormSheet } from "@/components/domains/create-domain-sheet";
 import { DomainIcon } from "@/components/domains/domain-icon";
 import { deleteDomain } from "@/server/actions";
+import { logout } from "@/server/auth-actions";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -29,9 +30,13 @@ const VIEW_ROUTES = new Set(["/today", "/my-tasks", "/rolled"]);
 export function Sidebar({
   domains,
   counts,
+  userName,
+  userEmail,
 }: {
   domains: Domain[];
   counts: NavCounts;
+  userName?: string;
+  userEmail?: string;
 }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -40,6 +45,7 @@ export function Sidebar({
   const [editing, setEditing] = useState<Domain | null>(null);
   const [domainSheetOpen, setDomainSheetOpen] = useState(false);
   const [, startDelete] = useTransition();
+  const [loggingOut, startLogout] = useTransition();
 
   const countFor = (href: string) => {
     switch (href) {
@@ -231,17 +237,30 @@ export function Sidebar({
         </Link>
 
         <div className="flex items-center gap-2.5 rounded-xl bg-card p-2.5">
-          <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary">
-            <User className="size-[18px] text-primary-foreground" />
+          <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-semibold text-primary-foreground uppercase">
+            {userName?.trim()?.[0] ?? userEmail?.[0] ?? <User className="size-[18px]" />}
           </div>
           <div className="flex min-w-0 flex-1 flex-col">
             <span className="truncate text-sm font-medium text-foreground">
-              Rishil Shajan
+              {userName ?? userEmail ?? "Your account"}
             </span>
             <span className="truncate text-xs text-muted-foreground">
-              Founder Mode
+              {userName ? userEmail : "Signed in"}
             </span>
           </div>
+          <button
+            onClick={() =>
+              startLogout(async () => {
+                await logout();
+              })
+            }
+            disabled={loggingOut}
+            className="shrink-0 rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-50"
+            aria-label="Log out"
+            title="Log out"
+          >
+            <LogOut className="size-4" />
+          </button>
         </div>
       </div>
 

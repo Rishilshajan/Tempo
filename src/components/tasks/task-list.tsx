@@ -7,10 +7,12 @@ export function TaskList({
   tasks,
   domainMap,
   onOpen,
+  noteCounts = {},
 }: {
   tasks: Task[];
   domainMap: Map<string, Domain>;
   onOpen: (task: Task) => void;
+  noteCounts?: Record<string, number>;
 }) {
   if (!tasks.length) {
     return (
@@ -27,6 +29,7 @@ export function TaskList({
           task={t}
           domain={t.domainId ? domainMap.get(t.domainId) : null}
           onOpen={onOpen}
+          noteCount={noteCounts[t.id] ?? 0}
         />
       ))}
     </div>

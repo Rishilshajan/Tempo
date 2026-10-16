@@ -1,5 +1,5 @@
 import "server-only";
-import { and, lt, ne, sql } from "drizzle-orm";
+import { and, eq, lt, ne, sql } from "drizzle-orm";
 
 import { db } from "@/db";
 import { tasks } from "@/db/schema";
@@ -15,9 +15,14 @@ import { log } from "@/lib/logger";
  * Idempotent: after a run the moved rows are dated today, so a second run the
  * same day is a no-op. "Today" comes from todayISO() so the Today filter, the
  * briefing and this job all agree on the same day boundary.
+ *
+ * Pass a `userId` to roll only that user's tasks (the manual in-app trigger);
+ * omit it for the nightly cron, which rolls every user's past-due work.
  */
-export async function rollforwardTasks(): Promise<number> {
+export async function rollforwardTasks(userId?: string): Promise<number> {
   const today = todayISO();
+  const conds = [lt(tasks.date, today), ne(tasks.status, "done")];
+  if (userId) conds.push(eq(tasks.userId, userId));
 
   const moved = await db
     .update(tasks)
@@ -29,9 +34,9 @@ export async function rollforwardTasks(): Promise<number> {
       rollforwardCount: sql`${tasks.rollforwardCount} + 1`,
       updatedAt: new Date(),
     })
-    .where(and(lt(tasks.date, today), ne(tasks.status, "done")))
+    .where(and(...conds))
     .returning({ id: tasks.id });
 
-  log.success("Rollforward complete", { moved: moved.length, today });
+  log.success("Rollforward complete", { moved: moved.length, today, userId });
   return moved.length;
 }

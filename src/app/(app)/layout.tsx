@@ -5,13 +5,28 @@ import { AppHeader } from "@/components/app/app-header";
 import { MobileNav } from "@/components/app/mobile-nav";
 import { getDomains, getTaskCounts, todayLabel } from "@/server/queries";
 import { getInAppNotifications } from "@/server/notifications-feed";
+import { requireUser } from "@/server/auth";
 
 // These routes read live, per-request data from Supabase - never prerender them.
 export const dynamic = "force-dynamic";
 
 async function DynamicSidebar() {
-  const [domains, counts] = await Promise.all([getDomains(), getTaskCounts()]);
-  return <Sidebar domains={domains} counts={counts} />;
+  const [user, domains, counts] = await Promise.all([
+    requireUser(),
+    getDomains(),
+    getTaskCounts(),
+  ]);
+  const name =
+    (user.user_metadata?.full_name as string | undefined) ??
+    (user.user_metadata?.name as string | undefined);
+  return (
+    <Sidebar
+      domains={domains}
+      counts={counts}
+      userName={name}
+      userEmail={user.email ?? undefined}
+    />
+  );
 }
 
 async function DynamicHeader() {

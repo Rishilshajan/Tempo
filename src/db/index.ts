@@ -20,10 +20,15 @@ const globalForDb = globalThis as unknown as {
 const client =
   globalForDb.client ??
   postgres(connectionString, {
-    max: 1,
+    // Pooled connections so the per-request Promise.all queries run in
+    // parallel instead of serializing through a single remote round-trip.
+    // Safe on the Supabase pooler; keep modest to respect pool limits.
+    max: Number(process.env.DB_POOL_MAX) || 10,
     prepare: false,
     connect_timeout: 10,
-    idle_timeout: 20,
+    // Keep pooled connections warm so active navigation reuses them instead of
+    // paying a cold TLS+pooler handshake to the remote region each time.
+    idle_timeout: Number(process.env.DB_IDLE_TIMEOUT) || 180,
   });
 
 if (process.env.NODE_ENV !== "production") {

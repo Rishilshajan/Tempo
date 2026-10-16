@@ -1,10 +1,12 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Plus } from "lucide-react";
+import { Plus, ChevronRight, CircleCheck, Loader2 } from "lucide-react";
 
 import type { Task, Domain } from "@/db/schema";
+import { fetchTasksPage, type FollowUpContext } from "@/server/actions";
+import type { TaskFilter } from "@/server/queries";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { TaskList } from "./task-list";
@@ -25,12 +27,16 @@ export function TaskSurface({
   title,
   initialView = "list",
   boardColumns,
+  noteCounts = {},
+  paginate,
 }: {
   tasks: Task[];
   domains: Domain[];
   title: string;
   initialView?: View;
   boardColumns?: Task["status"][];
+  noteCounts?: Record<string, number>;
+  paginate?: { filter: TaskFilter; pageSize: number };
 }) {
   // The single source of truth for the view is the ?view= URL param, driven by
   // the header switcher. Falls back to the page's initialView.
@@ -53,24 +59,80 @@ export function TaskSurface({
   const [createOpen, setCreateOpen] = useState(false);
   const [selected, setSelected] = useState<Task | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [threadContext, setThreadContext] = useState<FollowUpContext | null>(
+    null,
+  );
+
+  // Drawer requested a follow-up: close it, open Create pre-filled for the thread.
+  const handleFollowUp = (ctx: FollowUpContext) => {
+    setThreadContext(ctx);
+    setDrawerOpen(false);
+    setCreateOpen(true);
+  };
 
   const domainMap = useMemo(
     () => new Map(domains.map((d) => [d.id, d])),
     [domains],
   );
 
+  // "Load more" pagination: accumulate pages beyond the first on the client.
+  const [extra, setExtra] = useState<Task[]>([]);
+  const [hasMore, setHasMore] = useState(
+    paginate ? tasks.length >= paginate.pageSize : false,
+  );
+  const [loadingMore, startLoadMore] = useTransition();
+
+  // Resync when the first-page data changes (navigation / revalidation).
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- resync pagination to fresh server data
+    setExtra([]);
+    setHasMore(paginate ? tasks.length >= paginate.pageSize : false);
+  }, [tasks, paginate]);
+
+  // Dedupe by id (first occurrence wins) so an overlapping page or a
+  // revalidation never renders the same task twice (React key collisions).
+  const allTasks = useMemo(() => {
+    const byId = new Map<string, Task>();
+    for (const t of [...tasks, ...extra]) if (!byId.has(t.id)) byId.set(t.id, t);
+    return [...byId.values()];
+  }, [tasks, extra]);
+
+  const loadMore = () => {
+    if (!paginate) return;
+    startLoadMore(async () => {
+      const next = await fetchTasksPage({
+        ...paginate.filter,
+        offset: allTasks.length,
+        limit: paginate.pageSize,
+      });
+      setExtra((e) => [...e, ...next]);
+      setHasMore(next.length >= paginate.pageSize);
+    });
+  };
+
   const filtered = useMemo(() => {
-    if (filter === "all") return tasks;
-    if (filter === "uncat") return tasks.filter((t) => !t.domainId);
-    return tasks.filter((t) => t.domainId === filter);
-  }, [tasks, filter]);
+    if (filter === "all") return allTasks;
+    if (filter === "uncat") return allTasks.filter((t) => !t.domainId);
+    return allTasks.filter((t) => t.domainId === filter);
+  }, [allTasks, filter]);
+
+  // Split completed work into its own collapsible group (list view).
+  const activeTasks = useMemo(
+    () => filtered.filter((t) => t.status !== "done"),
+    [filtered],
+  );
+  const doneTasks = useMemo(
+    () => filtered.filter((t) => t.status === "done"),
+    [filtered],
+  );
+  const [showDone, setShowDone] = useState(false);
 
   const openTask = (t: Task) => {
     setSelected(t);
     setDrawerOpen(true);
   };
 
-  const uncatCount = tasks.filter((t) => !t.domainId).length;
+  const uncatCount = allTasks.filter((t) => !t.domainId).length;
 
   return (
     <div className="w-full">
@@ -90,7 +152,7 @@ export function TaskSurface({
           active={filter === "all"}
           onClick={() => setFilter("all")}
           label="All"
-          count={tasks.length}
+          count={hasMore ? `${allTasks.length}+` : allTasks.length}
         />
         {domains.map((d) => (
           <FilterPill
@@ -114,7 +176,44 @@ export function TaskSurface({
 
       {/* View */}
       {view === "list" && (
-        <TaskList tasks={filtered} domainMap={domainMap} onOpen={openTask} />
+        <div className="flex flex-col gap-4">
+          {activeTasks.length > 0 || doneTasks.length === 0 ? (
+            <TaskList
+              tasks={activeTasks}
+              domainMap={domainMap}
+              onOpen={openTask}
+              noteCounts={noteCounts}
+            />
+          ) : null}
+
+          {doneTasks.length > 0 && (
+            <div>
+              <button
+                onClick={() => setShowDone((v) => !v)}
+                className="flex items-center gap-1.5 text-sm font-semibold text-muted-foreground transition-colors hover:text-foreground"
+              >
+                <ChevronRight
+                  className={cn(
+                    "size-4 transition-transform",
+                    showDone && "rotate-90",
+                  )}
+                />
+                <CircleCheck className="size-4 text-ontrack" />
+                Done ({doneTasks.length})
+              </button>
+              {showDone && (
+                <div className="mt-2.5">
+                  <TaskList
+                    tasks={doneTasks}
+                    domainMap={domainMap}
+                    onOpen={openTask}
+                    noteCounts={noteCounts}
+                  />
+                </div>
+              )}
+            </div>
+          )}
+        </div>
       )}
       {view === "board" && (
         <TaskBoard
@@ -122,22 +221,42 @@ export function TaskSurface({
           domainMap={domainMap}
           onOpen={openTask}
           columns={boardColumns}
+          noteCounts={noteCounts}
         />
       )}
       {view === "calendar" && (
         <TaskCalendar tasks={filtered} domainMap={domainMap} onOpen={openTask} />
       )}
 
+      {paginate && hasMore && (
+        <div className="mt-5 flex justify-center">
+          <Button
+            variant="outline"
+            onClick={loadMore}
+            disabled={loadingMore}
+          >
+            {loadingMore && <Loader2 className="size-4 animate-spin" />}
+            Load more
+          </Button>
+        </div>
+      )}
+
       <CreateTaskDialog
         open={createOpen}
-        onOpenChange={setCreateOpen}
+        onOpenChange={(o) => {
+          setCreateOpen(o);
+          if (!o) setThreadContext(null);
+        }}
         domains={domains}
+        threadContext={threadContext}
       />
       <TaskDetailDrawer
         task={selected}
         domains={domains}
         open={drawerOpen}
         onOpenChange={setDrawerOpen}
+        onFollowUp={handleFollowUp}
+        onSelectTask={openTask}
       />
     </div>
   );
@@ -154,7 +273,7 @@ function FilterPill({
   active: boolean;
   onClick: () => void;
   label: string;
-  count?: number;
+  count?: number | string;
   color?: string;
   dashed?: boolean;
 }) {

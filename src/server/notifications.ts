@@ -1,11 +1,12 @@
 "use server";
 
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 
 import { db } from "@/db";
 import { pushSubscriptions } from "@/db/schema";
 import { log } from "@/lib/logger";
 import { runNotify } from "@/server/notify";
+import { requireUserId } from "@/server/auth";
 import type { ActionResult } from "@/server/actions";
 
 /** Shape the browser's PushSubscription.toJSON() produces. */
@@ -23,9 +24,11 @@ export async function savePushSubscription(
     return { ok: false, error: "Invalid subscription" };
   }
   try {
+    const userId = await requireUserId();
     await db
       .insert(pushSubscriptions)
       .values({
+        userId,
         endpoint: sub.endpoint,
         p256dh: sub.keys.p256dh,
         auth: sub.keys.auth,
@@ -33,7 +36,7 @@ export async function savePushSubscription(
       })
       .onConflictDoUpdate({
         target: pushSubscriptions.endpoint,
-        set: { p256dh: sub.keys.p256dh, auth: sub.keys.auth },
+        set: { userId, p256dh: sub.keys.p256dh, auth: sub.keys.auth },
       });
     log.success("Push subscription saved");
     return { ok: true, data: null };
@@ -48,9 +51,15 @@ export async function deletePushSubscription(
   endpoint: string,
 ): Promise<ActionResult<null>> {
   try {
+    const userId = await requireUserId();
     await db
       .delete(pushSubscriptions)
-      .where(eq(pushSubscriptions.endpoint, endpoint));
+      .where(
+        and(
+          eq(pushSubscriptions.endpoint, endpoint),
+          eq(pushSubscriptions.userId, userId),
+        ),
+      );
     log.success("Push subscription removed");
     return { ok: true, data: null };
   } catch (e) {
