@@ -205,7 +205,7 @@ export function CreateTaskDialog({
         className={cn(
           "flex flex-col gap-0 p-0",
           isDesktop
-            ? "w-full sm:max-w-3xl lg:max-w-4xl"
+            ? "w-full sm:max-w-none"
             : "max-h-[92vh] rounded-t-2xl",
         )}
       >

@@ -5,6 +5,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Plus, ChevronRight, CircleCheck, Loader2 } from "lucide-react";
 
 import type { Task, Domain } from "@/db/schema";
+import type { DatedSubtask } from "@/server/queries";
 import { fetchTasksPage, type FollowUpContext } from "@/server/actions";
 import type { TaskFilter } from "@/server/queries";
 import { cn } from "@/lib/utils";
@@ -29,6 +30,7 @@ export function TaskSurface({
   boardColumns,
   noteCounts = {},
   paginate,
+  datedSubtasks = [],
 }: {
   tasks: Task[];
   domains: Domain[];
@@ -37,6 +39,7 @@ export function TaskSurface({
   boardColumns?: Task["status"][];
   noteCounts?: Record<string, number>;
   paginate?: { filter: TaskFilter; pageSize: number };
+  datedSubtasks?: DatedSubtask[];
 }) {
   // The single source of truth for the view is the ?view= URL param, driven by
   // the header switcher. Falls back to the page's initialView.
@@ -125,6 +128,24 @@ export function TaskSurface({
     () => filtered.filter((t) => t.status === "done"),
     [filtered],
   );
+  const visibleDatedSubtasks = useMemo(() => {
+    if (filter === "all") return datedSubtasks;
+    if (filter === "uncat")
+      return datedSubtasks.filter((item) => !item.task.domainId);
+    return datedSubtasks.filter((item) => item.task.domainId === filter);
+  }, [datedSubtasks, filter]);
+  const activeDatedSubtasks = useMemo(
+    () => visibleDatedSubtasks.filter((item) => item.task.status !== "done"),
+    [visibleDatedSubtasks],
+  );
+  const doneDatedSubtasks = useMemo(
+    () => visibleDatedSubtasks.filter((item) => item.task.status === "done"),
+    [visibleDatedSubtasks],
+  );
+  const doneTaskCount = new Set([
+    ...doneTasks.map((task) => task.id),
+    ...doneDatedSubtasks.map((item) => item.task.id),
+  ]).size;
   const [showDone, setShowDone] = useState(false);
 
   const openTask = (t: Task) => {
@@ -177,16 +198,19 @@ export function TaskSurface({
       {/* View */}
       {view === "list" && (
         <div className="flex flex-col gap-4">
-          {activeTasks.length > 0 || doneTasks.length === 0 ? (
+          {activeTasks.length > 0 ||
+          activeDatedSubtasks.length > 0 ||
+          (doneTasks.length === 0 && doneDatedSubtasks.length === 0) ? (
             <TaskList
               tasks={activeTasks}
               domainMap={domainMap}
               onOpen={openTask}
               noteCounts={noteCounts}
+              datedSubtasks={activeDatedSubtasks}
             />
           ) : null}
 
-          {doneTasks.length > 0 && (
+          {(doneTasks.length > 0 || doneDatedSubtasks.length > 0) && (
             <div>
               <button
                 onClick={() => setShowDone((v) => !v)}
@@ -199,7 +223,7 @@ export function TaskSurface({
                   )}
                 />
                 <CircleCheck className="size-4 text-ontrack" />
-                Done ({doneTasks.length})
+                Done ({doneTaskCount})
               </button>
               {showDone && (
                 <div className="mt-2.5">
@@ -208,6 +232,7 @@ export function TaskSurface({
                     domainMap={domainMap}
                     onOpen={openTask}
                     noteCounts={noteCounts}
+                    datedSubtasks={doneDatedSubtasks}
                   />
                 </div>
               )}
@@ -225,7 +250,12 @@ export function TaskSurface({
         />
       )}
       {view === "calendar" && (
-        <TaskCalendar tasks={filtered} domainMap={domainMap} onOpen={openTask} />
+        <TaskCalendar
+          tasks={filtered}
+          domainMap={domainMap}
+          onOpen={openTask}
+          datedSubtasks={visibleDatedSubtasks}
+        />
       )}
 
       {paginate && hasMore && (

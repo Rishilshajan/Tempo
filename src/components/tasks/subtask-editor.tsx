@@ -189,7 +189,7 @@ export function SubtaskEditor({
                       <Circle className="size-5 text-muted-foreground" />
                     )}
                   </button>
-                  <textarea
+                  <Textarea
                     value={s.title}
                     rows={1}
                     onChange={(e) => update(i, { title: e.target.value })}
@@ -201,7 +201,7 @@ export function SubtaskEditor({
                     }}
                     placeholder="Step title"
                     className={cn(
-                      "flex-1 resize-none break-words bg-transparent text-sm outline-none [field-sizing:content] placeholder:text-muted-foreground/60",
+                      "min-h-0 flex-1 resize-none break-words border-0 bg-transparent px-0 py-0 text-sm outline-none placeholder:text-muted-foreground/60",
                       s.isCompleted && "text-muted-foreground line-through",
                     )}
                   />

@@ -4,6 +4,7 @@ import {
   getTasks,
   getDomains,
   getTaskNoteCounts,
+  getDatedSubtasks,
   todayISO,
 } from "@/server/queries";
 
@@ -19,16 +20,20 @@ export default async function CalendarPage() {
   // Bound the calendar to a window around today so the fetch stays small
   // regardless of how many tasks exist overall.
   const today = todayISO();
-  const [all, domains, noteCounts] = await Promise.all([
+  const dateFrom = addDaysISO(today, -60);
+  const dateTo = addDaysISO(today, 180);
+  const [all, domains, noteCounts, datedSubtasks] = await Promise.all([
     getTasks({
-      dateFrom: addDaysISO(today, -60),
-      dateTo: addDaysISO(today, 180),
+      dateFrom,
+      dateTo,
     }),
     getDomains(),
     getTaskNoteCounts(),
+    getDatedSubtasks(dateFrom, dateTo),
   ]);
 
-  if (all.length === 0) return <EmptyState domains={domains} />;
+  if (all.length === 0 && datedSubtasks.length === 0)
+    return <EmptyState domains={domains} />;
 
   return (
     <TaskSurface
@@ -37,6 +42,7 @@ export default async function CalendarPage() {
       title="Calendar"
       initialView="calendar"
       noteCounts={noteCounts}
+      datedSubtasks={datedSubtasks}
     />
   );
 }

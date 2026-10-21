@@ -1,9 +1,16 @@
 import "server-only";
 import { cache } from "react";
-import { and, asc, count, desc, eq, sql, type SQL } from "drizzle-orm";
+import { and, asc, count, desc, eq, gte, lte, sql, type SQL } from "drizzle-orm";
 
 import { db } from "@/db";
-import { domains, tasks, threads, taskNotes, appSettings } from "@/db/schema";
+import {
+  domains,
+  tasks,
+  threads,
+  taskNotes,
+  taskMilestones,
+  appSettings,
+} from "@/db/schema";
 import { log } from "@/lib/logger";
 import { requireUserId } from "@/server/auth";
 import type { Task, Domain, AppSettings, Thread } from "@/db/schema";
@@ -139,6 +146,27 @@ export async function getTasks(filter: TaskFilter = {}): Promise<Task[]> {
     return q;
   });
 }
+
+/** Dated subtasks and their parent tasks for the current user's date window. */
+export async function getDatedSubtasks(dateFrom: string, dateTo: string) {
+  const userId = await requireUserId();
+  return withDbTiming("dated_subtasks", () =>
+    db
+      .select({ subtask: taskMilestones, task: tasks })
+      .from(taskMilestones)
+      .innerJoin(tasks, eq(taskMilestones.taskId, tasks.id))
+      .where(
+        and(
+          eq(taskMilestones.userId, userId),
+          eq(tasks.userId, userId),
+          gte(taskMilestones.date, dateFrom),
+          lte(taskMilestones.date, dateTo),
+        ),
+      )
+      .orderBy(asc(taskMilestones.date), asc(taskMilestones.sortOrder)),
+  );
+}
+export type DatedSubtask = Awaited<ReturnType<typeof getDatedSubtasks>>[number];
 
 /** Map of taskId -> number of notes, for the card 📝 indicator. */
 export const getTaskNoteCounts = cache(

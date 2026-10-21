@@ -27,7 +27,7 @@ export default function AppError({
       </h1>
       <p className="mb-6 text-sm text-muted-foreground">
         Tempo couldn&apos;t load this view. This is usually a momentary
-        connection hiccup — try again.
+        connection hiccup - try again.
       </p>
       <Button onClick={reset}>
         <RotateCw className="size-4" /> Try again

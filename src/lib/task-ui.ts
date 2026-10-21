@@ -57,6 +57,14 @@ export const DOMAIN_COLORS = [
   "#7C87D6",
   "#3D9A9A",
   "#6D9DC5",
+  "#D76D8A",
+  "#9B6BCB",
+  "#5A75C9",
+  "#3E82A8",
+  "#8B9A45",
+  "#B77A4A",
+  "#6F7D8C",
+  "#C45D43",
 ] as const;
 
 export const DOMAIN_EMOJIS = ["🚀", "💼", "🏛️", "🌿", "🧪", "📁", "💡", "🎯"] as const;

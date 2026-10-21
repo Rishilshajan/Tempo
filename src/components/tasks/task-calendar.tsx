@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 import type { Task, Domain } from "@/db/schema";
+import type { DatedSubtask } from "@/server/queries";
 import { cn } from "@/lib/utils";
 import { TaskCard } from "./task-card";
 
@@ -15,10 +16,12 @@ export function TaskCalendar({
   tasks,
   domainMap,
   onOpen,
+  datedSubtasks = [],
 }: {
   tasks: Task[];
   domainMap: Map<string, Domain>;
   onOpen: (task: Task) => void;
+  datedSubtasks?: DatedSubtask[];
 }) {
   const now = new Date();
   const todayStr = iso(now.getFullYear(), now.getMonth(), now.getDate());
@@ -39,6 +42,17 @@ export function TaskCalendar({
     return map;
   }, [tasks]);
 
+  const subtasksByDate = useMemo(() => {
+    const map = new Map<string, DatedSubtask[]>();
+    for (const item of datedSubtasks) {
+      if (!item.subtask.date) continue;
+      const dateItems = map.get(item.subtask.date) ?? [];
+      dateItems.push(item);
+      map.set(item.subtask.date, dateItems);
+    }
+    return map;
+  }, [datedSubtasks]);
+
   const firstWeekday = new Date(cursor.y, cursor.m, 1).getDay();
   const daysInMonth = new Date(cursor.y, cursor.m + 1, 0).getDate();
   const cells: (number | null)[] = [
@@ -56,7 +70,15 @@ export function TaskCalendar({
     setCursor({ y: d.getFullYear(), m: d.getMonth() });
   };
 
-  const selectedTasks = byDate.get(selected) ?? [];
+  const selectedSubtasks = subtasksByDate.get(selected) ?? [];
+  const selectedTaskMap = new Map(
+    (byDate.get(selected) ?? []).map((task) => [task.id, task]),
+  );
+  for (const item of selectedSubtasks) {
+    if (!selectedTaskMap.has(item.task.id))
+      selectedTaskMap.set(item.task.id, item.task);
+  }
+  const selectedTasks = [...selectedTaskMap.values()];
 
   return (
     <div className="w-full">
@@ -94,6 +116,7 @@ export function TaskCalendar({
             if (day === null) return <div key={`b${i}`} />;
             const ds = iso(cursor.y, cursor.m, day);
             const dayTasks = byDate.get(ds) ?? [];
+            const daySubtasks = subtasksByDate.get(ds) ?? [];
             const isSelected = ds === selected;
             const isToday = ds === todayStr;
             return (
@@ -110,15 +133,15 @@ export function TaskCalendar({
               >
                 <span>{day}</span>
                 <span className="mt-0.5 flex h-1.5 items-center gap-0.5">
-                  {dayTasks.slice(0, 3).map((t) => (
+                  {[...dayTasks, ...daySubtasks].slice(0, 3).map((t) => (
                     <span
-                      key={t.id}
+                      key={"subtask" in t ? t.subtask.id : t.id}
                       className="size-1 rounded-full"
                       style={{
                         backgroundColor: isSelected
                           ? "var(--primary-foreground)"
-                          : t.domainId
-                            ? domainMap.get(t.domainId)?.color ?? "var(--muted-foreground)"
+                          : ("subtask" in t ? t.task.domainId : t.domainId)
+                            ? domainMap.get("subtask" in t ? t.task.domainId! : t.domainId!)?.color ?? "var(--muted-foreground)"
                             : "var(--muted-foreground)",
                       }}
                     />
@@ -146,6 +169,9 @@ export function TaskCalendar({
                 task={t}
                 domain={t.domainId ? domainMap.get(t.domainId) : null}
                 onOpen={onOpen}
+                datedSubtasks={selectedSubtasks.filter(
+                  (item) => item.task.id === t.id,
+                )}
               />
             ))}
           </div>

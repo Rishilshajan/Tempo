@@ -22,8 +22,8 @@ const client =
   postgres(connectionString, {
     // Pooled connections so the per-request Promise.all queries run in
     // parallel instead of serializing through a single remote round-trip.
-    // Safe on the Supabase pooler; keep modest to respect pool limits.
-    max: Number(process.env.DB_POOL_MAX) || 10,
+    // Keep per-process usage low because each runtime instance has its own pool.
+    max: Number(process.env.DB_POOL_MAX) || 3,
     prepare: false,
     connect_timeout: 10,
     // Keep pooled connections warm so active navigation reuses them instead of

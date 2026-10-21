@@ -284,7 +284,7 @@ export function TaskDetailDrawer({
         side={isDesktop ? "right" : "bottom"}
         className={cn(
           "flex flex-col gap-0",
-          isDesktop ? "w-full sm:max-w-xl" : "max-h-[90vh] rounded-t-2xl",
+          isDesktop ? "w-full sm:max-w-none" : "max-h-[90vh] rounded-t-2xl",
         )}
       >
         {/* Mobile grab handle */}

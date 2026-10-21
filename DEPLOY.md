@@ -124,7 +124,7 @@ response.
   (Vercel) deployments — `prepare: false` is already set for it. The session
   pooler (`5432`) holds a connection per client and is better for a single
   long-running server.
-- Pool size is configurable via `DB_POOL_MAX` (default 10) and
+- Pool size is configurable via `DB_POOL_MAX` (default 3) and
   `DB_IDLE_TIMEOUT` seconds (default 180). On serverless, keep `DB_POOL_MAX`
   modest (e.g. 3–5) so concurrent function instances don't exhaust the pool.
 - Deploy in / point at the **same region** as the database to minimise

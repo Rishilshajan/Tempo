@@ -16,11 +16,13 @@ import {
 import { toast } from "sonner";
 
 import type { Task, Domain } from "@/db/schema";
+import type { DatedSubtask } from "@/server/queries";
 import { cn } from "@/lib/utils";
 import { formatDuration, STATUS_META, BOARD_COLUMNS } from "@/lib/task-ui";
 import { moveTaskStatus, toggleTaskDone, moveTaskToTomorrow } from "@/server/actions";
 import { log } from "@/lib/logger";
 import { DomainIcon } from "@/components/domains/domain-icon";
+import { DatedSubtaskRow } from "./dated-subtask-card";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -33,11 +35,13 @@ export function TaskCard({
   domain,
   onOpen,
   noteCount = 0,
+  datedSubtasks = [],
 }: {
   task: Task;
   domain?: Domain | null;
   onOpen: (task: Task) => void;
   noteCount?: number;
+  datedSubtasks?: DatedSubtask[];
 }) {
   const [pending, startTransition] = useTransition();
   const duration = formatDuration(task.durationMin);
@@ -249,6 +253,14 @@ export function TaskCard({
         </DropdownMenu>
         </div>
       </div>
+
+      {datedSubtasks.length > 0 && (
+        <div className="mt-3 space-y-3 border-t border-border pt-3">
+          {datedSubtasks.map((item) => (
+            <DatedSubtaskRow key={item.subtask.id} item={item} />
+          ))}
+        </div>
+      )}
     </div>
   );
 }

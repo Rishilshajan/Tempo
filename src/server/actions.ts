@@ -591,6 +591,62 @@ export async function getMilestones(taskId: string): Promise<TaskMilestone[]> {
     .orderBy(taskMilestones.sortOrder);
 }
 
+/** Toggle a dated subtask while enforcing the current user's ownership. */
+export async function toggleMilestoneDone(
+  id: string,
+  done: boolean,
+): Promise<ActionResult<TaskMilestone>> {
+  try {
+    const userId = await requireUserId();
+    const [row] = await db
+      .update(taskMilestones)
+      .set({ isCompleted: done })
+      .where(
+        and(
+          eq(taskMilestones.id, id),
+          eq(taskMilestones.userId, userId),
+        ),
+      )
+      .returning();
+    if (!row) return { ok: false, error: "Subtask not found" };
+    refresh();
+    return { ok: true, data: row };
+  } catch (e) {
+    log.error("toggleMilestoneDone failed", e instanceof Error ? e.message : e);
+    return { ok: false, error: "Could not update the subtask" };
+  }
+}
+
+/** Move a dated subtask to tomorrow without changing its completion state. */
+export async function moveMilestoneToTomorrow(
+  id: string,
+): Promise<ActionResult<TaskMilestone>> {
+  try {
+    const userId = await requireUserId();
+    const date = addDaysISO(todayISO(), 1);
+    const [row] = await db
+      .update(taskMilestones)
+      .set({ date })
+      .where(
+        and(
+          eq(taskMilestones.id, id),
+          eq(taskMilestones.userId, userId),
+        ),
+      )
+      .returning();
+    if (!row) return { ok: false, error: "Subtask not found" };
+    log.event("Subtask re-dated", { id, date });
+    refresh();
+    return { ok: true, data: row };
+  } catch (e) {
+    log.error(
+      "moveMilestoneToTomorrow failed",
+      e instanceof Error ? e.message : e,
+    );
+    return { ok: false, error: "Could not reschedule the subtask" };
+  }
+}
+
 /** Replace all of a task's milestones with the given list (ordered). */
 export async function setMilestones(
   taskId: string,

@@ -13,6 +13,7 @@ import {
 } from "@/server/actions";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 
 /* ----------------------------- linkify ----------------------------- */
 
@@ -125,7 +126,7 @@ export function TaskNotes({ taskId }: { taskId: string }) {
 
       {/* Quick capture */}
       <div className="flex items-end gap-2">
-        <textarea
+        <Textarea
           rows={1}
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
@@ -136,7 +137,7 @@ export function TaskNotes({ taskId }: { taskId: string }) {
             }
           }}
           placeholder="Add a note or paste a link…  (⌘↵)"
-          className="min-h-9 flex-1 resize-none rounded-lg border border-input bg-transparent px-2.5 py-1.5 text-sm outline-none [field-sizing:content] placeholder:text-muted-foreground/70 focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+          className="min-h-9 flex-1 resize-none rounded-lg px-2.5 py-1.5 text-sm placeholder:text-muted-foreground/70"
         />
         <Button size="sm" onClick={add} disabled={pending || !draft.trim()}>
           Add
@@ -186,12 +187,12 @@ export function TaskNotes({ taskId }: { taskId: string }) {
 
               {editingId === n.id ? (
                 <div className="space-y-1.5">
-                  <textarea
+                  <Textarea
                     rows={2}
                     value={editDraft}
                     autoFocus
                     onChange={(e) => setEditDraft(e.target.value)}
-                    className="w-full resize-none rounded-lg border border-input bg-transparent px-2.5 py-1.5 text-sm outline-none [field-sizing:content] focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+                    className="w-full resize-none px-2.5 py-1.5 text-sm"
                   />
                   <div className="flex justify-end gap-1.5">
                     <Button

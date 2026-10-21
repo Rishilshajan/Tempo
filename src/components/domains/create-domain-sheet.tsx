@@ -114,7 +114,7 @@ export function DomainFormSheet({
         side={isDesktop ? "right" : "bottom"}
         className={cn(
           "flex flex-col gap-0 p-0",
-          isDesktop ? "w-full sm:max-w-xl" : "max-h-[92vh] rounded-t-2xl",
+          isDesktop ? "w-full sm:max-w-none" : "max-h-[92vh] rounded-t-2xl",
         )}
       >
         <SheetHeader className="gap-1 border-b border-border px-5 py-4">
