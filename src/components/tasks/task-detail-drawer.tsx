@@ -55,6 +55,7 @@ import {
   subtasksToPayload,
   fromMinutes,
   toMinutes,
+  toggleDurationUnit,
   type SubtaskDraft,
 } from "@/components/tasks/subtask-editor";
 import { TaskNotes } from "@/components/tasks/task-notes";
@@ -501,7 +502,8 @@ export function TaskDetailDrawer({
                 <Input
                   id="t-dur"
                   type="number"
-                  min={1}
+                  min={form.durationUnit === "hr" ? 1 / 60 : 1}
+                  step="any"
                   placeholder="45"
                   value={form.durationEst}
                   onChange={(e) =>
@@ -511,12 +513,17 @@ export function TaskDetailDrawer({
                 />
                 <button
                   type="button"
-                  onClick={() =>
+                  onClick={() => {
+                    const next = toggleDurationUnit(
+                      form.durationEst,
+                      form.durationUnit,
+                    );
                     setForm({
                       ...form,
-                      durationUnit: form.durationUnit === "hr" ? "min" : "hr",
-                    })
-                  }
+                      durationEst: next.value,
+                      durationUnit: next.unit,
+                    });
+                  }}
                   className="flex h-8 w-14 shrink-0 items-center justify-center rounded-lg border border-input text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
                   aria-label="Toggle unit (min/hr)"
                 >

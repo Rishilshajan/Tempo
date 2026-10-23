@@ -18,7 +18,12 @@ import { toast } from "sonner";
 import type { Task, Domain } from "@/db/schema";
 import type { DatedSubtask } from "@/server/queries";
 import { cn } from "@/lib/utils";
-import { formatDuration, STATUS_META, BOARD_COLUMNS } from "@/lib/task-ui";
+import {
+  formatDuration,
+  getTimeWindowDuration,
+  STATUS_META,
+  BOARD_COLUMNS,
+} from "@/lib/task-ui";
 import { moveTaskStatus, toggleTaskDone, moveTaskToTomorrow } from "@/server/actions";
 import { log } from "@/lib/logger";
 import { DomainIcon } from "@/components/domains/domain-icon";
@@ -51,6 +56,7 @@ export function TaskCard({
   const start = task.scheduledStart?.slice(0, 5);
   const end = task.scheduledEnd?.slice(0, 5);
   const timeLabel = start && end ? `${start}–${end}` : end ? `by ${end}` : start ?? task.timeHint;
+  const scheduledDuration = formatDuration(getTimeWindowDuration(start, end));
 
   const changeStatus = (s: Task["status"]) => {
     if (s === task.status) return;
@@ -198,11 +204,12 @@ export function TaskCard({
             <span className="inline-flex items-center gap-1">
               <Clock className="size-3.5 text-primary" />
               {timeLabel}
+              {scheduledDuration && ` · ${scheduledDuration}`}
             </span>
           )}
           {duration && (
             <span className="whitespace-nowrap rounded bg-muted px-1.5 py-0.5">
-              {duration}
+              Est. {duration}
             </span>
           )}
         </div>

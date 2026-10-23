@@ -147,7 +147,7 @@ export function TaskNotes({ taskId }: { taskId: string }) {
       {/* Log */}
       {notes.length === 0 ? (
         <p className="rounded-lg border border-dashed border-border px-3 py-2.5 text-xs text-muted-foreground">
-          No notes yet — capture what came out of this task.
+          No notes yet - capture what came out of this task.
         </p>
       ) : (
         <ul className="space-y-2">

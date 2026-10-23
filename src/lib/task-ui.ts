@@ -47,6 +47,20 @@ export function formatDuration(min?: number | null): string | null {
   return m ? `${h}h ${m}m` : `${h}h`;
 }
 
+export function getTimeWindowDuration(
+  start?: string | null,
+  end?: string | null,
+): number | null {
+  if (!start || !end) return null;
+  const startMatch = /^([01]\d|2[0-3]):([0-5]\d)$/.exec(start.slice(0, 5));
+  const endMatch = /^([01]\d|2[0-3]):([0-5]\d)$/.exec(end.slice(0, 5));
+  if (!startMatch || !endMatch) return null;
+
+  const startMinutes = Number(startMatch[1]) * 60 + Number(startMatch[2]);
+  const endMinutes = Number(endMatch[1]) * 60 + Number(endMatch[2]);
+  return endMinutes > startMinutes ? endMinutes - startMinutes : null;
+}
+
 /** Preset swatches offered when creating a domain (Sage Focus family). */
 export const DOMAIN_COLORS = [
   "#4C9A78",

@@ -55,6 +55,22 @@ export function fromMinutes(min: number): { value: string; unit: Unit } {
   return { value: String(min), unit: "min" };
 }
 
+/** Switch the displayed unit without changing the represented duration. */
+export function toggleDurationUnit(
+  value: string,
+  unit: Unit,
+): { value: string; unit: Unit } {
+  const nextUnit = unit === "hr" ? "min" : "hr";
+  const amount = Number(value);
+  if (!value.trim() || !Number.isFinite(amount) || amount <= 0) {
+    return { value, unit: nextUnit };
+  }
+
+  const converted =
+    unit === "min" ? Number((amount / 60).toFixed(4)) : Math.round(amount * 60);
+  return { value: String(converted), unit: nextUnit };
+}
+
 export type SubtaskPayload = {
   title: string;
   description: string | null;
@@ -278,7 +294,8 @@ export function SubtaskEditor({
                     <div className="flex items-center gap-1.5">
                       <Input
                         type="number"
-                        min={1}
+                        min={s.durationUnit === "hr" ? 1 / 60 : 1}
+                        step="any"
                         placeholder="15"
                         value={s.durationEst}
                         onChange={(e) => update(i, { durationEst: e.target.value })}
@@ -287,11 +304,16 @@ export function SubtaskEditor({
                       />
                       <button
                         type="button"
-                        onClick={() =>
+                        onClick={() => {
+                          const next = toggleDurationUnit(
+                            s.durationEst,
+                            s.durationUnit,
+                          );
                           update(i, {
-                            durationUnit: s.durationUnit === "hr" ? "min" : "hr",
-                          })
-                        }
+                            durationEst: next.value,
+                            durationUnit: next.unit,
+                          });
+                        }}
                         className="flex h-9 w-14 shrink-0 items-center justify-center rounded-lg border border-input text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
                         aria-label="Toggle unit (min/hr)"
                       >

@@ -39,6 +39,7 @@ import { TimePicker } from "@/components/ui/time-picker";
 import {
   SubtaskEditor,
   subtasksToPayload,
+  toggleDurationUnit,
   type SubtaskDraft,
 } from "@/components/tasks/subtask-editor";
 import { createTask, type FollowUpContext } from "@/server/actions";
@@ -427,7 +428,8 @@ export function CreateTaskDialog({
                 <div className="flex items-center gap-1.5">
                   <Input
                     type="number"
-                    min={1}
+                    min={form.durationUnit === "hr" ? 1 / 60 : 1}
+                    step="any"
                     placeholder="45"
                     value={form.durationMin}
                     onChange={(e) =>
@@ -437,12 +439,17 @@ export function CreateTaskDialog({
                   />
                   <button
                     type="button"
-                    onClick={() =>
+                    onClick={() => {
+                      const next = toggleDurationUnit(
+                        form.durationMin,
+                        form.durationUnit,
+                      );
                       setForm({
                         ...form,
-                        durationUnit: form.durationUnit === "hr" ? "min" : "hr",
-                      })
-                    }
+                        durationMin: next.value,
+                        durationUnit: next.unit,
+                      });
+                    }}
                     className="flex h-9 w-14 items-center justify-center rounded-lg border border-input text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
                     aria-label="Toggle unit (min/hr)"
                   >
