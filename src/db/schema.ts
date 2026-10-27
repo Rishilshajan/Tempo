@@ -171,8 +171,7 @@ export const taskMilestones = pgTable(
 );
 
 /* --------------------------- task_notes --------------------------
-   Append-only notes/output log per task (what the task produced:
-   results, meeting notes, decisions, reference links).             */
+   Working context captured while a task is in progress.             */
 
 export const taskNotes = pgTable(
   "task_notes",
@@ -182,6 +181,7 @@ export const taskNotes = pgTable(
     taskId: uuid("task_id")
       .notNull()
       .references(() => tasks.id, { onDelete: "cascade" }),
+    title: text("title"),
     body: text("body").notNull(),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
@@ -189,6 +189,51 @@ export const taskNotes = pgTable(
   (t) => [
     index("task_notes_task_created_idx").on(t.taskId, t.createdAt),
     ownerPolicy("task_notes_owner"),
+  ],
+);
+
+/* -------------------------- task_outputs -------------------------
+   Deliverables and references produced by completing a task.        */
+
+export const taskOutputs = pgTable(
+  "task_outputs",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: userId(),
+    taskId: uuid("task_id")
+      .notNull()
+      .references(() => tasks.id, { onDelete: "cascade" }),
+    title: text("title").notNull(),
+    description: text("description"),
+    outputType: text("output_type").default("other").notNull(),
+    referenceUrl: text("reference_url"),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [
+    index("task_outputs_task_created_idx").on(t.taskId, t.createdAt),
+    ownerPolicy("task_outputs_owner"),
+  ],
+);
+
+/* ------------------------- task_activity ------------------------
+   Durable, user-visible task lifecycle and subtask events.          */
+
+export const taskActivity = pgTable(
+  "task_activity",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: userId(),
+    taskId: uuid("task_id")
+      .notNull()
+      .references(() => tasks.id, { onDelete: "cascade" }),
+    eventType: text("event_type").notNull(),
+    summary: text("summary").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [
+    index("task_activity_task_created_idx").on(t.taskId, t.createdAt),
+    ownerPolicy("task_activity_owner"),
   ],
 );
 
@@ -320,6 +365,9 @@ export type TaskMilestone = typeof taskMilestones.$inferSelect;
 export type NewTaskMilestone = typeof taskMilestones.$inferInsert;
 export type TaskNote = typeof taskNotes.$inferSelect;
 export type NewTaskNote = typeof taskNotes.$inferInsert;
+export type TaskOutput = typeof taskOutputs.$inferSelect;
+export type NewTaskOutput = typeof taskOutputs.$inferInsert;
+export type TaskActivity = typeof taskActivity.$inferSelect;
 export type Dependency = typeof dependencies.$inferSelect;
 export type AppSettings = typeof appSettings.$inferSelect;
 export type WarningRule = typeof warningRules.$inferSelect;

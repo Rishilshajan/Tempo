@@ -30,6 +30,7 @@ export type SubtaskDraft = {
   durationEst: string; // number, in the chosen unit
   durationUnit: Unit;
   isCompleted: boolean;
+  createdAt?: Date | string;
 };
 
 export function emptySubtask(): SubtaskDraft {
@@ -346,99 +347,41 @@ export function SubtaskEditor({
                   </button>
                 </div>
 
-                {!titleOnly && <div>
-                {/* Details */}
-                <div className="mt-2 pl-8">
-                  <Textarea
-                    rows={1}
-                    value={s.description}
-                    onChange={(e) => update(i, { description: e.target.value })}
-                    placeholder="Add details…"
-                    className="min-h-0 resize-none py-1.5 text-[13px]"
-                  />
-                </div>
-
-                {/* Scheduling */}
-                <div className="mt-2 space-y-1.5 pl-8">
-                  {/* Quick date chips */}
-                  <div className="flex flex-wrap items-center gap-1.5">
-                    <DateChip
-                      label="Today"
-                      active={s.date === TODAY_ISO()}
-                      onClick={() =>
-                        update(i, {
-                          date: s.date === TODAY_ISO() ? "" : TODAY_ISO(),
-                        })
-                      }
-                    />
-                    <DateChip
-                      label="Tomorrow"
-                      active={s.date === TOMORROW_ISO()}
-                      onClick={() =>
-                        update(i, {
-                          date: s.date === TOMORROW_ISO() ? "" : TOMORROW_ISO(),
-                        })
-                      }
-                    />
-                  </div>
-                  {/* Date + Time, equal width side by side */}
-                  <div className="grid grid-cols-2 gap-1.5">
-                    <div className="min-w-0">
+                {!titleOnly && (
+                  <div className="mt-2 space-y-1.5 pl-8">
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      <DateChip
+                        label="Today"
+                        active={s.date === TODAY_ISO()}
+                        onClick={() =>
+                          update(i, {
+                            date: s.date === TODAY_ISO() ? "" : TODAY_ISO(),
+                          })
+                        }
+                      />
+                      <DateChip
+                        label="Tomorrow"
+                        active={s.date === TOMORROW_ISO()}
+                        onClick={() =>
+                          update(i, {
+                            date: s.date === TOMORROW_ISO() ? "" : TOMORROW_ISO(),
+                          })
+                        }
+                      />
+                    </div>
+                    <div className="w-full max-w-xs">
                       <DatePicker
                         value={s.date}
                         onChange={(v) => update(i, { date: v })}
                         placeholder={
                           label && label !== "Today" && label !== "Tomorrow"
                             ? label
-                            : "Date"
+                            : "Pick target date"
                         }
                       />
                     </div>
-                    <div className="min-w-0">
-                      <TimePicker
-                        value={s.scheduledTime}
-                        onChange={(v) => update(i, { scheduledTime: v })}
-                        ariaLabel="Subtask time"
-                      />
-                    </div>
                   </div>
-                  {/* Estimated duration */}
-                  <div className="space-y-1">
-                    <span className="block text-xs font-medium text-muted-foreground">
-                      Estimated duration
-                    </span>
-                    <div className="flex items-center gap-1.5">
-                      <Input
-                        type="number"
-                        min={s.durationUnit === "hr" ? 1 / 60 : 1}
-                        step="any"
-                        placeholder="15"
-                        value={s.durationEst}
-                        onChange={(e) => update(i, { durationEst: e.target.value })}
-                        className="h-9 flex-1"
-                        aria-label="Subtask estimated duration"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const next = toggleDurationUnit(
-                            s.durationEst,
-                            s.durationUnit,
-                          );
-                          update(i, {
-                            durationEst: next.value,
-                            durationUnit: next.unit,
-                          });
-                        }}
-                        className="flex h-9 w-14 shrink-0 items-center justify-center rounded-lg border border-input text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
-                        aria-label="Toggle unit (min/hr)"
-                      >
-                        {s.durationUnit}
-                      </button>
-                    </div>
-                  </div>
-                </div>
-                </div>}
+                )}
                 {compactRows && !titleOnly && (
                   <div className="mt-2 flex justify-end">
                     <button

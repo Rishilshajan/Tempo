@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
-import { Check } from "lucide-react";
+import { Check, Type, AlignLeft, Palette, Shapes } from "lucide-react";
 import { toast } from "sonner";
 
 import type { Domain } from "@/db/schema";
@@ -107,11 +107,20 @@ export function DomainFormSheet({
             : "max-h-[92vh] rounded-t-2xl",
         )}
       >
+        {/* Mobile grab handle */}
+        {!isDesktop && (
+          <div className="flex shrink-0 justify-center pb-1 pt-2.5">
+            <span className="h-1.5 w-10 rounded-full bg-muted-foreground/25" />
+          </div>
+        )}
+
         <SheetHeader className="shrink-0 gap-3 border-b border-border px-4 py-3">
-          <SheetTitle className="text-base">
+          <SheetTitle className="flex items-center gap-2 text-xl">
+            <Shapes className="size-5 text-primary" />
             {editing ? "Edit Domain" : "Create New Domain"}
           </SheetTitle>
-          <div className="flex min-w-0 items-center gap-2.5">
+          {/* Live preview */}
+          <div className="flex min-w-0 items-center gap-2.5 rounded-xl border border-border bg-secondary/20 px-3 py-2">
             <span
               className="flex size-9 shrink-0 items-center justify-center rounded-lg"
               style={{ backgroundColor: `${form.color}1f` }}
@@ -129,124 +138,105 @@ export function DomainFormSheet({
                 @{tag}
               </span>
             </span>
-            <span className="text-xs text-muted-foreground">
+            <span className="shrink-0 text-xs text-muted-foreground">
               {glyphLabel(form.glyph)}
             </span>
           </div>
         </SheetHeader>
 
         <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-4 py-4">
-          <section className="space-y-3">
-            <div>
-              <h3 className="text-sm font-semibold text-foreground">Overview</h3>
-              <p className="text-xs text-muted-foreground">
-                Name and describe the work this domain represents.
-              </p>
-            </div>
-            <div className="space-y-1">
-              <Label htmlFor="d-name">
-                Domain Name <span className="text-urgent">*</span>
-              </Label>
-              <Input
-                id="d-name"
-                autoFocus
-                placeholder="e.g. Growth & Marketing"
-                value={form.name}
-                onChange={(e) => setForm({ ...form, name: e.target.value })}
-                maxLength={60}
-              />
-            </div>
-            <div className="space-y-1">
-              <Label htmlFor="d-purpose">Description</Label>
-              <Textarea
-                id="d-purpose"
-                rows={2}
-                placeholder="What does this domain cover?"
-                value={form.purpose}
-                onChange={(e) => setForm({ ...form, purpose: e.target.value })}
-                maxLength={1000}
-              />
-            </div>
-          </section>
+          {/* Domain Name */}
+          <div className="space-y-1.5">
+            <Label htmlFor="d-name" className="text-[11px] uppercase tracking-wider text-muted-foreground">
+              Domain name <span className="text-urgent">*</span>
+            </Label>
+            <Input
+              id="d-name"
+              autoFocus
+              className="h-11 text-base font-semibold"
+              placeholder="e.g. Growth & Marketing"
+              value={form.name}
+              onChange={(e) => setForm({ ...form, name: e.target.value })}
+              maxLength={60}
+            />
+          </div>
 
-          <section className="space-y-3 border-t border-border pt-4">
-            <div>
-              <h3 className="text-sm font-semibold text-foreground">
-                Appearance
-              </h3>
-              <p className="text-xs text-muted-foreground">
-                Choose an icon and accent color.
-              </p>
+          {/* Description – tinted card box matching task creation */}
+          <div className="space-y-1.5 rounded-xl border border-primary/25 bg-primary/[0.03] p-3 transition-colors focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20">
+            <Label htmlFor="d-purpose" className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-primary">
+              <AlignLeft className="size-3.5" /> Description
+            </Label>
+            <Textarea
+              id="d-purpose"
+              rows={2}
+              placeholder="What does this domain cover?"
+              value={form.purpose}
+              onChange={(e) => setForm({ ...form, purpose: e.target.value })}
+              maxLength={1000}
+              className="min-h-16 resize-y border-0 bg-transparent p-0 text-sm leading-relaxed shadow-none focus-visible:ring-0"
+            />
+          </div>
+
+          {/* Appearance */}
+          <div className="space-y-3">
+            <Label className="flex items-center gap-1.5 text-[11px] uppercase tracking-wider text-muted-foreground">
+              <Palette className="size-3.5" /> Color
+            </Label>
+            <div className="grid grid-cols-8 gap-2">
+              {DOMAIN_COLORS.map((c) => (
+                <button
+                  key={c}
+                  type="button"
+                  onClick={() => setForm({ ...form, color: c })}
+                  className={cn(
+                    "flex size-7 items-center justify-center rounded-full transition-all",
+                    form.color === c &&
+                      "ring-2 ring-offset-2 ring-offset-background",
+                  )}
+                  style={{ backgroundColor: c }}
+                  aria-label={`Color ${c}`}
+                  aria-pressed={form.color === c}
+                >
+                  {form.color === c && (
+                    <Check className="size-3 text-white" />
+                  )}
+                </button>
+              ))}
             </div>
+          </div>
 
-            <div className="space-y-3 rounded-xl border border-border bg-secondary/30 p-3">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-muted-foreground">
-                  Color &amp; icon
-                </span>
-              </div>
-
-              <div className="space-y-1.5">
-                <Label className="text-[11px] uppercase tracking-wider text-muted-foreground">
-                  Color
-                </Label>
-                <div className="grid grid-cols-8 gap-2">
-                  {DOMAIN_COLORS.map((c) => (
-                    <button
-                      key={c}
-                      type="button"
-                      onClick={() => setForm({ ...form, color: c })}
-                      className={cn(
-                        "flex size-7 items-center justify-center rounded-full transition-all",
-                        form.color === c &&
-                          "ring-2 ring-offset-2 ring-offset-card",
-                      )}
-                      style={{ backgroundColor: c }}
-                      aria-label={`Color ${c}`}
-                      aria-pressed={form.color === c}
-                    >
-                      {form.color === c && (
-                        <Check className="size-3 text-white" />
-                      )}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="space-y-1.5">
-                <Label className="text-[11px] uppercase tracking-wider text-muted-foreground">
-                  Icon
-                </Label>
-                <div className="grid grid-cols-8 gap-1.5">
-                  {GLYPHS.map((g) => {
-                    const Icon = g.icon;
-                    const active = form.glyph === g.key;
-                    return (
-                      <button
-                        key={g.key}
-                        type="button"
-                        onClick={() => setForm({ ...form, glyph: g.key })}
-                        className={cn(
-                          "flex size-8 items-center justify-center rounded-lg border transition-all",
-                          active
-                            ? "border-primary bg-card ring-2 ring-primary/40"
-                            : "border-border bg-card hover:bg-secondary",
-                        )}
-                        aria-label={g.label}
-                        aria-pressed={active}
-                        title={g.label}
-                      >
-                        <Icon
-                          className="size-3.5"
-                          style={{ color: active ? form.color : undefined }}
-                        />
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
+          <div className="space-y-3">
+            <Label className="flex items-center gap-1.5 text-[11px] uppercase tracking-wider text-muted-foreground">
+              <Type className="size-3.5" /> Icon
+            </Label>
+            <div className="grid grid-cols-8 gap-1.5">
+              {GLYPHS.map((g) => {
+                const Icon = g.icon;
+                const active = form.glyph === g.key;
+                return (
+                  <button
+                    key={g.key}
+                    type="button"
+                    onClick={() => setForm({ ...form, glyph: g.key })}
+                    className={cn(
+                      "flex size-8 items-center justify-center rounded-lg border transition-all",
+                      active
+                        ? "border-primary bg-card ring-2 ring-primary/40"
+                        : "border-border bg-card hover:bg-secondary",
+                    )}
+                    aria-label={g.label}
+                    aria-pressed={active}
+                    title={g.label}
+                  >
+                    <Icon
+                      className="size-3.5"
+                      style={{ color: active ? form.color : undefined }}
+                    />
+                  </button>
+                );
+              })}
             </div>
-          </section>
+          </div>
         </div>
 
         <SheetFooter className="shrink-0 flex-row items-center justify-end gap-2 border-t border-border px-4 py-2.5">

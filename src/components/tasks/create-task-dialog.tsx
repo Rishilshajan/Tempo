@@ -9,6 +9,9 @@ import {
   Flag,
   ListPlus,
   Spline,
+  Layers,
+  AlignLeft,
+  Clock3,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -315,25 +318,30 @@ export function CreateTaskDialog({
             />
           </div>
 
-          <div className="grid grid-cols-[76px_minmax(0,1fr)] items-start gap-2 border-b border-border py-2.5">
-            <Label htmlFor="c-desc" className="pt-2 text-xs text-muted-foreground">
-              Description
+          {/* Description as a highlighted box matching task detail drawer */}
+          <div className="space-y-1.5 rounded-xl border border-primary/25 bg-primary/[0.03] p-3 transition-colors focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20">
+            <Label htmlFor="c-desc" className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-primary">
+              <AlignLeft className="size-3.5" /> Description
             </Label>
             <Textarea
               id="c-desc"
               rows={2}
-              placeholder="Add context…"
+              placeholder="Add context and details…"
               value={form.description}
               onChange={(e) =>
                 setForm({ ...form, description: e.target.value })
               }
-              className="min-h-9 resize-y border-0 bg-transparent px-1 py-2 shadow-none focus-visible:ring-0"
+              className="min-h-16 resize-y border-0 bg-transparent p-0 text-sm leading-relaxed shadow-none focus-visible:ring-0"
             />
           </div>
 
-          <div className="divide-y divide-border border-y border-border">
-            <div className="grid grid-cols-[76px_minmax(0,1fr)] items-center gap-2 py-2">
-              <Label className="text-xs text-muted-foreground">Domain</Label>
+          {/* Metadata rows without separating lines, consistent with task detail drawer */}
+          <div className="space-y-1">
+            {/* Domain */}
+            <div className="grid grid-cols-[100px_minmax(0,1fr)] items-center gap-2 py-1">
+              <Label className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <Layers className="size-3.5" /> Domain
+              </Label>
               <Select
                 items={domainItems}
                 value={form.domainId}
@@ -341,7 +349,7 @@ export function CreateTaskDialog({
                   setForm({ ...form, domainId: v ?? NO_DOMAIN })
                 }
               >
-                <SelectTrigger className="w-full border-0 bg-transparent shadow-none">
+                <SelectTrigger className="w-full justify-between border-0 bg-transparent px-1 shadow-none hover:bg-muted/40">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -361,8 +369,9 @@ export function CreateTaskDialog({
               </Select>
             </div>
 
-            <div className="grid grid-cols-[76px_minmax(0,1fr)] items-center gap-2 py-2">
-              <Label className="flex items-center gap-1 text-xs text-muted-foreground">
+            {/* Priority */}
+            <div className="grid grid-cols-[100px_minmax(0,1fr)] items-center gap-2 py-1">
+              <Label className="flex items-center gap-1.5 text-xs text-muted-foreground">
                 <Flag className="size-3.5" /> Priority
               </Label>
               <Select
@@ -380,7 +389,7 @@ export function CreateTaskDialog({
                   })
                 }
               >
-                <SelectTrigger className="w-full border-0 bg-transparent shadow-none">
+                <SelectTrigger className="w-full justify-between border-0 bg-transparent px-1 shadow-none hover:bg-muted/40">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -388,21 +397,23 @@ export function CreateTaskDialog({
                     <SelectItem
                       key={priority.value}
                       value={priority.value}
-                      className="items-center gap-2"
                     >
-                      <span
-                        aria-hidden="true"
-                        className={cn("block size-2 shrink-0 rounded-full", priority.dot)}
-                      />
-                      {priority.label}
+                      <span className="inline-flex items-center gap-2">
+                        <span
+                          aria-hidden="true"
+                          className={cn("size-2 shrink-0 rounded-full", priority.dot)}
+                        />
+                        <span className="leading-none">{priority.label}</span>
+                      </span>
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
 
-            <div className="grid grid-cols-[76px_minmax(0,1fr)] items-center gap-2 py-2">
-              <Label className="flex items-center gap-1 text-xs text-muted-foreground">
+            {/* Schedule Mode */}
+            <div className="grid grid-cols-[100px_minmax(0,1fr)] items-center gap-2 py-1">
+              <Label className="flex items-center gap-1.5 text-xs text-muted-foreground">
                 <CalendarDays className="size-3.5" /> Schedule
               </Label>
               <Select
@@ -428,13 +439,11 @@ export function CreateTaskDialog({
                   }
                 }}
               >
-                <SelectTrigger className="w-full border-0 bg-transparent shadow-none">
+                <SelectTrigger className="w-full justify-between border-0 bg-transparent px-1 shadow-none hover:bg-muted/40">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="flexible">
-                    Flexible
-                  </SelectItem>
+                  <SelectItem value="flexible">Flexible</SelectItem>
                   <SelectItem value="fixed">Fixed time window</SelectItem>
                 </SelectContent>
               </Select>
@@ -442,133 +451,120 @@ export function CreateTaskDialog({
 
             {form.scheduleMode === "fixed" ? (
               <>
-                <div className="grid grid-cols-[76px_minmax(0,1fr)] items-center gap-2 py-2">
-                  <Label className="text-xs text-muted-foreground">
-                    Start date
+                <div className="grid grid-cols-[100px_minmax(0,1fr)] items-center gap-2 py-1">
+                  <Label className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                    <CalendarDays className="size-3.5" /> Start date
                   </Label>
-                  <DatePicker
-                    value={form.date}
-                    onChange={(v) =>
-                      setForm((current) => ({
-                        ...current,
-                        date: v,
-                        scheduledEndDate:
-                          !current.scheduledEndDate ||
-                          current.scheduledEndDate < v
-                            ? v
-                            : current.scheduledEndDate,
-                      }))
-                    }
-                    placeholder="Choose date"
-                    className="border-0 bg-transparent shadow-none"
-                  />
+                  <div className="flex items-center gap-2">
+                    <DatePicker
+                      value={form.date}
+                      onChange={(v) =>
+                        setForm((current) => ({
+                          ...current,
+                          date: v,
+                          scheduledEndDate:
+                            !current.scheduledEndDate ||
+                            current.scheduledEndDate < v
+                              ? v
+                              : current.scheduledEndDate,
+                        }))
+                      }
+                      placeholder="Choose date"
+                      className="flex-1 border-0 bg-transparent px-1 shadow-none hover:bg-muted/40"
+                    />
+                    <TimePicker
+                      value={form.scheduledStart}
+                      onChange={(v) => setForm({ ...form, scheduledStart: v })}
+                      placeholder="Time"
+                      ariaLabel="Start time"
+                      className="w-28 shrink-0 border-0 bg-transparent px-1 shadow-none hover:bg-muted/40"
+                    />
+                  </div>
                 </div>
-                <div className="grid grid-cols-[76px_minmax(0,1fr)] items-center gap-2 py-2">
-                  <Label className="text-xs text-muted-foreground">
-                    Start time
+                <div className="grid grid-cols-[100px_minmax(0,1fr)] items-center gap-2 py-1">
+                  <Label className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                    <CalendarDays className="size-3.5" /> End date
                   </Label>
-                  <TimePicker
-                    value={form.scheduledStart}
-                    onChange={(v) => setForm({ ...form, scheduledStart: v })}
-                    placeholder="Choose time"
-                    ariaLabel="Start time"
-                    className="border-0 bg-transparent shadow-none"
-                  />
-                </div>
-                <div className="grid grid-cols-[76px_minmax(0,1fr)] items-center gap-2 py-2">
-                  <Label className="text-xs text-muted-foreground">
-                    End date
-                  </Label>
-                  <DatePicker
-                    value={form.scheduledEndDate}
-                    onChange={(v) =>
-                      setForm({ ...form, scheduledEndDate: v })
-                    }
-                    placeholder="Choose date"
-                    className="border-0 bg-transparent shadow-none"
-                  />
-                </div>
-                <div className="grid grid-cols-[76px_minmax(0,1fr)] items-center gap-2 py-2">
-                  <Label className="text-xs text-muted-foreground">
-                    End time
-                  </Label>
-                  <TimePicker
-                    value={form.scheduledEnd}
-                    onChange={(v) => setForm({ ...form, scheduledEnd: v })}
-                    placeholder="Choose time"
-                    ariaLabel="End time"
-                    className="border-0 bg-transparent shadow-none"
-                  />
+                  <div className="flex items-center gap-2">
+                    <DatePicker
+                      value={form.scheduledEndDate}
+                      onChange={(v) =>
+                        setForm({ ...form, scheduledEndDate: v })
+                      }
+                      placeholder="Choose date"
+                      className="flex-1 border-0 bg-transparent px-1 shadow-none hover:bg-muted/40"
+                    />
+                    <TimePicker
+                      value={form.scheduledEnd}
+                      onChange={(v) => setForm({ ...form, scheduledEnd: v })}
+                      placeholder="Time"
+                      ariaLabel="End time"
+                      className="w-28 shrink-0 border-0 bg-transparent px-1 shadow-none hover:bg-muted/40"
+                    />
+                  </div>
                 </div>
               </>
             ) : (
-              <div className="grid grid-cols-[76px_minmax(0,1fr)] items-center gap-2 py-2">
-                <Label className="text-xs text-muted-foreground">
-                  Due date
+              <div className="grid grid-cols-[100px_minmax(0,1fr)] items-center gap-2 py-1">
+                <Label className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <CalendarDays className="size-3.5" /> Due date
                 </Label>
                 <DatePicker
                   value={form.date}
                   onChange={(v) => setForm({ ...form, date: v })}
                   placeholder="No target day"
-                  className="border-0 bg-transparent shadow-none"
+                  className="w-full border-0 bg-transparent px-1 shadow-none hover:bg-muted/40"
                 />
               </div>
             )}
+
+            {/* Estimated duration */}
+            <div className="grid grid-cols-[100px_minmax(0,1fr)] items-center gap-2 py-1">
+              <Label htmlFor="c-duration" className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <Clock3 className="size-3.5" /> Duration
+              </Label>
+              <div className="flex items-center gap-2">
+                <Input
+                  id="c-duration"
+                  type="number"
+                  min={form.durationUnit === "hr" ? 1 / 60 : 1}
+                  step="any"
+                  placeholder="45"
+                  value={form.durationMin}
+                  onChange={(e) =>
+                    setForm({ ...form, durationMin: e.target.value })
+                  }
+                  className="h-8 w-20 border-0 bg-transparent px-1 text-sm font-medium shadow-none focus-visible:ring-0 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none hover:bg-muted/40"
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    const next = toggleDurationUnit(form.durationMin, form.durationUnit);
+                    setForm({
+                      ...form,
+                      durationMin: next.value,
+                      durationUnit: next.unit,
+                    });
+                  }}
+                  className="inline-flex h-7 items-center justify-center rounded-md border border-input bg-card px-2.5 text-xs font-semibold text-foreground shadow-xs transition-colors hover:bg-muted active:scale-95"
+                  aria-label="Toggle duration unit (min/hr)"
+                >
+                  {form.durationUnit}
+                </button>
+              </div>
+            </div>
           </div>
+
           {scheduleError && (
             <p role="alert" className="text-xs text-destructive">
               {scheduleError}
             </p>
           )}
 
-          <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded-lg border border-border px-3 py-3">
-            <div>
-              <Label htmlFor="c-duration" className="text-sm font-semibold">
-                Estimated duration
-              </Label>
-              <p className="text-xs text-muted-foreground">
-                How long you expect this task to take
-              </p>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <Input
-                id="c-duration"
-                type="number"
-                min={form.durationUnit === "hr" ? 1 / 60 : 1}
-                step="any"
-                placeholder="45"
-                value={form.durationMin}
-                onChange={(e) =>
-                  setForm({ ...form, durationMin: e.target.value })
-                }
-                className="h-9 w-16 text-right font-semibold"
-              />
-              <button
-                type="button"
-                onClick={() => {
-                  const next = toggleDurationUnit(
-                    form.durationMin,
-                    form.durationUnit,
-                  );
-                  setForm({
-                    ...form,
-                    durationMin: next.value,
-                    durationUnit: next.unit,
-                  });
-                }}
-                className="flex h-9 w-14 items-center justify-center rounded-lg border border-input text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
-                aria-label="Toggle unit (min/hr)"
-              >
-                {form.durationUnit}
-              </button>
-            </div>
-          </div>
-
           {/* Steps & subtasks */}
           <SubtaskEditor
             value={subtasks}
             onChange={setSubtasks}
-            titleOnly
             sectionLabel="Subtasks"
           />
         </div>

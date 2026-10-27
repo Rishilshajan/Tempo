@@ -137,6 +137,32 @@ export const saveMilestonesSchema = z
     "Subtask IDs must be unique",
   );
 
+export const taskNoteInputSchema = z.object({
+  title: z.string().trim().max(200).optional().nullable(),
+  body: z.string().trim().min(1, "Note can't be empty").max(5000),
+});
+
+export const TASK_OUTPUT_TYPES = [
+  "document",
+  "report",
+  "code",
+  "link",
+  "other",
+] as const;
+
+export const taskOutputInputSchema = z.object({
+  title: z.string().trim().min(1, "Output title is required").max(200),
+  description: z.string().trim().max(2000).optional().nullable(),
+  outputType: z.enum(TASK_OUTPUT_TYPES),
+  referenceUrl: z
+    .string()
+    .trim()
+    .url("Enter a valid URL")
+    .refine((value) => /^https?:\/\//i.test(value), "URL must use http or https")
+    .optional()
+    .nullable(),
+});
+
 export const createTaskSchema = baseTaskSchema
   .extend({
     milestones: z.array(milestoneInputSchema).max(50).optional(),
@@ -188,6 +214,8 @@ export const updateTaskSchema = baseTaskSchema
 
 export type MilestoneInput = z.input<typeof milestoneInputSchema>;
 export type SaveMilestonesInput = z.input<typeof saveMilestonesSchema>;
+export type TaskNoteInput = z.input<typeof taskNoteInputSchema>;
+export type TaskOutputInput = z.input<typeof taskOutputInputSchema>;
 
 export const moveStatusSchema = z.object({
   id: z.string().min(1),

@@ -3,7 +3,6 @@
 import { useEffect, useMemo, useState, useTransition } from "react";
 import {
   Trash2,
-  ChevronsDownUp,
   CircleCheck,
   CalendarArrowUp,
   Spline,
@@ -12,7 +11,13 @@ import {
   CalendarDays,
   Clock3,
   ListChecks,
-  MessageSquareText,
+  Flag,
+  Activity,
+  Layers,
+  Sparkles,
+  GitBranch,
+  StickyNote,
+  FileOutput,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -28,7 +33,6 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
 import {
   Select,
   SelectContent,
@@ -36,7 +40,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { TASK_STATUS, IMPORTANCE } from "@/server/validation";
+import { TASK_STATUS } from "@/server/validation";
 import { STATUS_META } from "@/lib/task-ui";
 import {
   updateTask,
@@ -52,7 +56,6 @@ import {
 import { log } from "@/lib/logger";
 import { cn } from "@/lib/utils";
 import { useIsDesktop } from "@/hooks/use-is-desktop";
-import { DomainIcon } from "@/components/domains/domain-icon";
 import { DatePicker } from "@/components/ui/date-picker";
 import { TimePicker } from "@/components/ui/time-picker";
 import {
@@ -64,11 +67,19 @@ import {
   type SubtaskDraft,
 } from "@/components/tasks/subtask-editor";
 import { TaskNotes } from "@/components/tasks/task-notes";
+import { TaskOutputs } from "@/components/tasks/task-outputs";
+import { TaskActivity } from "@/components/tasks/task-activity";
 
 const NO_DOMAIN = "__none__";
 
+const PRIORITIES = [
+  { value: "important", label: "Urgent / High", dot: "bg-urgent", color: "text-urgent", bg: "bg-urgent/10" },
+  { value: "medium", label: "Medium", dot: "bg-medium", color: "text-medium", bg: "bg-medium/10" },
+  { value: "flexible", label: "Flexible", dot: "bg-ontrack", color: "text-ontrack", bg: "bg-ontrack/10" },
+] as const;
+
 const IMPORTANCE_ITEMS: Record<string, string> = {
-  important: "Important",
+  important: "Urgent / High",
   medium: "Medium",
   flexible: "Flexible",
 };
@@ -77,12 +88,40 @@ const STATUS_ITEMS: Record<string, string> = Object.fromEntries(
   TASK_STATUS.map((s) => [s, STATUS_META[s].label]),
 );
 
-function formatTaskDate(value: Date | string): string {
-  return new Date(value).toLocaleDateString("en-US", {
-    month: "short",
+function format12HrTime(timeStr?: string | null): string {
+  if (!timeStr) return "";
+  const match = /^([01]\d|2[0-3]):([0-5]\d)/.exec(timeStr);
+  if (!match) return timeStr;
+  const h = Number(match[1]);
+  const m = match[2];
+  const ampm = h >= 12 ? "PM" : "AM";
+  const h12 = h % 12 === 0 ? 12 : h % 12;
+  return `${h12}:${m} ${ampm}`;
+}
+
+function formatTaskDate(value: Date | string, withTime = false, timeStr?: string | null): string {
+  const d = typeof value === "string" ? new Date(value) : value;
+  if (isNaN(d.getTime())) return "";
+  const dateFormatted = d.toLocaleDateString("en-GB", {
     day: "numeric",
+    month: "short",
     year: "numeric",
-  });
+    timeZone: "Asia/Kolkata",
+  }); // e.g. "18 Jan 2026"
+  if (withTime) {
+    if (timeStr) {
+      const formattedTime = format12HrTime(timeStr);
+      return `${dateFormatted} ${formattedTime}`;
+    }
+    const timeFormatted = d.toLocaleTimeString("en-US", {
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
+      timeZone: "Asia/Kolkata",
+    });
+    return `${dateFormatted} ${timeFormatted}`;
+  }
+  return dateFormatted;
 }
 
 export function TaskDetailsPanel({
@@ -113,9 +152,9 @@ export function TaskDetailsPanel({
     null,
   );
   const [subtasks, setSubtasks] = useState<SubtaskDraft[]>([]);
-  const [activeSection, setActiveSection] = useState<"details" | "activity">(
-    "details",
-  );
+  const [activeSection, setActiveSection] = useState<
+    "subtasks" | "notes" | "outputs" | "activity" | "thread"
+  >("subtasks");
   const [form, setForm] = useState({
     title: "",
     description: "",
@@ -177,6 +216,7 @@ export function TaskDetailsPanel({
             durationEst: d.value,
             durationUnit: d.unit,
             isCompleted: m.isCompleted,
+            createdAt: m.createdAt,
           };
         }),
       );
@@ -206,7 +246,6 @@ export function TaskDetailsPanel({
   if (!task) return null;
 
   const isDone = form.status === "done";
-  const selectedDomain = domains.find((domain) => domain.id === form.domainId);
   const trackedSubtasks = subtasks.filter((subtask) => subtask.title.trim());
   const completedSubtasks = trackedSubtasks.filter(
     (subtask) => subtask.isCompleted,
@@ -331,10 +370,10 @@ export function TaskDetailsPanel({
       <SheetContent
         side={isDesktop ? "right" : "bottom"}
         className={cn(
-          "flex flex-col gap-0",
+          "flex flex-col gap-0 p-0",
           isDesktop
-            ? "lg:data-[side=right]:w-[42vw] lg:data-[side=right]:max-w-[720px]"
-            : "max-h-[90vh] rounded-t-2xl",
+            ? "lg:data-[side=right]:w-[30vw] lg:data-[side=right]:max-w-none"
+            : "max-h-[92vh] rounded-t-2xl",
         )}
       >
         {/* Mobile grab handle */}
@@ -343,7 +382,8 @@ export function TaskDetailsPanel({
             <span className="h-1.5 w-10 rounded-full bg-muted-foreground/25" />
           </div>
         )}
-        <SheetHeader className="shrink-0 pb-3 pr-12">
+
+        <SheetHeader className="shrink-0 gap-1 border-b border-border px-4 py-3 pr-12">
           <SheetTitle className="sr-only">Task details</SheetTitle>
           <div className="flex min-w-0 items-center gap-2">
             <ClipboardList className="size-5 shrink-0 text-primary" />
@@ -353,13 +393,18 @@ export function TaskDetailsPanel({
               onChange={(e) => setForm({ ...form, title: e.target.value })}
               aria-label="Task name"
               className="h-9 min-w-0 border-0 bg-transparent px-0 text-lg font-semibold shadow-none focus-visible:ring-0"
+              placeholder="Task name"
             />
           </div>
+        </SheetHeader>
 
-          <div className="mt-2 grid grid-cols-2 gap-2">
-            <div className="space-y-1">
-              <Label className="text-[10px] uppercase tracking-wide text-muted-foreground">
-                Priority
+        <div className="flex-1 space-y-4 overflow-y-auto px-4 py-4">
+          {/* Metadata rows without separating lines, cleanly aligned */}
+          <div className="space-y-1">
+            {/* Priority */}
+            <div className="grid grid-cols-[100px_minmax(0,1fr)] items-center gap-2 py-1">
+              <Label className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <Flag className="size-3.5" /> Priority
               </Label>
               <Select
                 items={IMPORTANCE_ITEMS}
@@ -371,21 +416,61 @@ export function TaskDetailsPanel({
                   })
                 }
               >
-                <SelectTrigger className="h-8 w-full">
+                <SelectTrigger className="w-full justify-between border-0 bg-transparent px-1 shadow-none hover:bg-muted/40">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {IMPORTANCE.map((i) => (
-                    <SelectItem key={i} value={i}>
-                      {IMPORTANCE_ITEMS[i]}
+                  {PRIORITIES.map((p) => (
+                    <SelectItem key={p.value} value={p.value}>
+                      <span className="inline-flex items-center gap-2">
+                        <span
+                          aria-hidden="true"
+                          className={cn("size-2 shrink-0 rounded-full", p.dot)}
+                        />
+                        <span className="leading-none">{p.label}</span>
+                      </span>
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-1">
-              <Label className="text-[10px] uppercase tracking-wide text-muted-foreground">
-                Status
+
+            {/* Domain */}
+            <div className="grid grid-cols-[100px_minmax(0,1fr)] items-center gap-2 py-1">
+              <Label className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <Layers className="size-3.5" /> Domain
+              </Label>
+              <Select
+                items={domainItems}
+                value={form.domainId}
+                onValueChange={(v) =>
+                  setForm({ ...form, domainId: v ?? NO_DOMAIN })
+                }
+              >
+                <SelectTrigger className="w-full justify-between border-0 bg-transparent px-1 shadow-none hover:bg-muted/40">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={NO_DOMAIN}>Uncategorized</SelectItem>
+                  {domains.map((d) => (
+                    <SelectItem key={d.id} value={d.id}>
+                      <span className="flex items-center gap-2">
+                        <span
+                          className="size-2 rounded-full"
+                          style={{ backgroundColor: d.color }}
+                        />
+                        {d.name}
+                      </span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Status */}
+            <div className="grid grid-cols-[100px_minmax(0,1fr)] items-center gap-2 py-1">
+              <Label className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <Sparkles className="size-3.5" /> Status
               </Label>
               <Select
                 items={STATUS_ITEMS}
@@ -397,341 +482,316 @@ export function TaskDetailsPanel({
                   })
                 }
               >
-                <SelectTrigger className="h-8 w-full">
+                <SelectTrigger className="w-full justify-between border-0 bg-transparent px-1 shadow-none hover:bg-muted/40">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   {TASK_STATUS.map((s) => (
-                    <SelectItem key={s} value={s}>
+                    <SelectItem key={s} value={s} className="items-center gap-2">
+                      <span
+                        aria-hidden="true"
+                        className={cn("block size-2 shrink-0 rounded-full", STATUS_META[s].dot)}
+                      />
                       {STATUS_META[s].label}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-1">
-              <Label className="flex items-center gap-1 text-[10px] uppercase tracking-wide text-muted-foreground">
-                <CalendarDays className="size-3" /> Created
+
+            {/* Created date */}
+            <div className="grid grid-cols-[100px_minmax(0,1fr)] items-center gap-2 py-1">
+              <Label className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <CalendarDays className="size-3.5" /> Created
               </Label>
-              <div className="flex h-8 items-center rounded-md border border-input bg-muted/40 px-2 text-xs">
-                {formatTaskDate(task.createdAt)}
+              <div className="flex h-8 items-center px-1 text-sm font-medium text-foreground">
+                {formatTaskDate(task.createdAt, true, task.scheduledStart)}
               </div>
             </div>
-            <div className="space-y-1">
-              <Label className="flex items-center gap-1 text-[10px] uppercase tracking-wide text-muted-foreground">
-                <CalendarDays className="size-3" /> Due date
-              </Label>
-              <DatePicker
-                value={form.date}
-                onChange={(v) =>
-                  setForm((current) => ({
-                    ...current,
-                    date: v,
-                    scheduledEndDate:
-                      !current.scheduledEndDate ||
-                      current.scheduledEndDate < v
-                        ? v
-                        : current.scheduledEndDate,
-                  }))
-                }
-              />
-            </div>
-          </div>
 
-          <div className="mt-3 space-y-1.5">
-            <div className="flex items-center justify-between text-xs">
-              <span className="flex items-center gap-1.5 font-medium text-foreground">
-                <ListChecks className="size-3.5 text-primary" />
-                Progress
-                {trackedSubtasks.length > 0 && (
-                  <span className="font-normal text-muted-foreground">
-                    · {completedSubtasks}/{trackedSubtasks.length} subtasks
-                  </span>
-                )}
-              </span>
-              <span className="font-semibold tabular-nums">{progress}%</span>
-            </div>
-            <div
-              className="h-2 overflow-hidden rounded-full bg-secondary"
-              role="progressbar"
-              aria-label="Task progress"
-              aria-valuemin={0}
-              aria-valuemax={100}
-              aria-valuenow={progress}
-            >
-              <div
-                className="h-full rounded-full bg-primary transition-[width]"
-                style={{ width: `${progress}%` }}
-              />
-            </div>
-          </div>
-
-          <div className="mt-3 grid grid-cols-2 gap-2">
-            <div className="space-y-1">
-              <Label className="flex items-center gap-1 text-[10px] uppercase tracking-wide text-muted-foreground">
-                <Clock3 className="size-3" /> Start time
+            {/* Start date & time */}
+            <div className="grid grid-cols-[100px_minmax(0,1fr)] items-center gap-2 py-1">
+              <Label className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <CalendarDays className="size-3.5" /> Start date
               </Label>
-              <TimePicker
-                value={form.scheduledStart}
-                onChange={(v) => setForm({ ...form, scheduledStart: v })}
-                placeholder="Not set"
-                ariaLabel="Scheduled start time"
-              />
-            </div>
-            <div className="space-y-1">
-              <Label className="flex items-center gap-1 text-[10px] uppercase tracking-wide text-muted-foreground">
-                <Clock3 className="size-3" /> End time
-              </Label>
-              <TimePicker
-                value={form.scheduledEnd}
-                onChange={(v) => setForm({ ...form, scheduledEnd: v })}
-                placeholder="Not set"
-                ariaLabel="Scheduled end time"
-              />
-            </div>
-            <div className="col-span-2 space-y-1">
-              <Label htmlFor="t-dur" className="text-[10px] uppercase tracking-wide text-muted-foreground">
-                Estimated duration
-              </Label>
-              <div className="flex items-center gap-1.5">
-                <Input
-                  id="t-dur"
-                  type="number"
-                  min={form.durationUnit === "hr" ? 1 / 60 : 1}
-                  step="any"
-                  placeholder="Not estimated"
-                  value={form.durationEst}
-                  onChange={(e) =>
-                    setForm({ ...form, durationEst: e.target.value })
-                  }
-                  className="h-8 flex-1"
-                />
-                <button
-                  type="button"
-                  onClick={() => {
-                    const next = toggleDurationUnit(
-                      form.durationEst,
-                      form.durationUnit,
-                    );
-                    setForm({
-                      ...form,
-                      durationEst: next.value,
-                      durationUnit: next.unit,
-                    });
-                  }}
-                  className="flex h-8 w-14 shrink-0 items-center justify-center rounded-lg border border-input text-xs font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
-                  aria-label="Toggle duration unit (minutes or hours)"
-                >
-                  {form.durationUnit}
-                </button>
-              </div>
-            </div>
-            {form.scheduledEndDate !== form.date && form.scheduledEndDate && (
-              <div className="col-span-2 space-y-1">
-                <Label className="text-[10px] uppercase tracking-wide text-muted-foreground">
-                  Scheduled through
-                </Label>
+              <div className="flex items-center gap-2">
                 <DatePicker
-                  value={form.scheduledEndDate}
+                  value={form.date}
+                  onChange={(v) =>
+                    setForm((current) => ({
+                      ...current,
+                      date: v,
+                      scheduledEndDate:
+                        !current.scheduledEndDate ||
+                        current.scheduledEndDate < v
+                          ? v
+                          : current.scheduledEndDate,
+                    }))
+                  }
+                  className="flex-1 border-0 bg-transparent px-1 shadow-none hover:bg-muted/40"
+                  placeholder="Choose start date"
+                />
+                <TimePicker
+                  value={form.scheduledStart}
+                  onChange={(v) => setForm({ ...form, scheduledStart: v })}
+                  placeholder="Time"
+                  ariaLabel="Start time"
+                  className="w-28 shrink-0 border-0 bg-transparent px-1 shadow-none hover:bg-muted/40"
+                />
+              </div>
+            </div>
+
+            {/* End date & time */}
+            <div className="grid grid-cols-[100px_minmax(0,1fr)] items-center gap-2 py-1">
+              <Label className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <CalendarDays className="size-3.5" /> End date
+              </Label>
+              <div className="flex items-center gap-2">
+                <DatePicker
+                  value={form.scheduledEndDate || form.date}
                   onChange={(v) => setForm({ ...form, scheduledEndDate: v })}
+                  className="flex-1 border-0 bg-transparent px-1 shadow-none hover:bg-muted/40"
+                  placeholder="Choose end date"
+                />
+                <TimePicker
+                  value={form.scheduledEnd}
+                  onChange={(v) => setForm({ ...form, scheduledEnd: v })}
+                  placeholder="Time"
+                  ariaLabel="End time"
+                  className="w-28 shrink-0 border-0 bg-transparent px-1 shadow-none hover:bg-muted/40"
                 />
               </div>
-            )}
-          </div>
-        </SheetHeader>
+            </div>
 
-        <div
-          className="flex shrink-0 border-b border-border px-4"
-          role="tablist"
-          aria-label="Task sections"
-        >
-          <button
-            type="button"
-            onClick={() => setActiveSection("details")}
-            id="task-details-tab"
-            role="tab"
-            aria-selected={activeSection === "details"}
-            className={cn(
-              "flex items-center gap-1.5 border-b-2 px-3 py-2 text-sm font-medium transition-colors",
-              activeSection === "details"
-                ? "border-primary text-primary"
-                : "border-transparent text-muted-foreground hover:text-foreground",
-            )}
-          >
-            <ListChecks className="size-4" /> Details
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveSection("activity")}
-            id="task-activity-tab"
-            role="tab"
-            aria-selected={activeSection === "activity"}
-            className={cn(
-              "flex items-center gap-1.5 border-b-2 px-3 py-2 text-sm font-medium transition-colors",
-              activeSection === "activity"
-                ? "border-primary text-primary"
-                : "border-transparent text-muted-foreground hover:text-foreground",
-            )}
-          >
-            <MessageSquareText className="size-4" /> Thread &amp; activity
-          </button>
-        </div>
-
-        <div
-          className="flex-1 space-y-4 overflow-y-auto px-4 py-4"
-          role="tabpanel"
-          aria-labelledby={
-            activeSection === "details"
-              ? "task-details-tab"
-              : "task-activity-tab"
-          }
-          tabIndex={0}
-        >
-          {activeSection === "details" ? (
-            <>
-              <div className="space-y-1.5">
-                <Label htmlFor="t-desc">Description</Label>
-                <Textarea
-                  id="t-desc"
-                  rows={3}
-                  value={form.description}
-                  onChange={(e) =>
-                    setForm({ ...form, description: e.target.value })
-                  }
-                  placeholder="Add details about this task…"
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <Label>Domain</Label>
-                <Select
-                  items={domainItems}
-                  value={form.domainId}
-                  onValueChange={(v) =>
-                    setForm({ ...form, domainId: v ?? NO_DOMAIN })
-                  }
+            {/* Progress */}
+            <div className="grid grid-cols-[100px_minmax(0,1fr)] items-center gap-2 py-1">
+              <Label className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <ListChecks className="size-3.5" /> Progress
+              </Label>
+              <div className="flex items-center gap-3 px-1">
+                <div
+                  className="h-2 flex-1 overflow-hidden rounded-full bg-secondary"
+                  role="progressbar"
+                  aria-label="Task progress"
+                  aria-valuemin={0}
+                  aria-valuemax={100}
+                  aria-valuenow={progress}
                 >
-                  <SelectTrigger className="w-full">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value={NO_DOMAIN}>Uncategorized</SelectItem>
-                    {domains.map((d) => (
-                      <SelectItem key={d.id} value={d.id}>
-                        {d.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {selectedDomain && (
-                  <span
-                    className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold"
-                    style={{
-                      backgroundColor: `${selectedDomain.color}1f`,
-                      color: selectedDomain.color,
-                    }}
-                  >
-                    <DomainIcon domain={selectedDomain} className="size-3.5" />
-                    {selectedDomain.name}
-                  </span>
-                )}
+                  <div
+                    className="h-full rounded-full bg-primary transition-[width]"
+                    style={{ width: `${progress}%` }}
+                  />
+                </div>
+                <span className="shrink-0 text-xs font-semibold tabular-nums text-foreground">
+                  {progress}%
+                </span>
               </div>
+            </div>
 
-              <SubtaskEditor
-                value={subtasks}
-                onChange={setSubtasks}
-                sectionLabel="Subtasks"
-                compactRows
-              />
-
-              <div className="rounded-xl border border-border bg-secondary/30 p-3">
-                <div className="flex items-center justify-between">
-                  <span
-                    className={cn(
-                      "flex items-center gap-1.5 text-sm font-medium",
-                      shrinkAllowed ? "text-foreground" : "text-muted-foreground",
-                    )}
-                  >
-                    <ChevronsDownUp className="size-4 text-primary" />
-                    Can shrink
-                    {shrinkAllowed && form.isElastic && (
-                      <span className="text-muted-foreground">
-                        (min {form.minDurationMin || 15}m)
-                      </span>
-                    )}
-                  </span>
-                  <div className="flex items-center gap-2">
-                    {shrinkAllowed && form.isElastic && (
-                      <Input
-                        type="number"
-                        min={1}
-                        value={form.minDurationMin}
-                        onChange={(e) =>
-                          setForm({ ...form, minDurationMin: e.target.value })
+            {/* Estimated duration */}
+            <div className="grid grid-cols-[100px_minmax(0,1fr)] items-center gap-2 py-1">
+              <Label htmlFor="t-dur" className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <Clock3 className="size-3.5" /> Duration
+              </Label>
+              <div className="flex items-center">
+                <div className="inline-flex h-8 w-fit items-center overflow-hidden rounded-md border border-input bg-background/50 transition-colors focus-within:border-primary focus-within:ring-1 focus-within:ring-primary">
+                  <Input
+                    id="t-dur"
+                    type="number"
+                    min={form.durationUnit === "hr" ? 1 / 60 : 1}
+                    step="any"
+                    placeholder="45"
+                    value={form.durationEst}
+                    onChange={(e) =>
+                      setForm({ ...form, durationEst: e.target.value })
+                    }
+                    className="h-full w-20 border-0 bg-transparent px-2.5 text-sm font-medium shadow-none focus-visible:ring-0 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                  />
+                  <div className="h-4 w-px bg-border" />
+                  <div className="flex items-center p-0.5">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (form.durationUnit !== "min") {
+                          const next = toggleDurationUnit(form.durationEst, form.durationUnit);
+                          setForm({ ...form, durationEst: next.value, durationUnit: next.unit });
                         }
-                        className="h-8 w-16 text-right text-xs"
-                        aria-label="Minimum minutes"
-                      />
-                    )}
-                    <Switch
-                      checked={shrinkAllowed && form.isElastic}
-                      disabled={!shrinkAllowed}
-                      onCheckedChange={(v) =>
-                        setForm({ ...form, isElastic: v })
-                      }
-                    />
+                      }}
+                      className={cn(
+                        "rounded px-1.5 py-0.5 text-xs font-medium transition-colors",
+                        form.durationUnit === "min"
+                          ? "bg-primary text-primary-foreground shadow-sm"
+                          : "text-muted-foreground hover:text-foreground",
+                      )}
+                      aria-label="Set minutes"
+                    >
+                      min
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (form.durationUnit !== "hr") {
+                          const next = toggleDurationUnit(form.durationEst, form.durationUnit);
+                          setForm({ ...form, durationEst: next.value, durationUnit: next.unit });
+                        }
+                      }}
+                      className={cn(
+                        "rounded px-1.5 py-0.5 text-xs font-medium transition-colors",
+                        form.durationUnit === "hr"
+                          ? "bg-primary text-primary-foreground shadow-sm"
+                          : "text-muted-foreground hover:text-foreground",
+                      )}
+                      aria-label="Set hours"
+                    >
+                      hr
+                    </button>
                   </div>
                 </div>
-                {!shrinkAllowed && (
-                  <p className="mt-2 text-[11px] text-muted-foreground">
-                    Enable &quot;Allow Shrinking&quot; on the selected domain to let
-                    this task shrink.
-                  </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Description as a highlighted box */}
+          <div className="space-y-1.5 rounded-xl border border-primary/25 bg-primary/[0.03] p-3 transition-colors focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20">
+            <Label htmlFor="t-desc" className="text-xs font-semibold uppercase tracking-wider text-primary">
+              Description
+            </Label>
+            <Textarea
+              id="t-desc"
+              rows={2}
+              placeholder="Add details and context about this task…"
+              value={form.description}
+              onChange={(e) =>
+                setForm({ ...form, description: e.target.value })
+              }
+              className="min-h-16 resize-y border-0 bg-transparent p-0 text-sm leading-relaxed shadow-none focus-visible:ring-0"
+            />
+          </div>
+
+          <div className="-mx-4 overflow-x-auto border-b border-border px-4">
+            <div className="flex min-w-max" role="tablist" aria-label="Task sections">
+              {(
+                [
+                  {
+                    id: "subtasks",
+                    label: `Subtasks (${trackedSubtasks.length})`,
+                    icon: ListChecks,
+                  },
+                  { id: "notes", label: "Notes", icon: StickyNote },
+                  { id: "outputs", label: "Outputs", icon: FileOutput },
+                  { id: "activity", label: "Activity", icon: Activity },
+                  { id: "thread", label: "Threads", icon: GitBranch },
+                ] as const
+              ).map(({ id, label, icon: Icon }) => (
+                <button
+                  key={id}
+                  type="button"
+                  onClick={() => setActiveSection(id)}
+                  id={`task-${id}-tab`}
+                  role="tab"
+                  aria-selected={activeSection === id}
+                  className={cn(
+                    "flex items-center gap-1.5 border-b-2 px-3 py-2 text-sm font-medium transition-colors",
+                    activeSection === id
+                      ? "border-primary text-primary"
+                      : "border-transparent text-muted-foreground hover:text-foreground",
+                  )}
+                >
+                  <Icon className="size-4" /> {label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div
+            role="tabpanel"
+            aria-labelledby={`task-${activeSection}-tab`}
+            tabIndex={0}
+            className="space-y-4 pt-1"
+          >
+            {activeSection === "subtasks" && (
+              <div className="space-y-4">
+                <SubtaskEditor
+                  value={subtasks}
+                  onChange={setSubtasks}
+                  sectionLabel="Subtasks"
+                  compactRows
+                />
+              </div>
+            )}
+
+            {activeSection === "notes" && <TaskNotes taskId={task.id} />}
+
+            {activeSection === "outputs" && <TaskOutputs taskId={task.id} />}
+
+            {activeSection === "activity" && <TaskActivity task={task} />}
+
+            {activeSection === "thread" && (
+              <div className="space-y-4">
+                <div className="space-y-2 rounded-xl border border-border p-3">
+                  <div>
+                    <h3 className="text-sm font-semibold">Thread options</h3>
+                    <p className="text-xs text-muted-foreground">
+                      Continue this work in a connected follow-up task. You can keep this task open or mark it complete.
+                    </p>
+                  </div>
+                  {thread?.thread.title && (
+                    <p className="text-xs text-muted-foreground">
+                      Current thread:{" "}
+                      <span className="font-medium text-foreground">{thread.thread.title}</span>
+                    </p>
+                  )}
+                  <div className="flex flex-col gap-2 sm:flex-row">
+                    <Button
+                      variant="outline"
+                      onClick={addToThread}
+                      disabled={pending}
+                      className="sm:flex-1"
+                    >
+                      <Plus className="size-4" /> Move forward (open)
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={completeAndFollowUp}
+                      disabled={pending}
+                      className="sm:flex-1"
+                    >
+                      <Spline className="size-4" /> Complete &amp; follow-up
+                    </Button>
+                  </div>
+                </div>
+
+                {thread && thread.tasks.length > 0 && (
+                  <div className="space-y-2">
+                    <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                      Thread Timeline ({thread.tasks.length} tasks)
+                    </h4>
+                    <div className="space-y-1.5">
+                      {thread.tasks.map((threadTask) => (
+                        <button
+                          key={threadTask.id}
+                          type="button"
+                          disabled={threadTask.id === task.id || !onSelectTask}
+                          onClick={() => onSelectTask?.(threadTask)}
+                          className={cn(
+                            "flex w-full items-center justify-between rounded-lg border p-2.5 text-left text-xs transition-colors",
+                            threadTask.id === task.id
+                              ? "border-primary bg-primary/5 font-semibold text-primary"
+                              : "border-border bg-card hover:bg-muted text-foreground",
+                          )}
+                        >
+                          <span className="truncate">{threadTask.title}</span>
+                          <span className="shrink-0 text-[10px] uppercase text-muted-foreground">
+                            {threadTask.status === "done" ? "Done" : "Active"}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                 )}
               </div>
-            </>
-          ) : (
-            <>
-              <div className="space-y-2 rounded-xl border border-border p-3">
-                <div>
-                  <h3 className="text-sm font-semibold">Thread options</h3>
-                  <p className="text-xs text-muted-foreground">
-                    Continue this work in a connected follow-up task.
-                  </p>
-                </div>
-                {thread?.thread.title && (
-                  <p className="text-xs text-muted-foreground">
-                    Current thread: <span className="font-medium text-foreground">{thread.thread.title}</span>
-                  </p>
-                )}
-                <div className="flex flex-col gap-2 sm:flex-row">
-                  <Button
-                    variant="outline"
-                    onClick={addToThread}
-                    disabled={pending}
-                    className="sm:flex-1"
-                  >
-                    <Plus className="size-4" /> Add follow-up
-                  </Button>
-                  <Button
-                    variant="outline"
-                    onClick={completeAndFollowUp}
-                    disabled={pending}
-                    className="sm:flex-1"
-                  >
-                    <Spline className="size-4" /> Complete &amp; follow-up
-                  </Button>
-                </div>
-              </div>
-              <TaskNotes
-                taskId={task.id}
-                task={task}
-                threadTitle={thread?.thread.title}
-                threadTasks={thread?.tasks}
-                onSelectTask={onSelectTask}
-              />
-            </>
-          )}
+            )}
+          </div>
         </div>
 
         {/* Quick lifecycle actions */}
@@ -760,7 +820,7 @@ export function TaskDetailsPanel({
 
         <SheetFooter
           className={cn(
-            "flex-row items-center justify-between gap-2 border-t border-border",
+            "flex-row items-center justify-between gap-2 border-t border-border px-4 py-3",
             !isDesktop && "pb-[calc(env(safe-area-inset-bottom)+1rem)]",
           )}
         >

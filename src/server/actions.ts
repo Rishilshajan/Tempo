@@ -11,10 +11,20 @@ import {
   appSettings,
   taskMilestones,
   taskNotes,
+  taskOutputs,
+  taskActivity,
   notificationReads,
 } from "@/db/schema";
 import { requireUserId } from "@/server/auth";
-import type { Task, Domain, AppSettings, TaskMilestone, TaskNote } from "@/db/schema";
+import type {
+  Task,
+  Domain,
+  AppSettings,
+  TaskMilestone,
+  TaskNote,
+  TaskOutput,
+  TaskActivity,
+} from "@/db/schema";
 import { log } from "@/lib/logger";
 import { rollforwardTasks } from "@/server/rollforward";
 import {
@@ -33,11 +43,15 @@ import {
   updateSettingsSchema,
   reorderDomainsSchema,
   saveMilestonesSchema,
+  taskNoteInputSchema,
+  taskOutputInputSchema,
   type CreateDomainInput,
   type CreateTaskInput,
   type UpdateTaskInput,
   type UpdateSettingsInput,
   type SaveMilestonesInput,
+  type TaskNoteInput,
+  type TaskOutputInput,
 } from "@/server/validation";
 
 export type ActionResult<T> =
@@ -224,6 +238,12 @@ export async function createTask(
           date: taskData.date ?? todayISO(),
         })
         .returning();
+      await tx.insert(taskActivity).values({
+        taskId: created.id,
+        userId,
+        eventType: "task_created",
+        summary: "Task created",
+      });
       if (milestones?.length) {
         await tx.insert(taskMilestones).values(
           milestones.map((m, i) => ({
@@ -264,18 +284,48 @@ export async function updateTask(
   const { id, ...rest } = parsed.data;
   try {
     const userId = await requireUserId();
-    // Retain the last completion timestamp when a task is reopened.
-    const completedPatch =
-      rest.status === undefined
-        ? {}
-        : rest.status === "done"
-          ? { completedAt: new Date() }
-          : {};
-    const [row] = await db
-      .update(tasks)
-      .set({ ...rest, ...completedPatch, updatedAt: new Date() })
-      .where(and(eq(tasks.id, id), eq(tasks.userId, userId)))
-      .returning();
+    const row = await db.transaction(async (tx) => {
+      const [previous] = await tx
+        .select()
+        .from(tasks)
+        .where(and(eq(tasks.id, id), eq(tasks.userId, userId)))
+        .limit(1);
+      if (!previous) return null;
+      const statusChanged =
+        rest.status !== undefined && rest.status !== previous.status;
+      const detailsChanged = Object.entries(rest).some(
+        ([field, value]) =>
+          field !== "status" && previous[field as keyof Task] !== value,
+      );
+      const [updated] = await tx
+        .update(tasks)
+        .set({
+          ...rest,
+          ...(statusChanged && rest.status === "done"
+            ? { completedAt: new Date() }
+            : {}),
+          updatedAt: new Date(),
+        })
+        .where(and(eq(tasks.id, id), eq(tasks.userId, userId)))
+        .returning();
+      if (statusChanged && rest.status) {
+        await tx.insert(taskActivity).values({
+          taskId: id,
+          userId,
+          eventType: "status_changed",
+          summary: `Status changed from ${previous.status.replace("_", " ")} to ${rest.status.replace("_", " ")}`,
+        });
+      }
+      if (detailsChanged) {
+        await tx.insert(taskActivity).values({
+          taskId: id,
+          userId,
+          eventType: "task_updated",
+          summary: "Task details updated",
+        });
+      }
+      return updated;
+    });
     if (!row) return { ok: false, error: "Task not found" };
     log.success("Task updated", { id });
     refresh();
@@ -296,15 +346,39 @@ export async function moveTaskStatus(
     return { ok: false, error: firstError(parsed.error.issues) };
   try {
     const userId = await requireUserId();
-    const [row] = await db
-      .update(tasks)
-      .set({
-        status: parsed.data.status,
-        ...(parsed.data.status === "done" ? { completedAt: new Date() } : {}),
-        updatedAt: new Date(),
-      })
-      .where(and(eq(tasks.id, parsed.data.id), eq(tasks.userId, userId)))
-      .returning();
+    const row = await db.transaction(async (tx) => {
+      const [previous] = await tx
+        .select({ status: tasks.status })
+        .from(tasks)
+        .where(
+          and(eq(tasks.id, parsed.data.id), eq(tasks.userId, userId)),
+        )
+        .limit(1);
+      if (!previous) return null;
+      const changed = previous.status !== parsed.data.status;
+      const [updated] = await tx
+        .update(tasks)
+        .set({
+          status: parsed.data.status,
+          ...(changed && parsed.data.status === "done"
+            ? { completedAt: new Date() }
+            : {}),
+          updatedAt: new Date(),
+        })
+        .where(
+          and(eq(tasks.id, parsed.data.id), eq(tasks.userId, userId)),
+        )
+        .returning();
+      if (changed) {
+        await tx.insert(taskActivity).values({
+          taskId: parsed.data.id,
+          userId,
+          eventType: "status_changed",
+          summary: `Status changed from ${previous.status.replace("_", " ")} to ${parsed.data.status.replace("_", " ")}`,
+        });
+      }
+      return updated;
+    });
     if (!row) return { ok: false, error: "Task not found" };
     log.event("Task status moved", { id, status });
     refresh();
@@ -326,15 +400,34 @@ export async function toggleTaskDone(
 ): Promise<ActionResult<Task>> {
   try {
     const userId = await requireUserId();
-    const [row] = await db
-      .update(tasks)
-      .set({
-        status: done ? "done" : "not_started",
-        ...(done ? { completedAt: new Date() } : {}),
-        updatedAt: new Date(),
-      })
-      .where(and(eq(tasks.id, id), eq(tasks.userId, userId)))
-      .returning();
+    const row = await db.transaction(async (tx) => {
+      const [previous] = await tx
+        .select({ status: tasks.status })
+        .from(tasks)
+        .where(and(eq(tasks.id, id), eq(tasks.userId, userId)))
+        .limit(1);
+      if (!previous) return null;
+      const status = done ? "done" : "not_started";
+      const changed = previous.status !== status;
+      const [updated] = await tx
+        .update(tasks)
+        .set({
+          status,
+          ...(changed && done ? { completedAt: new Date() } : {}),
+          updatedAt: new Date(),
+        })
+        .where(and(eq(tasks.id, id), eq(tasks.userId, userId)))
+        .returning();
+      if (changed) {
+        await tx.insert(taskActivity).values({
+          taskId: id,
+          userId,
+          eventType: "status_changed",
+          summary: `Status changed from ${previous.status.replace("_", " ")} to ${status.replace("_", " ")}`,
+        });
+      }
+      return updated;
+    });
     if (!row) return { ok: false, error: "Task not found" };
     log.event("Task done toggled", { id, done });
     refresh();
@@ -366,11 +459,32 @@ export async function moveTaskToDate(
     return { ok: false, error: firstError(parsed.error.issues) };
   try {
     const userId = await requireUserId();
-    const [row] = await db
-      .update(tasks)
-      .set({ date: parsed.data.date, updatedAt: new Date() })
-      .where(and(eq(tasks.id, parsed.data.id), eq(tasks.userId, userId)))
-      .returning();
+    const row = await db.transaction(async (tx) => {
+      const [previous] = await tx
+        .select({ date: tasks.date })
+        .from(tasks)
+        .where(
+          and(eq(tasks.id, parsed.data.id), eq(tasks.userId, userId)),
+        )
+        .limit(1);
+      if (!previous) return null;
+      const [updated] = await tx
+        .update(tasks)
+        .set({ date: parsed.data.date, updatedAt: new Date() })
+        .where(
+          and(eq(tasks.id, parsed.data.id), eq(tasks.userId, userId)),
+        )
+        .returning();
+      if (previous.date !== parsed.data.date) {
+        await tx.insert(taskActivity).values({
+          taskId: parsed.data.id,
+          userId,
+          eventType: "task_rescheduled",
+          summary: `Due date changed to ${parsed.data.date}`,
+        });
+      }
+      return updated;
+    });
     if (!row) return { ok: false, error: "Task not found" };
     log.event("Task re-dated", { id, date: parsed.data.date });
     refresh();
@@ -428,6 +542,14 @@ export async function startThreadFollowUp(
             updatedAt: new Date(),
           })
           .where(and(eq(tasks.id, taskId), eq(tasks.userId, userId)));
+        if (task.status !== "done") {
+          await tx.insert(taskActivity).values({
+            taskId,
+            userId,
+            eventType: "status_changed",
+            summary: `Status changed from ${task.status.replace("_", " ")} to done`,
+          });
+        }
       }
 
       // Ensure a thread.
@@ -451,7 +573,6 @@ export async function startThreadFollowUp(
           .set({ threadId, updatedAt: new Date() })
           .where(and(eq(tasks.id, taskId), eq(tasks.userId, userId)));
       }
-
       // Carry the task's latest note (its output) into the follow-up context.
       const [lastNote] = await tx
         .select({ body: taskNotes.body })
@@ -612,16 +733,40 @@ export async function toggleMilestoneDone(
 ): Promise<ActionResult<TaskMilestone>> {
   try {
     const userId = await requireUserId();
-    const [row] = await db
-      .update(taskMilestones)
-      .set({ isCompleted: done })
-      .where(
-        and(
-          eq(taskMilestones.id, id),
-          eq(taskMilestones.userId, userId),
-        ),
-      )
-      .returning();
+    const row = await db.transaction(async (tx) => {
+      const [previous] = await tx
+        .select()
+        .from(taskMilestones)
+        .where(
+          and(
+            eq(taskMilestones.id, id),
+            eq(taskMilestones.userId, userId),
+          ),
+        )
+        .limit(1);
+      if (!previous) return null;
+      const [updated] = await tx
+        .update(taskMilestones)
+        .set({ isCompleted: done })
+        .where(
+          and(
+            eq(taskMilestones.id, id),
+            eq(taskMilestones.userId, userId),
+          ),
+        )
+        .returning();
+      if (previous.isCompleted !== done) {
+        await tx.insert(taskActivity).values({
+          taskId: previous.taskId,
+          userId,
+          eventType: done ? "subtask_completed" : "subtask_reopened",
+          summary: done
+            ? `Subtask completed: ${previous.title}`
+            : `Subtask reopened: ${previous.title}`,
+        });
+      }
+      return updated;
+    });
     if (!row) return { ok: false, error: "Subtask not found" };
     refresh();
     return { ok: true, data: row };
@@ -638,16 +783,36 @@ export async function moveMilestoneToTomorrow(
   try {
     const userId = await requireUserId();
     const date = addDaysISO(todayISO(), 1);
-    const [row] = await db
-      .update(taskMilestones)
-      .set({ date })
-      .where(
-        and(
-          eq(taskMilestones.id, id),
-          eq(taskMilestones.userId, userId),
-        ),
-      )
-      .returning();
+    const row = await db.transaction(async (tx) => {
+      const [previous] = await tx
+        .select()
+        .from(taskMilestones)
+        .where(
+          and(
+            eq(taskMilestones.id, id),
+            eq(taskMilestones.userId, userId),
+          ),
+        )
+        .limit(1);
+      if (!previous) return null;
+      const [updated] = await tx
+        .update(taskMilestones)
+        .set({ date })
+        .where(
+          and(
+            eq(taskMilestones.id, id),
+            eq(taskMilestones.userId, userId),
+          ),
+        )
+        .returning();
+      await tx.insert(taskActivity).values({
+        taskId: previous.taskId,
+        userId,
+        eventType: "subtask_rescheduled",
+        summary: `Subtask rescheduled to tomorrow: ${previous.title}`,
+      });
+      return updated;
+    });
     if (!row) return { ok: false, error: "Subtask not found" };
     log.event("Subtask re-dated", { id, date });
     refresh();
@@ -682,7 +847,11 @@ export async function setMilestones(
     if (!owned) return { ok: false, error: "Task not found" };
     const saved = await db.transaction(async (tx) => {
       const existing = await tx
-        .select({ id: taskMilestones.id })
+        .select({
+          id: taskMilestones.id,
+          title: taskMilestones.title,
+          isCompleted: taskMilestones.isCompleted,
+        })
         .from(taskMilestones)
         .where(
           and(
@@ -710,6 +879,7 @@ export async function setMilestones(
           sortOrder,
         };
         if (item.id) {
+          const previous = existing.find((row) => row.id === item.id);
           await tx
             .update(taskMilestones)
             .set(values)
@@ -720,17 +890,41 @@ export async function setMilestones(
                 eq(taskMilestones.userId, userId),
               ),
             );
+          if (previous && previous.isCompleted !== item.isCompleted) {
+            await tx.insert(taskActivity).values({
+              taskId,
+              userId,
+              eventType: item.isCompleted
+                ? "subtask_completed"
+                : "subtask_reopened",
+              summary: item.isCompleted
+                ? `Subtask completed: ${item.title}`
+                : `Subtask reopened: ${item.title}`,
+            });
+          }
         } else {
           await tx.insert(taskMilestones).values({
             ...values,
             taskId,
             userId,
           });
+          await tx.insert(taskActivity).values({
+            taskId,
+            userId,
+            eventType: "subtask_added",
+            summary: `Subtask added: ${item.title}`,
+          });
         }
       }
 
       for (const item of existing) {
         if (!submittedIds.has(item.id)) {
+          await tx.insert(taskActivity).values({
+            taskId,
+            userId,
+            eventType: "subtask_removed",
+            summary: `Subtask removed: ${item.title}`,
+          });
           await tx
             .delete(taskMilestones)
             .where(
@@ -761,9 +955,7 @@ export async function setMilestones(
 
 /* ------------------------------ task notes ----------------------------- */
 
-const MAX_NOTE = 5000;
-
-/** A task's notes/output log, newest first (client-callable, like getMilestones). */
+/** A task's working notes, newest first. */
 export async function getTaskNotes(taskId: string): Promise<TaskNote[]> {
   const userId = await requireUserId();
   return db
@@ -773,14 +965,13 @@ export async function getTaskNotes(taskId: string): Promise<TaskNote[]> {
     .orderBy(desc(taskNotes.createdAt));
 }
 
-/** Append a note/output entry to a task. */
+/** Add working context to a task. */
 export async function addTaskNote(
   taskId: string,
-  body: string,
+  input: TaskNoteInput,
 ): Promise<ActionResult<TaskNote>> {
-  const text = body.trim();
-  if (!text) return { ok: false, error: "Note can't be empty" };
-  if (text.length > MAX_NOTE) return { ok: false, error: "Note is too long" };
+  const parsed = taskNoteInputSchema.safeParse(input);
+  if (!parsed.success) return { ok: false, error: firstError(parsed.error.issues) };
   try {
     const userId = await requireUserId();
     const [owned] = await db
@@ -791,7 +982,12 @@ export async function addTaskNote(
     if (!owned) return { ok: false, error: "Task not found" };
     const [row] = await db
       .insert(taskNotes)
-      .values({ taskId, userId, body: text })
+      .values({
+        taskId,
+        userId,
+        title: parsed.data.title?.trim() || null,
+        body: parsed.data.body,
+      })
       .returning();
     log.success("Task note added", { taskId, id: row.id });
     refresh();
@@ -805,16 +1001,19 @@ export async function addTaskNote(
 /** Edit a note entry. */
 export async function updateTaskNote(
   id: string,
-  body: string,
+  input: TaskNoteInput,
 ): Promise<ActionResult<TaskNote>> {
-  const text = body.trim();
-  if (!text) return { ok: false, error: "Note can't be empty" };
-  if (text.length > MAX_NOTE) return { ok: false, error: "Note is too long" };
+  const parsed = taskNoteInputSchema.safeParse(input);
+  if (!parsed.success) return { ok: false, error: firstError(parsed.error.issues) };
   try {
     const userId = await requireUserId();
     const [row] = await db
       .update(taskNotes)
-      .set({ body: text, updatedAt: new Date() })
+      .set({
+        title: parsed.data.title?.trim() || null,
+        body: parsed.data.body,
+        updatedAt: new Date(),
+      })
       .where(and(eq(taskNotes.id, id), eq(taskNotes.userId, userId)))
       .returning();
     if (!row) return { ok: false, error: "Note not found" };
@@ -830,15 +1029,151 @@ export async function updateTaskNote(
 export async function deleteTaskNote(id: string): Promise<ActionResult<null>> {
   try {
     const userId = await requireUserId();
-    await db
+    const [deleted] = await db
       .delete(taskNotes)
-      .where(and(eq(taskNotes.id, id), eq(taskNotes.userId, userId)));
+      .where(and(eq(taskNotes.id, id), eq(taskNotes.userId, userId)))
+      .returning({ id: taskNotes.id });
+    if (!deleted) return { ok: false, error: "Note not found" };
     refresh();
     return { ok: true, data: null };
   } catch (e) {
     log.error("deleteTaskNote failed", e instanceof Error ? e.message : e);
     return { ok: false, error: "Could not delete the note" };
   }
+}
+
+/* ----------------------------- task outputs ---------------------------- */
+
+export async function getTaskOutputs(taskId: string): Promise<TaskOutput[]> {
+  const userId = await requireUserId();
+  return db
+    .select()
+    .from(taskOutputs)
+    .where(and(eq(taskOutputs.taskId, taskId), eq(taskOutputs.userId, userId)))
+    .orderBy(desc(taskOutputs.createdAt));
+}
+
+export async function addTaskOutput(
+  taskId: string,
+  input: TaskOutputInput,
+): Promise<ActionResult<TaskOutput>> {
+  const parsed = taskOutputInputSchema.safeParse(input);
+  if (!parsed.success) {
+    return { ok: false, error: firstError(parsed.error.issues) };
+  }
+  try {
+    const userId = await requireUserId();
+    const [owned] = await db
+      .select({ id: tasks.id })
+      .from(tasks)
+      .where(and(eq(tasks.id, taskId), eq(tasks.userId, userId)))
+      .limit(1);
+    if (!owned) return { ok: false, error: "Task not found" };
+    const row = await db.transaction(async (tx) => {
+      const [created] = await tx
+        .insert(taskOutputs)
+        .values({
+          taskId,
+          userId,
+          ...parsed.data,
+          description: parsed.data.description || null,
+          referenceUrl: parsed.data.referenceUrl || null,
+        })
+        .returning();
+      await tx.insert(taskActivity).values({
+        taskId,
+        userId,
+        eventType: "output_added",
+        summary: `Output added: ${created.title}`,
+      });
+      return created;
+    });
+    refresh();
+    return { ok: true, data: row };
+  } catch (e) {
+    log.error("addTaskOutput failed", e instanceof Error ? e.message : e);
+    return { ok: false, error: "Could not save the output" };
+  }
+}
+
+export async function updateTaskOutput(
+  id: string,
+  input: TaskOutputInput,
+): Promise<ActionResult<TaskOutput>> {
+  const parsed = taskOutputInputSchema.safeParse(input);
+  if (!parsed.success) {
+    return { ok: false, error: firstError(parsed.error.issues) };
+  }
+  try {
+    const userId = await requireUserId();
+    const row = await db.transaction(async (tx) => {
+      const [updated] = await tx
+        .update(taskOutputs)
+        .set({
+          ...parsed.data,
+          description: parsed.data.description || null,
+          referenceUrl: parsed.data.referenceUrl || null,
+          updatedAt: new Date(),
+        })
+        .where(and(eq(taskOutputs.id, id), eq(taskOutputs.userId, userId)))
+        .returning();
+      if (updated) {
+        await tx.insert(taskActivity).values({
+          taskId: updated.taskId,
+          userId,
+          eventType: "output_updated",
+          summary: `Output updated: ${updated.title}`,
+        });
+      }
+      return updated;
+    });
+    if (!row) return { ok: false, error: "Output not found" };
+    refresh();
+    return { ok: true, data: row };
+  } catch (e) {
+    log.error("updateTaskOutput failed", e instanceof Error ? e.message : e);
+    return { ok: false, error: "Could not update the output" };
+  }
+}
+
+export async function deleteTaskOutput(id: string): Promise<ActionResult<null>> {
+  try {
+    const userId = await requireUserId();
+    const deleted = await db.transaction(async (tx) => {
+      const [row] = await tx
+        .delete(taskOutputs)
+        .where(and(eq(taskOutputs.id, id), eq(taskOutputs.userId, userId)))
+        .returning();
+      if (row) {
+        await tx.insert(taskActivity).values({
+          taskId: row.taskId,
+          userId,
+          eventType: "output_removed",
+          summary: `Output removed: ${row.title}`,
+        });
+      }
+      return row;
+    });
+    if (!deleted) return { ok: false, error: "Output not found" };
+    refresh();
+    return { ok: true, data: null };
+  } catch (e) {
+    log.error("deleteTaskOutput failed", e instanceof Error ? e.message : e);
+    return { ok: false, error: "Could not delete the output" };
+  }
+}
+
+/* ----------------------------- task activity -------------------------- */
+
+export async function getTaskActivity(taskId: string): Promise<TaskActivity[]> {
+  const userId = await requireUserId();
+  return db
+    .select()
+    .from(taskActivity)
+    .where(
+      and(eq(taskActivity.taskId, taskId), eq(taskActivity.userId, userId)),
+    )
+    .orderBy(desc(taskActivity.createdAt), desc(taskActivity.id));
 }
 
 /* --------------------------- notifications ----------------------------- */
