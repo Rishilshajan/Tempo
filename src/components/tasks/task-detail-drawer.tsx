@@ -7,8 +7,12 @@ import {
   CircleCheck,
   CalendarArrowUp,
   Spline,
-  Circle,
   Plus,
+  ClipboardList,
+  CalendarDays,
+  Clock3,
+  ListChecks,
+  MessageSquareText,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -48,6 +52,7 @@ import {
 import { log } from "@/lib/logger";
 import { cn } from "@/lib/utils";
 import { useIsDesktop } from "@/hooks/use-is-desktop";
+import { DomainIcon } from "@/components/domains/domain-icon";
 import { DatePicker } from "@/components/ui/date-picker";
 import { TimePicker } from "@/components/ui/time-picker";
 import {
@@ -72,24 +77,22 @@ const STATUS_ITEMS: Record<string, string> = Object.fromEntries(
   TASK_STATUS.map((s) => [s, STATUS_META[s].label]),
 );
 
-/** "2026-10-16" -> "16 Oct 26". */
-function fmtDate(iso: string | null): string {
-  if (!iso) return "No date";
-  const [y, m, d] = iso.split("-").map(Number);
-  return new Date(y, m - 1, d).toLocaleDateString("en-GB", {
-    day: "2-digit",
+function formatTaskDate(value: Date | string): string {
+  return new Date(value).toLocaleDateString("en-US", {
     month: "short",
-    year: "2-digit",
+    day: "numeric",
+    year: "numeric",
   });
 }
 
-export function TaskDetailDrawer({
+export function TaskDetailsPanel({
   task,
   domains,
   open,
   onOpenChange,
   onFollowUp,
   onSelectTask,
+  onTaskUpdated,
 }: {
   task: Task | null;
   domains: Domain[];
@@ -97,6 +100,7 @@ export function TaskDetailDrawer({
   onOpenChange: (open: boolean) => void;
   onFollowUp?: (ctx: FollowUpContext) => void;
   onSelectTask?: (task: Task) => void;
+  onTaskUpdated?: (task: Task) => void;
 }) {
   const isDesktop = useIsDesktop();
   const domainItems = useMemo(() => {
@@ -108,6 +112,10 @@ export function TaskDetailDrawer({
   const [thread, setThread] = useState<{ thread: Thread; tasks: Task[] } | null>(
     null,
   );
+  const [subtasks, setSubtasks] = useState<SubtaskDraft[]>([]);
+  const [activeSection, setActiveSection] = useState<"details" | "activity">(
+    "details",
+  );
   const [form, setForm] = useState({
     title: "",
     description: "",
@@ -115,6 +123,7 @@ export function TaskDetailDrawer({
     status: "not_started" as Task["status"],
     importance: "flexible" as Task["importance"],
     date: "",
+    scheduledEndDate: "",
     scheduledStart: "",
     scheduledEnd: "",
     durationEst: "",
@@ -122,8 +131,6 @@ export function TaskDetailDrawer({
     minDurationMin: "15",
     isElastic: true,
   });
-  const [subtasks, setSubtasks] = useState<SubtaskDraft[]>([]);
-
   const shrinkAllowed = useMemo(() => {
     const d = domains.find((x) => x.id === form.domainId);
     return d ? d.allowElastic : false;
@@ -147,6 +154,7 @@ export function TaskDetailDrawer({
       status: task.status,
       importance: task.importance,
       date: task.date ?? "",
+      scheduledEndDate: task.scheduledEndDate ?? task.date ?? "",
       scheduledStart: task.scheduledStart?.slice(0, 5) ?? "",
       scheduledEnd: task.scheduledEnd?.slice(0, 5) ?? "",
       durationEst: task.durationMin ? fromMinutes(task.durationMin).value : "",
@@ -161,6 +169,7 @@ export function TaskDetailDrawer({
         ms.map((m) => {
           const d = fromMinutes(m.durationEstMin);
           return {
+            id: m.id,
             title: m.title,
             description: m.description ?? "",
             date: m.date ?? "",
@@ -171,12 +180,22 @@ export function TaskDetailDrawer({
           };
         }),
       );
+    }).catch((error) => {
+      if (!cancelled) {
+        log.error("Could not load task subtasks", error);
+        toast.error("Could not load task subtasks");
+      }
     });
     // Load the thread chain (if any).
     setThread(null);
     if (task.threadId) {
       getThread(task.threadId).then((t) => {
         if (!cancelled) setThread(t);
+      }).catch((error) => {
+        if (!cancelled) {
+          log.error("Could not load task thread", error);
+          toast.error("Could not load task thread");
+        }
       });
     }
     return () => {
@@ -187,7 +206,23 @@ export function TaskDetailDrawer({
   if (!task) return null;
 
   const isDone = form.status === "done";
-  const currentId = task.id;
+  const selectedDomain = domains.find((domain) => domain.id === form.domainId);
+  const trackedSubtasks = subtasks.filter((subtask) => subtask.title.trim());
+  const completedSubtasks = trackedSubtasks.filter(
+    (subtask) => subtask.isCompleted,
+  ).length;
+  const progress = trackedSubtasks.length
+    ? isDone
+      ? 100
+      : Math.round(
+          (form.status === "in_progress" ? 10 : 0) +
+            (completedSubtasks / trackedSubtasks.length) * 90,
+        )
+    : isDone
+      ? 100
+      : form.status === "in_progress"
+        ? 10
+        : 0;
 
   const completeAndFollowUp = () => {
     startTransition(async () => {
@@ -222,6 +257,7 @@ export function TaskDetailDrawer({
         status: form.status,
         importance: form.importance,
         date: form.date || null,
+        scheduledEndDate: form.scheduledEndDate || null,
         scheduledStart: form.scheduledStart || null,
         scheduledEnd: form.scheduledEnd || null,
         durationMin: form.durationEst
@@ -238,7 +274,16 @@ export function TaskDetailDrawer({
         toast.error(res.error);
         return;
       }
-      await setMilestones(task.id, subtasksToPayload(subtasks));
+      const milestonesRes = await setMilestones(
+        task.id,
+        subtasksToPayload(subtasks),
+      );
+      if (!milestonesRes.ok) {
+        log.error("Subtask save failed", milestonesRes.error);
+        toast.error(milestonesRes.error);
+        return;
+      }
+      onTaskUpdated?.(res.data);
       toast.success("Task saved");
       onOpenChange(false);
     });
@@ -251,6 +296,7 @@ export function TaskDetailDrawer({
         toast.error(res.error);
         return;
       }
+      onTaskUpdated?.(res.data);
       setForm((f) => ({ ...f, status: isDone ? "not_started" : "done" }));
       toast.success(isDone ? "Marked not started" : "Task completed");
     });
@@ -263,6 +309,7 @@ export function TaskDetailDrawer({
         toast.error(res.error);
         return;
       }
+      onTaskUpdated?.(res.data);
       toast.success("Moved to tomorrow");
       onOpenChange(false);
     });
@@ -285,7 +332,9 @@ export function TaskDetailDrawer({
         side={isDesktop ? "right" : "bottom"}
         className={cn(
           "flex flex-col gap-0",
-          isDesktop ? "w-full sm:max-w-none" : "max-h-[90vh] rounded-t-2xl",
+          isDesktop
+            ? "lg:data-[side=right]:w-[42vw] lg:data-[side=right]:max-w-[720px]"
+            : "max-h-[90vh] rounded-t-2xl",
         )}
       >
         {/* Mobile grab handle */}
@@ -294,149 +343,24 @@ export function TaskDetailDrawer({
             <span className="h-1.5 w-10 rounded-full bg-muted-foreground/25" />
           </div>
         )}
-        <SheetHeader>
-          <SheetTitle>Task details</SheetTitle>
-        </SheetHeader>
-
-        <div className="flex-1 space-y-4 overflow-y-auto px-4 pb-4">
-          {/* Thread timeline */}
-          {thread && thread.tasks.length > 1 && (
-            <div className="rounded-xl bg-rolledforward/5 p-3 ring-1 ring-rolledforward/20">
-              <div className="mb-2 flex items-center gap-2">
-                <Spline className="size-4 shrink-0 text-rolledforward" />
-                <span className="flex-1 truncate text-sm font-semibold text-foreground">
-                  {thread.thread.title}
-                </span>
-                <span className="shrink-0 text-[11px] font-medium text-muted-foreground">
-                  {thread.tasks.length} tasks
-                </span>
-              </div>
-              <ol className="space-y-0.5">
-                {thread.tasks.map((t) => {
-                  const done = t.status === "done";
-                  const isCurrent = t.id === currentId;
-                  return (
-                    <li key={t.id}>
-                      <button
-                        type="button"
-                        disabled={isCurrent}
-                        onClick={() => onSelectTask?.(t)}
-                        className={cn(
-                          "flex w-full items-start gap-2 rounded-lg px-2 py-1.5 text-left transition-colors",
-                          isCurrent ? "bg-rolledforward/10" : "hover:bg-secondary",
-                        )}
-                      >
-                        {done ? (
-                          <CircleCheck className="mt-0.5 size-4 shrink-0 text-ontrack" />
-                        ) : (
-                          <Circle
-                            className={cn(
-                              "mt-0.5 size-4 shrink-0",
-                              isCurrent ? "text-rolledforward" : "text-muted-foreground",
-                            )}
-                          />
-                        )}
-                        <span className="min-w-0 flex-1">
-                          <span
-                            className={cn(
-                              "block truncate text-[13px]",
-                              done
-                                ? "text-muted-foreground line-through"
-                                : "font-medium text-foreground",
-                            )}
-                          >
-                            {t.title}
-                          </span>
-                          <span className="block text-[11px] text-muted-foreground">
-                            {fmtDate(t.date)}
-                            {isCurrent ? " · current" : ""}
-                          </span>
-                        </span>
-                      </button>
-                    </li>
-                  );
-                })}
-              </ol>
-              <button
-                type="button"
-                onClick={addToThread}
-                disabled={pending}
-                className="mt-1 flex items-center gap-1 px-2 text-xs font-semibold text-rolledforward hover:underline disabled:opacity-50"
-              >
-                <Plus className="size-3.5" /> Add task to thread
-              </button>
-            </div>
-          )}
-
-          <div className="space-y-1.5">
-            <Label htmlFor="t-title">Title</Label>
+        <SheetHeader className="shrink-0 pb-3 pr-12">
+          <SheetTitle className="sr-only">Task details</SheetTitle>
+          <div className="flex min-w-0 items-center gap-2">
+            <ClipboardList className="size-5 shrink-0 text-primary" />
             <Input
               id="t-title"
               value={form.title}
               onChange={(e) => setForm({ ...form, title: e.target.value })}
+              aria-label="Task name"
+              className="h-9 min-w-0 border-0 bg-transparent px-0 text-lg font-semibold shadow-none focus-visible:ring-0"
             />
           </div>
 
-          <div className="space-y-1.5">
-            <Label htmlFor="t-desc">Description</Label>
-            <Textarea
-              id="t-desc"
-              rows={3}
-              value={form.description}
-              onChange={(e) =>
-                setForm({ ...form, description: e.target.value })
-              }
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <Label>Domain</Label>
-              <Select
-                items={domainItems}
-                value={form.domainId}
-                onValueChange={(v) =>
-                  setForm({ ...form, domainId: v ?? NO_DOMAIN })
-                }
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value={NO_DOMAIN}>Uncategorized</SelectItem>
-                  {domains.map((d) => (
-                    <SelectItem key={d.id} value={d.id}>
-                      {d.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-1.5">
-              <Label>Status</Label>
-              <Select
-                items={STATUS_ITEMS}
-                value={form.status}
-                onValueChange={(v) =>
-                  setForm({ ...form, status: (v ?? "not_started") as Task["status"] })
-                }
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {TASK_STATUS.map((s) => (
-                    <SelectItem key={s} value={s}>
-                      {STATUS_META[s].label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-1.5">
-              <Label>Importance</Label>
+          <div className="mt-2 grid grid-cols-2 gap-2">
+            <div className="space-y-1">
+              <Label className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                Priority
+              </Label>
               <Select
                 items={IMPORTANCE_ITEMS}
                 value={form.importance}
@@ -447,7 +371,7 @@ export function TaskDetailDrawer({
                   })
                 }
               >
-                <SelectTrigger className="w-full">
+                <SelectTrigger className="h-8 w-full">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -459,57 +383,128 @@ export function TaskDetailDrawer({
                 </SelectContent>
               </Select>
             </div>
-
-            <div className="space-y-1.5">
-              <Label>Date</Label>
-              <DatePicker
-                value={form.date}
-                onChange={(v) => setForm({ ...form, date: v })}
-              />
+            <div className="space-y-1">
+              <Label className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                Status
+              </Label>
+              <Select
+                items={STATUS_ITEMS}
+                value={form.status}
+                onValueChange={(v) =>
+                  setForm({
+                    ...form,
+                    status: (v ?? "not_started") as Task["status"],
+                  })
+                }
+              >
+                <SelectTrigger className="h-8 w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {TASK_STATUS.map((s) => (
+                    <SelectItem key={s} value={s}>
+                      {STATUS_META[s].label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
-
-            <div className="col-span-2 space-y-1.5">
-              <Label>Time window</Label>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="min-w-0 space-y-1">
-                  <span className="block text-xs font-medium text-muted-foreground">
-                    Start
-                  </span>
-                  <TimePicker
-                    value={form.scheduledStart}
-                    onChange={(v) => setForm({ ...form, scheduledStart: v })}
-                    placeholder="Start time"
-                    ariaLabel="Start time"
-                  />
-                </div>
-                <div className="min-w-0 space-y-1">
-                  <span className="block text-xs font-medium text-muted-foreground">
-                    Finish by
-                  </span>
-                  <TimePicker
-                    value={form.scheduledEnd}
-                    onChange={(v) => setForm({ ...form, scheduledEnd: v })}
-                    placeholder="Finish time"
-                    ariaLabel="Finish by"
-                  />
-                </div>
+            <div className="space-y-1">
+              <Label className="flex items-center gap-1 text-[10px] uppercase tracking-wide text-muted-foreground">
+                <CalendarDays className="size-3" /> Created
+              </Label>
+              <div className="flex h-8 items-center rounded-md border border-input bg-muted/40 px-2 text-xs">
+                {formatTaskDate(task.createdAt)}
               </div>
             </div>
+            <div className="space-y-1">
+              <Label className="flex items-center gap-1 text-[10px] uppercase tracking-wide text-muted-foreground">
+                <CalendarDays className="size-3" /> Due date
+              </Label>
+              <DatePicker
+                value={form.date}
+                onChange={(v) =>
+                  setForm((current) => ({
+                    ...current,
+                    date: v,
+                    scheduledEndDate:
+                      !current.scheduledEndDate ||
+                      current.scheduledEndDate < v
+                        ? v
+                        : current.scheduledEndDate,
+                  }))
+                }
+              />
+            </div>
+          </div>
 
-            <div className="col-span-2 space-y-1.5">
-              <Label htmlFor="t-dur">Estimated duration</Label>
+          <div className="mt-3 space-y-1.5">
+            <div className="flex items-center justify-between text-xs">
+              <span className="flex items-center gap-1.5 font-medium text-foreground">
+                <ListChecks className="size-3.5 text-primary" />
+                Progress
+                {trackedSubtasks.length > 0 && (
+                  <span className="font-normal text-muted-foreground">
+                    · {completedSubtasks}/{trackedSubtasks.length} subtasks
+                  </span>
+                )}
+              </span>
+              <span className="font-semibold tabular-nums">{progress}%</span>
+            </div>
+            <div
+              className="h-2 overflow-hidden rounded-full bg-secondary"
+              role="progressbar"
+              aria-label="Task progress"
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-valuenow={progress}
+            >
+              <div
+                className="h-full rounded-full bg-primary transition-[width]"
+                style={{ width: `${progress}%` }}
+              />
+            </div>
+          </div>
+
+          <div className="mt-3 grid grid-cols-2 gap-2">
+            <div className="space-y-1">
+              <Label className="flex items-center gap-1 text-[10px] uppercase tracking-wide text-muted-foreground">
+                <Clock3 className="size-3" /> Start time
+              </Label>
+              <TimePicker
+                value={form.scheduledStart}
+                onChange={(v) => setForm({ ...form, scheduledStart: v })}
+                placeholder="Not set"
+                ariaLabel="Scheduled start time"
+              />
+            </div>
+            <div className="space-y-1">
+              <Label className="flex items-center gap-1 text-[10px] uppercase tracking-wide text-muted-foreground">
+                <Clock3 className="size-3" /> End time
+              </Label>
+              <TimePicker
+                value={form.scheduledEnd}
+                onChange={(v) => setForm({ ...form, scheduledEnd: v })}
+                placeholder="Not set"
+                ariaLabel="Scheduled end time"
+              />
+            </div>
+            <div className="col-span-2 space-y-1">
+              <Label htmlFor="t-dur" className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                Estimated duration
+              </Label>
               <div className="flex items-center gap-1.5">
                 <Input
                   id="t-dur"
                   type="number"
                   min={form.durationUnit === "hr" ? 1 / 60 : 1}
                   step="any"
-                  placeholder="45"
+                  placeholder="Not estimated"
                   value={form.durationEst}
                   onChange={(e) =>
                     setForm({ ...form, durationEst: e.target.value })
                   }
-                  className="flex-1"
+                  className="h-8 flex-1"
                 />
                 <button
                   type="button"
@@ -524,65 +519,219 @@ export function TaskDetailDrawer({
                       durationUnit: next.unit,
                     });
                   }}
-                  className="flex h-8 w-14 shrink-0 items-center justify-center rounded-lg border border-input text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
-                  aria-label="Toggle unit (min/hr)"
+                  className="flex h-8 w-14 shrink-0 items-center justify-center rounded-lg border border-input text-xs font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+                  aria-label="Toggle duration unit (minutes or hours)"
                 >
                   {form.durationUnit}
                 </button>
               </div>
             </div>
-          </div>
-
-          {/* Can shrink */}
-          <div className="rounded-xl border border-border bg-secondary/30 p-3">
-            <div className="flex items-center justify-between">
-              <span
-                className={cn(
-                  "flex items-center gap-1.5 text-sm font-medium",
-                  shrinkAllowed ? "text-foreground" : "text-muted-foreground",
-                )}
-              >
-                <ChevronsDownUp className="size-4 text-primary" />
-                Can shrink
-                {shrinkAllowed && form.isElastic && (
-                  <span className="text-muted-foreground">
-                    (min {form.minDurationMin || 15}m)
-                  </span>
-                )}
-              </span>
-              <div className="flex items-center gap-2">
-                {shrinkAllowed && form.isElastic && (
-                  <Input
-                    type="number"
-                    min={1}
-                    value={form.minDurationMin}
-                    onChange={(e) =>
-                      setForm({ ...form, minDurationMin: e.target.value })
-                    }
-                    className="h-8 w-16 text-right text-xs"
-                    aria-label="Minimum minutes"
-                  />
-                )}
-                <Switch
-                  checked={shrinkAllowed && form.isElastic}
-                  disabled={!shrinkAllowed}
-                  onCheckedChange={(v) => setForm({ ...form, isElastic: v })}
+            {form.scheduledEndDate !== form.date && form.scheduledEndDate && (
+              <div className="col-span-2 space-y-1">
+                <Label className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                  Scheduled through
+                </Label>
+                <DatePicker
+                  value={form.scheduledEndDate}
+                  onChange={(v) => setForm({ ...form, scheduledEndDate: v })}
                 />
               </div>
-            </div>
-            {!shrinkAllowed && (
-              <p className="mt-2 text-[11px] text-muted-foreground">
-                Enable &quot;Allow Shrinking&quot; on the selected domain to let
-                this task shrink.
-              </p>
             )}
           </div>
+        </SheetHeader>
 
-          {/* Subtasks */}
-          <SubtaskEditor value={subtasks} onChange={setSubtasks} />
+        <div
+          className="flex shrink-0 border-b border-border px-4"
+          role="tablist"
+          aria-label="Task sections"
+        >
+          <button
+            type="button"
+            onClick={() => setActiveSection("details")}
+            id="task-details-tab"
+            role="tab"
+            aria-selected={activeSection === "details"}
+            className={cn(
+              "flex items-center gap-1.5 border-b-2 px-3 py-2 text-sm font-medium transition-colors",
+              activeSection === "details"
+                ? "border-primary text-primary"
+                : "border-transparent text-muted-foreground hover:text-foreground",
+            )}
+          >
+            <ListChecks className="size-4" /> Details
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveSection("activity")}
+            id="task-activity-tab"
+            role="tab"
+            aria-selected={activeSection === "activity"}
+            className={cn(
+              "flex items-center gap-1.5 border-b-2 px-3 py-2 text-sm font-medium transition-colors",
+              activeSection === "activity"
+                ? "border-primary text-primary"
+                : "border-transparent text-muted-foreground hover:text-foreground",
+            )}
+          >
+            <MessageSquareText className="size-4" /> Thread &amp; activity
+          </button>
+        </div>
 
-          {/* Notes & Output */}
-          <TaskNotes taskId={task.id} />
+        <div
+          className="flex-1 space-y-4 overflow-y-auto px-4 py-4"
+          role="tabpanel"
+          aria-labelledby={
+            activeSection === "details"
+              ? "task-details-tab"
+              : "task-activity-tab"
+          }
+          tabIndex={0}
+        >
+          {activeSection === "details" ? (
+            <>
+              <div className="space-y-1.5">
+                <Label htmlFor="t-desc">Description</Label>
+                <Textarea
+                  id="t-desc"
+                  rows={3}
+                  value={form.description}
+                  onChange={(e) =>
+                    setForm({ ...form, description: e.target.value })
+                  }
+                  placeholder="Add details about this task…"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <Label>Domain</Label>
+                <Select
+                  items={domainItems}
+                  value={form.domainId}
+                  onValueChange={(v) =>
+                    setForm({ ...form, domainId: v ?? NO_DOMAIN })
+                  }
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={NO_DOMAIN}>Uncategorized</SelectItem>
+                    {domains.map((d) => (
+                      <SelectItem key={d.id} value={d.id}>
+                        {d.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {selectedDomain && (
+                  <span
+                    className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold"
+                    style={{
+                      backgroundColor: `${selectedDomain.color}1f`,
+                      color: selectedDomain.color,
+                    }}
+                  >
+                    <DomainIcon domain={selectedDomain} className="size-3.5" />
+                    {selectedDomain.name}
+                  </span>
+                )}
+              </div>
+
+              <SubtaskEditor
+                value={subtasks}
+                onChange={setSubtasks}
+                sectionLabel="Subtasks"
+                compactRows
+              />
+
+              <div className="rounded-xl border border-border bg-secondary/30 p-3">
+                <div className="flex items-center justify-between">
+                  <span
+                    className={cn(
+                      "flex items-center gap-1.5 text-sm font-medium",
+                      shrinkAllowed ? "text-foreground" : "text-muted-foreground",
+                    )}
+                  >
+                    <ChevronsDownUp className="size-4 text-primary" />
+                    Can shrink
+                    {shrinkAllowed && form.isElastic && (
+                      <span className="text-muted-foreground">
+                        (min {form.minDurationMin || 15}m)
+                      </span>
+                    )}
+                  </span>
+                  <div className="flex items-center gap-2">
+                    {shrinkAllowed && form.isElastic && (
+                      <Input
+                        type="number"
+                        min={1}
+                        value={form.minDurationMin}
+                        onChange={(e) =>
+                          setForm({ ...form, minDurationMin: e.target.value })
+                        }
+                        className="h-8 w-16 text-right text-xs"
+                        aria-label="Minimum minutes"
+                      />
+                    )}
+                    <Switch
+                      checked={shrinkAllowed && form.isElastic}
+                      disabled={!shrinkAllowed}
+                      onCheckedChange={(v) =>
+                        setForm({ ...form, isElastic: v })
+                      }
+                    />
+                  </div>
+                </div>
+                {!shrinkAllowed && (
+                  <p className="mt-2 text-[11px] text-muted-foreground">
+                    Enable &quot;Allow Shrinking&quot; on the selected domain to let
+                    this task shrink.
+                  </p>
+                )}
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="space-y-2 rounded-xl border border-border p-3">
+                <div>
+                  <h3 className="text-sm font-semibold">Thread options</h3>
+                  <p className="text-xs text-muted-foreground">
+                    Continue this work in a connected follow-up task.
+                  </p>
+                </div>
+                {thread?.thread.title && (
+                  <p className="text-xs text-muted-foreground">
+                    Current thread: <span className="font-medium text-foreground">{thread.thread.title}</span>
+                  </p>
+                )}
+                <div className="flex flex-col gap-2 sm:flex-row">
+                  <Button
+                    variant="outline"
+                    onClick={addToThread}
+                    disabled={pending}
+                    className="sm:flex-1"
+                  >
+                    <Plus className="size-4" /> Add follow-up
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={completeAndFollowUp}
+                    disabled={pending}
+                    className="sm:flex-1"
+                  >
+                    <Spline className="size-4" /> Complete &amp; follow-up
+                  </Button>
+                </div>
+              </div>
+              <TaskNotes
+                taskId={task.id}
+                task={task}
+                threadTitle={thread?.thread.title}
+                threadTasks={thread?.tasks}
+                onSelectTask={onSelectTask}
+              />
+            </>
+          )}
         </div>
 
         {/* Quick lifecycle actions */}
@@ -605,26 +754,6 @@ export function TaskDetailDrawer({
               disabled={pending}
             >
               <CalendarArrowUp className="size-4" /> Tomorrow
-            </Button>
-          </div>
-          <div className="flex flex-col gap-2 sm:flex-row">
-            <Button
-              variant="outline"
-              size="lg"
-              onClick={addToThread}
-              disabled={pending}
-              className="sm:flex-1"
-            >
-              <Plus className="size-4" /> Add follow-up
-            </Button>
-            <Button
-              variant="outline"
-              size="lg"
-              onClick={completeAndFollowUp}
-              disabled={pending}
-              className="sm:flex-1"
-            >
-              <Spline className="size-4" /> Complete &amp; follow-up
             </Button>
           </div>
         </div>

@@ -32,10 +32,12 @@ import {
   moveDateSchema,
   updateSettingsSchema,
   reorderDomainsSchema,
+  saveMilestonesSchema,
   type CreateDomainInput,
   type CreateTaskInput,
   type UpdateTaskInput,
   type UpdateSettingsInput,
+  type SaveMilestonesInput,
 } from "@/server/validation";
 
 export type ActionResult<T> =
@@ -203,7 +205,11 @@ export async function createTask(
   }
   try {
     const userId = await requireUserId();
-    const { milestones, ...taskData } = parsed.data;
+    const {
+      milestones,
+      scheduleMode,
+      ...taskData
+    } = parsed.data;
     // Task + its milestones are one unit of work: if the milestone insert
     // fails we must not leave an orphaned task behind.
     const row = await db.transaction(async (tx) => {
@@ -238,6 +244,7 @@ export async function createTask(
     log.success("Task created", {
       id: row.id,
       title: row.title,
+      scheduleMode,
       milestones: milestones?.length ?? 0,
     });
     refresh();
@@ -257,11 +264,13 @@ export async function updateTask(
   const { id, ...rest } = parsed.data;
   try {
     const userId = await requireUserId();
-    // Keep completedAt in sync with status when status is part of the update.
+    // Retain the last completion timestamp when a task is reopened.
     const completedPatch =
       rest.status === undefined
         ? {}
-        : { completedAt: rest.status === "done" ? new Date() : null };
+        : rest.status === "done"
+          ? { completedAt: new Date() }
+          : {};
     const [row] = await db
       .update(tasks)
       .set({ ...rest, ...completedPatch, updatedAt: new Date() })
@@ -291,7 +300,7 @@ export async function moveTaskStatus(
       .update(tasks)
       .set({
         status: parsed.data.status,
-        completedAt: parsed.data.status === "done" ? new Date() : null,
+        ...(parsed.data.status === "done" ? { completedAt: new Date() } : {}),
         updatedAt: new Date(),
       })
       .where(and(eq(tasks.id, parsed.data.id), eq(tasks.userId, userId)))
@@ -308,7 +317,8 @@ export async function moveTaskStatus(
 
 /**
  * One-tap complete toggle (card checkbox). `done` -> status done + stamp
- * completedAt; un-done -> back to not_started and clear the stamp.
+ * completedAt; un-done -> back to not_started while retaining the last
+ * completion timestamp for task history.
  */
 export async function toggleTaskDone(
   id: string,
@@ -320,7 +330,7 @@ export async function toggleTaskDone(
       .update(tasks)
       .set({
         status: done ? "done" : "not_started",
-        completedAt: done ? new Date() : null,
+        ...(done ? { completedAt: new Date() } : {}),
         updatedAt: new Date(),
       })
       .where(and(eq(tasks.id, id), eq(tasks.userId, userId)))
@@ -412,7 +422,11 @@ export async function startThreadFollowUp(
       if (opts.complete) {
         await tx
           .update(tasks)
-          .set({ status: "done", completedAt: new Date(), updatedAt: new Date() })
+          .set({
+            status: "done",
+            completedAt: new Date(),
+            updatedAt: new Date(),
+          })
           .where(and(eq(tasks.id, taskId), eq(tasks.userId, userId)));
       }
 
@@ -647,18 +661,16 @@ export async function moveMilestoneToTomorrow(
   }
 }
 
-/** Replace all of a task's milestones with the given list (ordered). */
+/** Save an ordered milestone list while preserving IDs for existing items. */
 export async function setMilestones(
   taskId: string,
-  items: {
-    title: string;
-    description?: string | null;
-    date?: string | null;
-    scheduledTime?: string | null;
-    durationEstMin: number;
-    isCompleted: boolean;
-  }[],
+  input: SaveMilestonesInput,
 ): Promise<ActionResult<null>> {
+  const parsed = saveMilestonesSchema.safeParse(input);
+  if (!parsed.success) {
+    log.warn("setMilestones validation failed", parsed.error.issues);
+    return { ok: false, error: firstError(parsed.error.issues) };
+  }
   try {
     const userId = await requireUserId();
     // Only operate on a task the user owns.
@@ -668,34 +680,77 @@ export async function setMilestones(
       .where(and(eq(tasks.id, taskId), eq(tasks.userId, userId)))
       .limit(1);
     if (!owned) return { ok: false, error: "Task not found" };
-    // Replace-in-place must be atomic: a failed insert after the delete would
-    // otherwise wipe every subtask with no way to recover them.
-    await db.transaction(async (tx) => {
-      await tx
-        .delete(taskMilestones)
+    const saved = await db.transaction(async (tx) => {
+      const existing = await tx
+        .select({ id: taskMilestones.id })
+        .from(taskMilestones)
         .where(
           and(
             eq(taskMilestones.taskId, taskId),
             eq(taskMilestones.userId, userId),
           ),
         );
-      if (items.length) {
-        await tx.insert(taskMilestones).values(
-          items.map((m, i) => ({
+      const existingIds = new Set(existing.map((item) => item.id));
+      const submittedIds = new Set(
+        parsed.data.flatMap((item) => (item.id ? [item.id] : [])),
+      );
+
+      if ([...submittedIds].some((id) => !existingIds.has(id))) {
+        return false;
+      }
+
+      for (const [sortOrder, item] of parsed.data.entries()) {
+        const values = {
+          title: item.title,
+          description: item.description ?? null,
+          date: item.date ?? null,
+          scheduledTime: item.scheduledTime ?? null,
+          durationEstMin: item.durationEstMin,
+          isCompleted: item.isCompleted,
+          sortOrder,
+        };
+        if (item.id) {
+          await tx
+            .update(taskMilestones)
+            .set(values)
+            .where(
+              and(
+                eq(taskMilestones.id, item.id),
+                eq(taskMilestones.taskId, taskId),
+                eq(taskMilestones.userId, userId),
+              ),
+            );
+        } else {
+          await tx.insert(taskMilestones).values({
+            ...values,
             taskId,
             userId,
-            title: m.title,
-            description: m.description ?? null,
-            date: m.date ?? null,
-            scheduledTime: m.scheduledTime ?? null,
-            durationEstMin: m.durationEstMin,
-            isCompleted: m.isCompleted,
-            sortOrder: i,
-          })),
-        );
+          });
+        }
       }
+
+      for (const item of existing) {
+        if (!submittedIds.has(item.id)) {
+          await tx
+            .delete(taskMilestones)
+            .where(
+              and(
+                eq(taskMilestones.id, item.id),
+                eq(taskMilestones.taskId, taskId),
+                eq(taskMilestones.userId, userId),
+              ),
+            );
+        }
+      }
+      return true;
     });
-    log.success("Milestones saved", { taskId, count: items.length });
+    if (!saved) {
+      return { ok: false, error: "Subtask does not belong to this task" };
+    }
+    log.success("Milestones saved", {
+      taskId,
+      count: parsed.data.length,
+    });
     refresh();
     return { ok: true, data: null };
   } catch (e) {

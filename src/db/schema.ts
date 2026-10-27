@@ -123,6 +123,7 @@ export const tasks = pgTable(
     inferredImportant: boolean("inferred_important").default(false).notNull(),
     status: taskStatusEnum("status").default("not_started").notNull(),
     date: date("date"),
+    scheduledEndDate: date("scheduled_end_date"),
     scheduledStart: time("scheduled_start"), // e.g. "09:00"
     scheduledEnd: time("scheduled_end"), // e.g. "10:30"
     timeHint: text("time_hint"), // "before noon", "by 2pm"
@@ -130,7 +131,7 @@ export const tasks = pgTable(
     minDurationMin: integer("min_duration_min"), // elastic floor
     isElastic: boolean("is_elastic").default(true).notNull(),
     rollforwardCount: integer("rollforward_count").default(0).notNull(),
-    completedAt: timestamp("completed_at", { withTimezone: true }), // set when status -> done
+    completedAt: timestamp("completed_at", { withTimezone: true }), // most recent completion, retained when reopened
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
   },

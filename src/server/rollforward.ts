@@ -1,5 +1,5 @@
 import "server-only";
-import { and, eq, lt, ne, sql } from "drizzle-orm";
+import { and, eq, ne, sql } from "drizzle-orm";
 
 import { db } from "@/db";
 import { tasks } from "@/db/schema";
@@ -21,13 +21,20 @@ import { log } from "@/lib/logger";
  */
 export async function rollforwardTasks(userId?: string): Promise<number> {
   const today = todayISO();
-  const conds = [lt(tasks.date, today), ne(tasks.status, "done")];
+  const conds = [
+    sql`coalesce(${tasks.scheduledEndDate}, ${tasks.date}) < ${today}`,
+    ne(tasks.status, "done"),
+  ];
   if (userId) conds.push(eq(tasks.userId, userId));
 
   const moved = await db
     .update(tasks)
     .set({
       date: today,
+      scheduledEndDate: sql`case
+        when ${tasks.scheduledEndDate} is null then null
+        else ${today}::date + (${tasks.scheduledEndDate} - ${tasks.date})
+      end`,
       status: sql`case when ${tasks.status} = 'in_progress'
                        then 'in_progress'::task_status
                        else 'rolled_forward'::task_status end`,

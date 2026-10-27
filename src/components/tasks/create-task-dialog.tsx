@@ -6,8 +6,6 @@ import {
   Mic,
   Zap,
   CalendarDays,
-  AlarmClock,
-  ChevronsDownUp,
   Flag,
   ListPlus,
   Spline,
@@ -26,7 +24,6 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
 import {
   Select,
   SelectContent,
@@ -63,7 +60,9 @@ const EMPTY = {
   description: "",
   domainId: NO_DOMAIN,
   importance: "flexible" as Importance,
+  scheduleMode: "flexible" as "flexible" | "fixed",
   date: "",
+  scheduledEndDate: "",
   timeHint: "",
   scheduledStart: "",
   scheduledEnd: "",
@@ -87,6 +86,11 @@ function tomorrowISO(): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
+function todayISO(): string {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
 export function CreateTaskDialog({
   open,
   onOpenChange,
@@ -105,6 +109,18 @@ export function CreateTaskDialog({
   const [nl, setNl] = useState("");
   const [form, setForm] = useState({ ...EMPTY, title: initialTitle });
   const [subtasks, setSubtasks] = useState<SubtaskDraft[]>([]);
+  const scheduleError =
+    form.scheduleMode === "fixed"
+      ? !form.date ||
+        !form.scheduledStart ||
+        !form.scheduledEndDate ||
+        !form.scheduledEnd
+        ? ""
+        : `${form.scheduledEndDate}T${form.scheduledEnd}` <=
+            `${form.date}T${form.scheduledStart}`
+          ? "End date and time must be after the start."
+          : null
+      : null;
 
   const domainItems = useMemo(() => {
     const m: Record<string, string> = { [NO_DOMAIN]: "Uncategorized" };
@@ -164,6 +180,10 @@ export function CreateTaskDialog({
   };
 
   const submit = () => {
+    if (scheduleError) {
+      toast.error(scheduleError);
+      return;
+    }
     startTransition(async () => {
       const milestones = subtasksToPayload(subtasks);
       const durationMin = form.durationMin
@@ -176,8 +196,13 @@ export function CreateTaskDialog({
         importance: form.importance,
         date: form.date || null,
         timeHint: form.timeHint || null,
-        scheduledStart: form.scheduledStart || null,
-        scheduledEnd: form.scheduledEnd || null,
+        scheduleMode: form.scheduleMode,
+        scheduledEndDate:
+          form.scheduleMode === "fixed" ? form.scheduledEndDate : null,
+        scheduledStart:
+          form.scheduleMode === "fixed" ? form.scheduledStart : null,
+        scheduledEnd:
+          form.scheduleMode === "fixed" ? form.scheduledEnd : null,
         durationMin,
         minDurationMin:
           shrinkAllowed && form.isElastic && form.minDurationMin
@@ -206,7 +231,7 @@ export function CreateTaskDialog({
         className={cn(
           "flex flex-col gap-0 p-0",
           isDesktop
-            ? "w-full sm:max-w-none"
+            ? "lg:data-[side=right]:w-[30vw] lg:data-[side=right]:max-w-none"
             : "max-h-[92vh] rounded-t-2xl",
         )}
       >
@@ -216,7 +241,7 @@ export function CreateTaskDialog({
             <span className="h-1.5 w-10 rounded-full bg-muted-foreground/25" />
           </div>
         )}
-        <SheetHeader className="gap-1 border-b border-border px-5 py-4">
+        <SheetHeader className="gap-1 border-b border-border px-4 py-3">
           <SheetTitle className="flex items-center gap-2 text-xl">
             {threadContext ? (
               <Spline className="size-5 text-rolledforward" />
@@ -228,11 +253,11 @@ export function CreateTaskDialog({
           <p className="text-sm text-muted-foreground">
             {threadContext
               ? "Continue the thread — context is carried over."
-              : "Describe your intent naturally or refine scheduling details below."}
+              : "Describe the task, then choose details one by one."}
           </p>
         </SheetHeader>
 
-        <div className="flex-1 space-y-5 overflow-y-auto px-5 py-5">
+        <div className="flex-1 space-y-4 overflow-y-auto px-4 py-4">
           {/* Thread context banner */}
           {threadContext && (
             <div className="flex items-start gap-2.5 rounded-xl bg-rolledforward/10 px-3 py-2.5 ring-1 ring-rolledforward/25">
@@ -248,37 +273,33 @@ export function CreateTaskDialog({
             </div>
           )}
           {/* Natural Language Ingestion */}
-          <div className="rounded-xl border border-border bg-secondary/40 p-3">
-            <div className="mb-2 flex items-center justify-between">
-              <span className="flex items-center gap-1.5 text-xs font-semibold text-foreground">
-                <Sparkles className="size-4 text-brand" />
-                Natural Language Ingestion
-              </span>
-              <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
-                Basic Parser
-              </span>
-            </div>
-            <div className="flex items-center gap-2 rounded-lg bg-card px-3 py-2 ring-1 ring-border">
+          <details className="group rounded-lg border border-border">
+            <summary className="flex cursor-pointer list-none items-center gap-2 px-3 py-2 text-xs font-semibold text-foreground">
+              <Sparkles className="size-4 text-brand" />
+              Draft task from a sentence
+            </summary>
+            <div className="flex items-center gap-2 border-t border-border px-2 py-2">
               <input
                 value={nl}
                 onChange={(e) => setNl(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && autoFill()}
                 placeholder="Draft investor memo before 11am for @alpha 90m"
-                className="w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground/70"
+                className="min-w-0 flex-1 bg-transparent px-1 text-sm outline-none placeholder:text-muted-foreground/70"
               />
               <button
+                type="button"
                 onClick={() => log.event("Create: voice (Phase 4)")}
-                className="text-muted-foreground hover:text-primary"
+                className="shrink-0 text-muted-foreground hover:text-primary"
                 aria-label="Voice"
               >
                 <Mic className="size-4" />
               </button>
               <Button size="sm" variant="secondary" onClick={autoFill}>
                 <Zap className="size-3.5" />
-                Auto-Fill
+                Parse
               </Button>
             </div>
-          </div>
+          </details>
 
           {/* Title */}
           <div className="space-y-1.5">
@@ -294,29 +315,25 @@ export function CreateTaskDialog({
             />
           </div>
 
-          {/* Description */}
-          <div className="space-y-1.5">
-            <Label htmlFor="c-desc" className="text-[11px] uppercase tracking-wider text-muted-foreground">
+          <div className="grid grid-cols-[76px_minmax(0,1fr)] items-start gap-2 border-b border-border py-2.5">
+            <Label htmlFor="c-desc" className="pt-2 text-xs text-muted-foreground">
               Description
             </Label>
             <Textarea
               id="c-desc"
               rows={2}
-              placeholder="Context, links…"
+              placeholder="Add context…"
               value={form.description}
               onChange={(e) =>
                 setForm({ ...form, description: e.target.value })
               }
+              className="min-h-9 resize-y border-0 bg-transparent px-1 py-2 shadow-none focus-visible:ring-0"
             />
           </div>
 
-          {/* Classification + scheduling - two columns on wider screens */}
-          <div className="grid grid-cols-1 gap-x-5 gap-y-5 sm:grid-cols-2">
-            {/* Domain */}
-            <div className="min-w-0 space-y-1.5 sm:col-span-2">
-              <Label className="text-[11px] uppercase tracking-wider text-muted-foreground">
-                Domain / Category
-              </Label>
+          <div className="divide-y divide-border border-y border-border">
+            <div className="grid grid-cols-[76px_minmax(0,1fr)] items-center gap-2 py-2">
+              <Label className="text-xs text-muted-foreground">Domain</Label>
               <Select
                 items={domainItems}
                 value={form.domainId}
@@ -324,7 +341,7 @@ export function CreateTaskDialog({
                   setForm({ ...form, domainId: v ?? NO_DOMAIN })
                 }
               >
-                <SelectTrigger className="w-full">
+                <SelectTrigger className="w-full border-0 bg-transparent shadow-none">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -344,174 +361,221 @@ export function CreateTaskDialog({
               </Select>
             </div>
 
-            {/* Priority */}
-            <div className="min-w-0 space-y-1.5 sm:col-span-2">
-              <Label className="flex items-center gap-1.5 text-[11px] uppercase tracking-wider text-muted-foreground">
-                <Flag className="size-3.5" /> Priority calibration
+            <div className="grid grid-cols-[76px_minmax(0,1fr)] items-center gap-2 py-2">
+              <Label className="flex items-center gap-1 text-xs text-muted-foreground">
+                <Flag className="size-3.5" /> Priority
               </Label>
-              <div className="grid grid-cols-3 gap-2">
-                {PRIORITIES.map((p) => {
-                  const active = form.importance === p.value;
-                  return (
-                    <button
-                      key={p.value}
-                      onClick={() => setForm({ ...form, importance: p.value })}
-                      className={cn(
-                        "flex items-center justify-center gap-1.5 rounded-lg px-2 py-2 text-xs font-semibold ring-1 transition-all",
-                        active
-                          ? p.ring
-                          : "bg-card text-muted-foreground ring-border hover:bg-secondary",
-                      )}
+              <Select
+                items={Object.fromEntries(
+                  PRIORITIES.map((priority) => [
+                    priority.value,
+                    priority.label,
+                  ]),
+                )}
+                value={form.importance}
+                onValueChange={(v) =>
+                  setForm({
+                    ...form,
+                    importance: (v ?? "flexible") as Importance,
+                  })
+                }
+              >
+                <SelectTrigger className="w-full border-0 bg-transparent shadow-none">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {PRIORITIES.map((priority) => (
+                    <SelectItem
+                      key={priority.value}
+                      value={priority.value}
+                      className="items-center gap-2"
                     >
-                      <span className={cn("size-2 shrink-0 rounded-full", p.dot)} />
-                      {p.label}
-                    </button>
-                  );
-                })}
-              </div>
+                      <span
+                        aria-hidden="true"
+                        className={cn("block size-2 shrink-0 rounded-full", priority.dot)}
+                      />
+                      {priority.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
-            {/* Scheduled execution */}
-            <div className="min-w-0 space-y-1.5 sm:col-span-2">
-              <Label className="flex items-center gap-1.5 text-[11px] uppercase tracking-wider text-muted-foreground">
-                <CalendarDays className="size-3.5" /> Scheduled execution
+            <div className="grid grid-cols-[76px_minmax(0,1fr)] items-center gap-2 py-2">
+              <Label className="flex items-center gap-1 text-xs text-muted-foreground">
+                <CalendarDays className="size-3.5" /> Schedule
               </Label>
-              <DatePicker
-                value={form.date}
-                onChange={(v) => setForm({ ...form, date: v })}
-                placeholder="Pick a date"
-              />
+              <Select
+                value={form.scheduleMode}
+                onValueChange={(v) => {
+                  const mode = v as "flexible" | "fixed";
+                  if (mode === "fixed") {
+                    const startDate = form.date || todayISO();
+                    setForm({
+                      ...form,
+                      scheduleMode: mode,
+                      date: startDate,
+                      scheduledEndDate: form.scheduledEndDate || startDate,
+                    });
+                  } else {
+                    setForm({
+                      ...form,
+                      scheduleMode: mode,
+                      scheduledStart: "",
+                      scheduledEnd: "",
+                      scheduledEndDate: "",
+                    });
+                  }
+                }}
+              >
+                <SelectTrigger className="w-full border-0 bg-transparent shadow-none">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="flexible">
+                    Flexible
+                  </SelectItem>
+                  <SelectItem value="fixed">Fixed time window</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
-            {/* Time window */}
-            <div className="min-w-0 space-y-1.5 sm:col-span-2">
-              <Label className="flex items-center gap-1.5 text-[11px] uppercase tracking-wider text-muted-foreground">
-                <AlarmClock className="size-3.5" /> Time window
-              </Label>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="min-w-0 space-y-1">
-                  <span className="block text-xs font-medium text-muted-foreground">
-                    Start
-                  </span>
+            {form.scheduleMode === "fixed" ? (
+              <>
+                <div className="grid grid-cols-[76px_minmax(0,1fr)] items-center gap-2 py-2">
+                  <Label className="text-xs text-muted-foreground">
+                    Start date
+                  </Label>
+                  <DatePicker
+                    value={form.date}
+                    onChange={(v) =>
+                      setForm((current) => ({
+                        ...current,
+                        date: v,
+                        scheduledEndDate:
+                          !current.scheduledEndDate ||
+                          current.scheduledEndDate < v
+                            ? v
+                            : current.scheduledEndDate,
+                      }))
+                    }
+                    placeholder="Choose date"
+                    className="border-0 bg-transparent shadow-none"
+                  />
+                </div>
+                <div className="grid grid-cols-[76px_minmax(0,1fr)] items-center gap-2 py-2">
+                  <Label className="text-xs text-muted-foreground">
+                    Start time
+                  </Label>
                   <TimePicker
                     value={form.scheduledStart}
                     onChange={(v) => setForm({ ...form, scheduledStart: v })}
-                    placeholder="Start time"
+                    placeholder="Choose time"
                     ariaLabel="Start time"
+                    className="border-0 bg-transparent shadow-none"
                   />
                 </div>
-                <div className="min-w-0 space-y-1">
-                  <span className="block text-xs font-medium text-muted-foreground">
-                    Finish by
-                  </span>
+                <div className="grid grid-cols-[76px_minmax(0,1fr)] items-center gap-2 py-2">
+                  <Label className="text-xs text-muted-foreground">
+                    End date
+                  </Label>
+                  <DatePicker
+                    value={form.scheduledEndDate}
+                    onChange={(v) =>
+                      setForm({ ...form, scheduledEndDate: v })
+                    }
+                    placeholder="Choose date"
+                    className="border-0 bg-transparent shadow-none"
+                  />
+                </div>
+                <div className="grid grid-cols-[76px_minmax(0,1fr)] items-center gap-2 py-2">
+                  <Label className="text-xs text-muted-foreground">
+                    End time
+                  </Label>
                   <TimePicker
                     value={form.scheduledEnd}
                     onChange={(v) => setForm({ ...form, scheduledEnd: v })}
-                    placeholder="Finish time"
-                    ariaLabel="Finish by"
+                    placeholder="Choose time"
+                    ariaLabel="End time"
+                    className="border-0 bg-transparent shadow-none"
                   />
                 </div>
+              </>
+            ) : (
+              <div className="grid grid-cols-[76px_minmax(0,1fr)] items-center gap-2 py-2">
+                <Label className="text-xs text-muted-foreground">
+                  Due date
+                </Label>
+                <DatePicker
+                  value={form.date}
+                  onChange={(v) => setForm({ ...form, date: v })}
+                  placeholder="No target day"
+                  className="border-0 bg-transparent shadow-none"
+                />
               </div>
-            </div>
+            )}
+          </div>
+          {scheduleError && (
+            <p role="alert" className="text-xs text-destructive">
+              {scheduleError}
+            </p>
+          )}
 
-            {/* Duration + elastic - full width */}
-            <div className="space-y-3 rounded-xl border border-border bg-secondary/30 p-3 sm:col-span-2">
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="text-sm font-semibold text-foreground">
-                    Estimated Duration
-                  </div>
-                  <div className="text-xs text-muted-foreground">
-                    How long you expect this to take
-                  </div>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <Input
-                    type="number"
-                    min={form.durationUnit === "hr" ? 1 / 60 : 1}
-                    step="any"
-                    placeholder="45"
-                    value={form.durationMin}
-                    onChange={(e) =>
-                      setForm({ ...form, durationMin: e.target.value })
-                    }
-                    className="h-9 w-16 text-right font-semibold"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const next = toggleDurationUnit(
-                        form.durationMin,
-                        form.durationUnit,
-                      );
-                      setForm({
-                        ...form,
-                        durationMin: next.value,
-                        durationUnit: next.unit,
-                      });
-                    }}
-                    className="flex h-9 w-14 items-center justify-center rounded-lg border border-input text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
-                    aria-label="Toggle unit (min/hr)"
-                  >
-                    {form.durationUnit}
-                  </button>
-                </div>
-              </div>
-              <div className="border-t border-border pt-3">
-                <div className="flex items-center justify-between">
-                  <span
-                    className={cn(
-                      "flex items-center gap-1.5 text-sm font-medium",
-                      shrinkAllowed ? "text-foreground" : "text-muted-foreground",
-                    )}
-                  >
-                    <ChevronsDownUp className="size-4 text-primary" />
-                    Can shrink
-                    {shrinkAllowed && form.isElastic && (
-                      <span className="text-muted-foreground">
-                        (min {form.minDurationMin || 15}m)
-                      </span>
-                    )}
-                  </span>
-                  <div className="flex items-center gap-2">
-                    {shrinkAllowed && form.isElastic && (
-                      <Input
-                        type="number"
-                        min={1}
-                        value={form.minDurationMin}
-                        onChange={(e) =>
-                          setForm({ ...form, minDurationMin: e.target.value })
-                        }
-                        className="h-8 w-16 text-right text-xs"
-                        aria-label="Minimum minutes"
-                      />
-                    )}
-                    <Switch
-                      checked={shrinkAllowed && form.isElastic}
-                      disabled={!shrinkAllowed}
-                      onCheckedChange={(v) =>
-                        setForm({ ...form, isElastic: v })
-                      }
-                    />
-                  </div>
-                </div>
-                {!shrinkAllowed && (
-                  <p className="mt-2 text-[11px] text-muted-foreground">
-                    Enable &quot;Allow Shrinking&quot; on the selected domain to let
-                    this task shrink.
-                  </p>
-                )}
-              </div>
+          <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded-lg border border-border px-3 py-3">
+            <div>
+              <Label htmlFor="c-duration" className="text-sm font-semibold">
+                Estimated duration
+              </Label>
+              <p className="text-xs text-muted-foreground">
+                How long you expect this task to take
+              </p>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <Input
+                id="c-duration"
+                type="number"
+                min={form.durationUnit === "hr" ? 1 / 60 : 1}
+                step="any"
+                placeholder="45"
+                value={form.durationMin}
+                onChange={(e) =>
+                  setForm({ ...form, durationMin: e.target.value })
+                }
+                className="h-9 w-16 text-right font-semibold"
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  const next = toggleDurationUnit(
+                    form.durationMin,
+                    form.durationUnit,
+                  );
+                  setForm({
+                    ...form,
+                    durationMin: next.value,
+                    durationUnit: next.unit,
+                  });
+                }}
+                className="flex h-9 w-14 items-center justify-center rounded-lg border border-input text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+                aria-label="Toggle unit (min/hr)"
+              >
+                {form.durationUnit}
+              </button>
             </div>
           </div>
 
           {/* Steps & subtasks */}
-          <SubtaskEditor value={subtasks} onChange={setSubtasks} />
+          <SubtaskEditor
+            value={subtasks}
+            onChange={setSubtasks}
+            titleOnly
+            sectionLabel="Subtasks"
+          />
         </div>
 
         <SheetFooter
           className={cn(
-            "flex-row items-center justify-between gap-2 border-t border-border px-5 py-3",
+            "flex-row items-center justify-between gap-2 border-t border-border px-4 py-3",
             !isDesktop && "pb-[calc(env(safe-area-inset-bottom)+0.75rem)]",
           )}
         >
@@ -522,7 +586,10 @@ export function CreateTaskDialog({
           >
             Cancel
           </Button>
-          <Button onClick={submit} disabled={pending || !form.title.trim()}>
+          <Button
+            onClick={submit}
+            disabled={pending || !form.title.trim() || Boolean(scheduleError)}
+          >
             {threadContext ? "Add to thread" : "Create Task"}
           </Button>
         </SheetFooter>

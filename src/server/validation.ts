@@ -60,6 +60,7 @@ const baseTaskSchema = z.object({
     .regex(/^\d{4}-\d{2}-\d{2}$/, "Use YYYY-MM-DD")
     .optional()
     .nullable(),
+  scheduledEndDate: isoDate.optional().nullable(),
   timeHint: z.string().trim().max(60).optional().nullable(),
   // Structured time window (24h "HH:MM"). scheduledEnd is the "finish by".
   scheduledStart: time24.optional().nullable(),
@@ -84,14 +85,26 @@ const baseTaskSchema = z.object({
   parentTaskId: z.string().uuid().optional().nullable(),
 });
 
-/** Finish must be strictly after start when both are set (HH:MM sorts correctly). */
+/** A scheduled end must be strictly after its start. */
 const timeWindowOk = (d: {
+  date?: string | null;
+  scheduledEndDate?: string | null;
   scheduledStart?: string | null;
   scheduledEnd?: string | null;
-}) => !d.scheduledStart || !d.scheduledEnd || d.scheduledEnd > d.scheduledStart;
+}) => {
+  if (d.date && d.scheduledEndDate) {
+    if (d.scheduledEndDate < d.date) return false;
+    if (d.scheduledEndDate > d.date) return true;
+  }
+  return (
+    !d.scheduledStart ||
+    !d.scheduledEnd ||
+    d.scheduledEnd > d.scheduledStart
+  );
+};
 const TIME_WINDOW_ERR = {
-  message: "Finish time must be after the start time",
-  path: ["scheduledEnd"] as PropertyKey[],
+  message: "End date and time must be after the start date and time",
+  path: ["scheduledEndDate"] as PropertyKey[],
 };
 
 export const milestoneInputSchema = z.object({
@@ -108,11 +121,65 @@ export const milestoneInputSchema = z.object({
   isCompleted: z.boolean().optional(),
 });
 
+export const saveMilestonesSchema = z
+  .array(
+    milestoneInputSchema.extend({
+      id: z.string().uuid().optional(),
+      isCompleted: z.boolean(),
+    }),
+  )
+  .max(50)
+  .refine(
+    (items) => {
+      const ids = items.flatMap((item) => (item.id ? [item.id] : []));
+      return new Set(ids).size === ids.length;
+    },
+    "Subtask IDs must be unique",
+  );
+
 export const createTaskSchema = baseTaskSchema
   .extend({
     milestones: z.array(milestoneInputSchema).max(50).optional(),
+    scheduleMode: z.enum(["flexible", "fixed"]).default("flexible"),
   })
-  .refine(timeWindowOk, TIME_WINDOW_ERR);
+  .superRefine((data, ctx) => {
+    if (data.scheduleMode === "fixed") {
+      const required: (keyof typeof data)[] = [
+        "date",
+        "scheduledStart",
+        "scheduledEndDate",
+        "scheduledEnd",
+      ];
+      for (const key of required) {
+        if (!data[key]) {
+          ctx.addIssue({
+            code: "custom",
+            message: "Start and end date and time are required for fixed tasks",
+            path: [key],
+          });
+        }
+      }
+      if (
+        data.date &&
+        data.scheduledStart &&
+        data.scheduledEndDate &&
+        data.scheduledEnd &&
+        !timeWindowOk(data)
+      ) {
+        ctx.addIssue({ code: "custom", ...TIME_WINDOW_ERR });
+      }
+    } else if (
+      data.scheduledStart ||
+      data.scheduledEnd ||
+      data.scheduledEndDate
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Flexible tasks cannot reserve a fixed time window",
+        path: ["scheduleMode"],
+      });
+    }
+  });
 
 export const updateTaskSchema = baseTaskSchema
   .partial()
@@ -120,6 +187,7 @@ export const updateTaskSchema = baseTaskSchema
   .refine(timeWindowOk, TIME_WINDOW_ERR);
 
 export type MilestoneInput = z.input<typeof milestoneInputSchema>;
+export type SaveMilestonesInput = z.input<typeof saveMilestonesSchema>;
 
 export const moveStatusSchema = z.object({
   id: z.string().min(1),

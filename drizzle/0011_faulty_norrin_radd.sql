@@ -1,0 +1,1 @@
+ALTER TABLE "tasks" ADD COLUMN "scheduled_end_date" date;

@@ -11,6 +11,11 @@ import { TaskCard } from "./task-card";
 const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const pad = (n: number) => String(n).padStart(2, "0");
 const iso = (y: number, m: number, d: number) => `${y}-${pad(m + 1)}-${pad(d)}`;
+const nextISO = (value: string) => {
+  const date = new Date(`${value}T00:00:00Z`);
+  date.setUTCDate(date.getUTCDate() + 1);
+  return date.toISOString().slice(0, 10);
+};
 
 export function TaskCalendar({
   tasks,
@@ -35,9 +40,15 @@ export function TaskCalendar({
     const map = new Map<string, Task[]>();
     for (const t of tasks) {
       if (!t.date) continue;
-      const arr = map.get(t.date) ?? [];
-      arr.push(t);
-      map.set(t.date, arr);
+      const endDate =
+        t.scheduledEndDate && t.scheduledEndDate >= t.date
+          ? t.scheduledEndDate
+          : t.date;
+      for (let date = t.date; date <= endDate; date = nextISO(date)) {
+        const arr = map.get(date) ?? [];
+        arr.push(t);
+        map.set(date, arr);
+      }
     }
     return map;
   }, [tasks]);

@@ -14,7 +14,7 @@ import { TaskList } from "./task-list";
 import { TaskBoard } from "./task-board";
 import { TaskCalendar } from "./task-calendar";
 import { CreateTaskDialog } from "./create-task-dialog";
-import { TaskDetailDrawer } from "./task-detail-drawer";
+import { TaskDetailsPanel } from "./task-detail-drawer";
 
 type View = "list" | "board" | "calendar";
 type Filter = "all" | "uncat" | (string & {});
@@ -280,13 +280,14 @@ export function TaskSurface({
         domains={domains}
         threadContext={threadContext}
       />
-      <TaskDetailDrawer
+      <TaskDetailsPanel
         task={selected}
         domains={domains}
         open={drawerOpen}
         onOpenChange={setDrawerOpen}
         onFollowUp={handleFollowUp}
         onSelectTask={openTask}
+        onTaskUpdated={setSelected}
       />
     </div>
   );

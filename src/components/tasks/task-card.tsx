@@ -3,6 +3,7 @@
 import { useTransition } from "react";
 import {
   Clock,
+  CalendarDays,
   Flag,
   Minimize2,
   ChevronDown,
@@ -57,6 +58,15 @@ export function TaskCard({
   const end = task.scheduledEnd?.slice(0, 5);
   const timeLabel = start && end ? `${start}–${end}` : end ? `by ${end}` : start ?? task.timeHint;
   const scheduledDuration = formatDuration(getTimeWindowDuration(start, end));
+  const dateRange =
+    task.date &&
+    task.scheduledEndDate &&
+    task.scheduledEndDate > task.date
+      ? `${new Date(`${task.date}T00:00:00`).toLocaleDateString("en-US", { month: "short", day: "numeric" })}–${new Date(`${task.scheduledEndDate}T00:00:00`).toLocaleDateString("en-US", { month: "short", day: "numeric" })}`
+      : null;
+  const scheduleLabel = dateRange
+    ? `${dateRange}${timeLabel ? ` · ${timeLabel}` : ""}`
+    : timeLabel;
 
   const changeStatus = (s: Task["status"]) => {
     if (s === task.status) return;
@@ -200,11 +210,15 @@ export function TaskCard({
 
       <div className="mt-3 flex items-center justify-between gap-2">
         <div className="flex items-center gap-3 text-[12px] text-muted-foreground">
-          {timeLabel && (
+          {scheduleLabel && (
             <span className="inline-flex items-center gap-1">
-              <Clock className="size-3.5 text-primary" />
-              {timeLabel}
-              {scheduledDuration && ` · ${scheduledDuration}`}
+              {dateRange ? (
+                <CalendarDays className="size-3.5 text-primary" />
+              ) : (
+                <Clock className="size-3.5 text-primary" />
+              )}
+              {scheduleLabel}
+              {!dateRange && scheduledDuration && ` · ${scheduledDuration}`}
             </span>
           )}
           {duration && (

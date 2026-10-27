@@ -78,6 +78,13 @@
       "when": 1792134299506,
       "tag": "0010_clear_leader",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1793009667768,
+      "tag": "0011_faulty_norrin_radd",
+      "breakpoints": true
     }
   ]
 }

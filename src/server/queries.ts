@@ -1,6 +1,16 @@
 import "server-only";
 import { cache } from "react";
-import { and, asc, count, desc, eq, gte, lte, sql, type SQL } from "drizzle-orm";
+import {
+  and,
+  asc,
+  count,
+  desc,
+  eq,
+  gte,
+  lte,
+  sql,
+  type SQL,
+} from "drizzle-orm";
 
 import { db } from "@/db";
 import {
@@ -127,9 +137,17 @@ export async function getTasks(filter: TaskFilter = {}): Promise<Task[]> {
   const userId = await requireUserId();
   const where: SQL[] = [eq(tasks.userId, userId)];
   if (filter.status) where.push(eq(tasks.status, filter.status));
-  if (filter.date) where.push(eq(tasks.date, filter.date));
+  if (filter.date) {
+    where.push(
+      sql`${tasks.date} <= ${filter.date} and coalesce(${tasks.scheduledEndDate}, ${tasks.date}) >= ${filter.date}`,
+    );
+  }
   if (filter.domainId) where.push(eq(tasks.domainId, filter.domainId));
-  if (filter.dateFrom) where.push(sql`${tasks.date} >= ${filter.dateFrom}`);
+  if (filter.dateFrom) {
+    where.push(
+      sql`coalesce(${tasks.scheduledEndDate}, ${tasks.date}) >= ${filter.dateFrom}`,
+    );
+  }
   if (filter.dateTo) where.push(sql`${tasks.date} <= ${filter.dateTo}`);
 
   return withDbTiming("tasks", () => {
@@ -205,13 +223,13 @@ export const getTaskDashboardSummary = cache(
           rolled: sql<number>`count(*) filter (where ${tasks.status} = 'rolled_forward')`.mapWith(
             Number,
           ),
-          today: sql<number>`count(*) filter (where ${tasks.date} = ${today})`.mapWith(
+          today: sql<number>`count(*) filter (where ${tasks.date} <= ${today} and coalesce(${tasks.scheduledEndDate}, ${tasks.date}) >= ${today})`.mapWith(
             Number,
           ),
           uncategorized: sql<number>`count(*) filter (where ${tasks.domainId} is null)`.mapWith(
             Number,
           ),
-          activeToday: sql<number>`count(*) filter (where ${tasks.date} = ${today} and ${tasks.status} <> 'done')`.mapWith(
+          activeToday: sql<number>`count(*) filter (where ${tasks.date} <= ${today} and coalesce(${tasks.scheduledEndDate}, ${tasks.date}) >= ${today} and ${tasks.status} <> 'done')`.mapWith(
             Number,
           ),
         })

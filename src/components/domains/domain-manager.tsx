@@ -137,6 +137,11 @@ export function DomainManager({ domains }: { domains: Domain[] }) {
                 <div className="text-sm font-semibold break-words text-foreground">
                   {d.name}
                 </div>
+                {d.purpose && (
+                  <div className="line-clamp-2 text-xs text-muted-foreground">
+                    {d.purpose}
+                  </div>
+                )}
                 <div className="font-mono text-xs break-all text-muted-foreground">
                   @{d.tag}
                 </div>

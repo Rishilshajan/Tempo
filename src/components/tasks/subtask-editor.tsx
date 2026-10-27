@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import {
   GripVertical,
   Circle,
@@ -8,6 +8,7 @@ import {
   Plus,
   X,
   CalendarDays,
+  Pencil,
 } from "lucide-react";
 
 import { cn } from "cn";
@@ -21,6 +22,7 @@ type Unit = "min" | "hr";
 
 /** Client-side draft of a subtask (strings for inputs). */
 export type SubtaskDraft = {
+  id?: string;
   title: string;
   description: string;
   date: string; // "" or YYYY-MM-DD
@@ -72,6 +74,7 @@ export function toggleDurationUnit(
 }
 
 export type SubtaskPayload = {
+  id?: string;
   title: string;
   description: string | null;
   date: string | null;
@@ -85,6 +88,7 @@ export function subtasksToPayload(subtasks: SubtaskDraft[]): SubtaskPayload[] {
   return subtasks
     .filter((s) => s.title.trim())
     .map((s) => ({
+      ...(s.id ? { id: s.id } : {}),
       title: s.title.trim(),
       description: s.description.trim() || null,
       date: s.date || null,
@@ -125,16 +129,35 @@ function dateLabel(iso: string): string | null {
 export function SubtaskEditor({
   value,
   onChange,
+  titleOnly = false,
+  sectionLabel = "Steps & Subtasks",
+  compactRows = false,
 }: {
   value: SubtaskDraft[];
   onChange: (next: SubtaskDraft[]) => void;
+  titleOnly?: boolean;
+  sectionLabel?: string;
+  compactRows?: boolean;
 }) {
   const dragFrom = useRef<number | null>(null);
+  const [editingIndex, setEditingIndex] = useState<number | null>(null);
 
-  const add = () => onChange([...value, emptySubtask()]);
+  const add = () => {
+    onChange([...value, emptySubtask()]);
+    if (compactRows) setEditingIndex(value.length);
+  };
   const update = (i: number, patch: Partial<SubtaskDraft>) =>
     onChange(value.map((s, idx) => (idx === i ? { ...s, ...patch } : s)));
-  const remove = (i: number) => onChange(value.filter((_, idx) => idx !== i));
+  const remove = (i: number) => {
+    onChange(value.filter((_, idx) => idx !== i));
+    setEditingIndex((current) =>
+      current === null || current === i
+        ? null
+        : current > i
+          ? current - 1
+          : current,
+    );
+  };
 
   const reorder = (from: number, to: number) => {
     if (from === to) return;
@@ -142,20 +165,27 @@ export function SubtaskEditor({
     const [moved] = next.splice(from, 1);
     next.splice(to, 0, moved);
     onChange(next);
+    setEditingIndex((current) => {
+      if (current === null) return null;
+      if (current === from) return to;
+      if (from < to && current > from && current <= to) return current - 1;
+      if (from > to && current >= to && current < from) return current + 1;
+      return current;
+    });
   };
 
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
         <Label className="text-[11px] uppercase tracking-wider text-muted-foreground">
-          Steps &amp; Subtasks ({value.length})
+          {sectionLabel} ({value.length})
         </Label>
         <button
           type="button"
           onClick={add}
           className="flex items-center gap-1 text-xs font-semibold text-primary hover:underline"
         >
-          <Plus className="size-3.5" /> Add step
+          <Plus className="size-3.5" /> Add {titleOnly ? "subtask" : "step"}
         </button>
       </div>
 
@@ -165,7 +195,9 @@ export function SubtaskEditor({
           onClick={add}
           className="w-full rounded-lg border border-dashed border-border px-3 py-2.5 text-left text-xs text-muted-foreground transition-colors hover:border-primary/50 hover:text-foreground"
         >
-          Break this into steps (optional)…
+          {titleOnly
+            ? "Add a subtask title…"
+            : "Break this into steps (optional)…"}
         </button>
       ) : (
         <div className="space-y-2">
@@ -184,43 +216,126 @@ export function SubtaskEditor({
                   }
                 }}
                 onDragEnd={() => (dragFrom.current = null)}
-                className="rounded-xl border border-border bg-card p-2.5"
+                className={cn(
+                  "rounded-xl border border-border bg-card p-2.5",
+                  titleOnly && "py-2",
+                  compactRows && "rounded-none border-x-0 border-t-0 bg-transparent px-1 py-2 last:border-b-0",
+                )}
               >
-                {/* Top row: handle · check · title · delete */}
+                {compactRows && !titleOnly && editingIndex !== i ? (
+                  <div className="flex min-h-8 items-center gap-2">
+                    <span
+                      className="cursor-grab text-muted-foreground/50 active:cursor-grabbing"
+                      title="Drag to reorder"
+                      aria-hidden="true"
+                    >
+                      <GripVertical className="size-3.5" />
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => update(i, { isCompleted: !s.isCompleted })}
+                      aria-label={
+                        s.isCompleted ? "Mark incomplete" : "Mark complete"
+                      }
+                      className="shrink-0"
+                    >
+                      {s.isCompleted ? (
+                        <CircleCheck className="size-4 text-ontrack" />
+                      ) : (
+                        <Circle className="size-4 text-muted-foreground" />
+                      )}
+                    </button>
+                    <span
+                      className={cn(
+                        "min-w-0 flex-1 truncate text-sm",
+                        s.isCompleted && "text-muted-foreground line-through",
+                      )}
+                      title={s.title}
+                    >
+                      {s.title || "Untitled subtask"}
+                    </span>
+                    {label && (
+                      <span className="shrink-0 text-[11px] text-muted-foreground">
+                        {label}
+                      </span>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => setEditingIndex(i)}
+                      className="rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
+                      aria-label={`Edit ${s.title || "subtask"}`}
+                    >
+                      <Pencil className="size-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => remove(i)}
+                      className="rounded p-1 text-muted-foreground hover:bg-urgent/10 hover:text-urgent"
+                      aria-label={`Remove ${s.title || "subtask"}`}
+                    >
+                      <X className="size-3.5" />
+                    </button>
+                  </div>
+                ) : (
+                  <>
                 <div className="flex items-center gap-2">
                   <span
                     className="cursor-grab text-muted-foreground/60 active:cursor-grabbing"
+                    title="Drag to reorder"
                     aria-hidden="true"
                   >
                     <GripVertical className="size-4" />
                   </span>
-                  <button
-                    type="button"
-                    onClick={() => update(i, { isCompleted: !s.isCompleted })}
-                    aria-label={s.isCompleted ? "Mark incomplete" : "Mark complete"}
-                  >
-                    {s.isCompleted ? (
-                      <CircleCheck className="size-5 text-ontrack" />
-                    ) : (
-                      <Circle className="size-5 text-muted-foreground" />
-                    )}
-                  </button>
-                  <Textarea
-                    value={s.title}
-                    rows={1}
-                    onChange={(e) => update(i, { title: e.target.value })}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" && !e.shiftKey) {
-                        e.preventDefault();
-                        if (i === value.length - 1) add();
-                      }
-                    }}
-                    placeholder="Step title"
-                    className={cn(
-                      "min-h-0 flex-1 resize-none break-words border-0 bg-transparent px-0 py-0 text-sm outline-none placeholder:text-muted-foreground/60",
-                      s.isCompleted && "text-muted-foreground line-through",
-                    )}
-                  />
+                  {titleOnly ? (
+                    <Input
+                      value={s.title}
+                      onChange={(e) => update(i, { title: e.target.value })}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          if (i === value.length - 1) add();
+                        }
+                      }}
+                      placeholder="Subtask title"
+                      aria-label={`Subtask ${i + 1} title`}
+                      className="h-9 min-w-0 flex-1 border-0 bg-transparent px-1 shadow-none focus-visible:ring-0"
+                    />
+                  ) : (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          update(i, { isCompleted: !s.isCompleted })
+                        }
+                        aria-label={
+                          s.isCompleted ? "Mark incomplete" : "Mark complete"
+                        }
+                      >
+                        {s.isCompleted ? (
+                          <CircleCheck className="size-5 text-ontrack" />
+                        ) : (
+                          <Circle className="size-5 text-muted-foreground" />
+                        )}
+                      </button>
+                      <Textarea
+                        value={s.title}
+                        rows={1}
+                        onChange={(e) => update(i, { title: e.target.value })}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" && !e.shiftKey) {
+                            e.preventDefault();
+                            if (i === value.length - 1) add();
+                          }
+                        }}
+                        placeholder="Step title"
+                        className={cn(
+                          "min-h-0 flex-1 resize-none break-words border-0 bg-transparent px-0 py-0 text-sm outline-none placeholder:text-muted-foreground/60",
+                          s.isCompleted &&
+                            "text-muted-foreground line-through",
+                        )}
+                      />
+                    </>
+                  )}
                   <button
                     type="button"
                     onClick={() => remove(i)}
@@ -231,6 +346,7 @@ export function SubtaskEditor({
                   </button>
                 </div>
 
+                {!titleOnly && <div>
                 {/* Details */}
                 <div className="mt-2 pl-8">
                   <Textarea
@@ -322,6 +438,20 @@ export function SubtaskEditor({
                     </div>
                   </div>
                 </div>
+                </div>}
+                {compactRows && !titleOnly && (
+                  <div className="mt-2 flex justify-end">
+                    <button
+                      type="button"
+                      onClick={() => setEditingIndex(null)}
+                      className="text-xs font-medium text-primary hover:underline"
+                    >
+                      Done editing
+                    </button>
+                  </div>
+                )}
+                  </>
+                )}
               </div>
             );
           })}
