@@ -1,21 +1,18 @@
-import type { NextRequest } from "next/server";
-import { updateSession } from "@/lib/supabase/proxy";
+import { clerkMiddleware } from "@clerk/nextjs/server";
+import { NextResponse, type NextFetchEvent, type NextRequest } from "next/server";
+import { isClerkConfigured } from "@/lib/auth/config";
 
-// Next.js 16 renamed Middleware to Proxy. This runs on the Node.js runtime and
-// refreshes the Supabase session on every matched request. Keep it optimistic
-// (cookie read + redirect only) - see src/lib/supabase/proxy.ts.
-export default async function proxy(request: NextRequest) {
-  return updateSession(request);
+export default function proxy(request: NextRequest, event: NextFetchEvent) {
+  // Public pages remain usable before credentials are supplied. The dashboard
+  // also checks configuration and auth at its own resource boundary.
+  if (!isClerkConfigured()) return NextResponse.next();
+  return clerkMiddleware()(request, event);
 }
 
 export const config = {
-  /*
-   * Run on everything EXCEPT:
-   * - /api         (route handlers, incl. secret-guarded cron)
-   * - _next/static, _next/image  (build assets)
-   * - the PWA manifest + static image/icon files
-   */
   matcher: [
-    "/((?!api|_next/static|_next/image|manifest.webmanifest|.*\\.(?:png|jpg|jpeg|svg|ico|webp)$).*)",
+    "/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|webmanifest)).*)",
+    "/(api|trpc)(.*)",
+    "/__clerk/(.*)",
   ],
 };

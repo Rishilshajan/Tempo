@@ -7,9 +7,9 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-figtree);
-  --font-mono: var(--font-geist-mono);
-  --font-heading: var(--font-figtree);
+  --font-sans: var(--font-inter);
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+  --font-heading: var(--font-inter);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -36,6 +36,7 @@
   --color-primary-foreground: var(--primary-foreground);
   --color-primary: var(--primary);
   --color-brand: var(--brand);
+  --color-soft-lime: var(--soft-lime);
   --color-popover-foreground: var(--popover-foreground);
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
@@ -64,7 +65,7 @@
    Neutral #22312B · Background #F7F6F2 · Surface #FFFFFF
    Urgent coral #F0705A · Medium amber #F2B24C · Rolled-fwd #7C87D6
    ============================================================ */
-:root {
+:root, .tempo-light {
   --radius: 0.75rem;
 
   --background: #f7f6f2;       /* warm off-white (60%)  */
@@ -86,6 +87,7 @@
   --muted-foreground: #6b7b72;
 
   --accent: #7bc96f;           /* fresh lime (energizing 10%) */
+  --soft-lime: #e5f8a8;
   --accent-foreground: #16241c;
 
   --destructive: #f0705a;      /* warm coral = urgent */

@@ -1,10 +1,25 @@
-import { getOptionalUser } from "@/server/auth";
-import { Splash } from "@/components/app/splash";
+import type { Metadata } from "next";
+import { inter } from "@/lib/fonts";
+import { LandingHeader, HeroSection, BenefitsSection, HowItWorksSection, FinalCTASection, LandingFooter } from "@/components/landing/landing-page";
+import styles from "@/components/landing/landing.module.css";
 
-// Reads the session cookie to decide where to land - always dynamic.
-export const dynamic = "force-dynamic";
+export const metadata: Metadata = {
+  title: "Tempo — Your work, in rhythm.",
+  description: "Every task, every commitment, every domain. One place to keep it all moving. Meet Tempo, your personal work command center.",
+};
 
-export default async function ColdStartSplash() {
-  const user = await getOptionalUser();
-  return <Splash target={user ? "/today" : "/login"} />;
+export default function LandingPage() {
+  return (
+    <div className={`tempo-light ${inter.className} ${styles.landing}`}>
+      <a className={styles.skipLink} href="#main-content">Skip to content</a>
+      <LandingHeader />
+      <main id="main-content">
+        <HeroSection />
+        <BenefitsSection />
+        <HowItWorksSection />
+        <FinalCTASection />
+      </main>
+      <LandingFooter />
+    </div>
+  );
 }

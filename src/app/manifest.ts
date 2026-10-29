@@ -2,12 +2,13 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Tempo - Your day, orchestrated",
+    name: "Tempo — Your work, in rhythm.",
     short_name: "Tempo",
     description:
-      "Tempo is an agentic personal task manager that keeps your day in rhythm.",
+      "Every task, every commitment, every domain. One place to keep it all moving.",
     id: "/",
-    start_url: "/",
+    // Installed app launches should still open the daily workspace.
+    start_url: "/dashboard",
     scope: "/",
     display: "standalone",
     orientation: "portrait",
