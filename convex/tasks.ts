@@ -4,7 +4,13 @@ import {
 } from "convex/server";
 import { ConvexError, v } from "convex/values";
 import { mutation, query } from "./_generated/server";
-import { taskInputFields, subtaskInput, taskView } from "./taskFields";
+import {
+  taskInputFields,
+  subtaskInput,
+  taskView,
+  taskSchedule,
+} from "./taskFields";
+import { toTaskView } from "./taskViews";
 import { createNextOccurrence } from "./taskRecurrence";
 import {
   calendarDateSchema,
@@ -22,6 +28,47 @@ export const hasAny = query({
       .query("tasks")
       .withIndex("by_ownerId", (q) => q.eq("ownerId", user.tokenIdentifier))
       .first());
+  },
+});
+
+export const get = query({
+  args: { id: v.id("tasks") },
+  returns: v.union(v.null(), taskView),
+  handler: async (ctx, { id }) => {
+    const user = await ctx.auth.getUserIdentity();
+    if (!user) throw new ConvexError("Please sign in to view a task.");
+    const task = await ctx.db.get(id);
+    return task?.ownerId === user.tokenIdentifier
+      ? await toTaskView(ctx, task)
+      : null;
+  },
+});
+
+export const reschedule = mutation({
+  args: { id: v.id("tasks"), schedule: taskSchedule },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const user = await ctx.auth.getUserIdentity();
+    if (!user) throw new ConvexError("Please sign in to reschedule a task.");
+    const task = await ctx.db.get(args.id);
+    if (!task || task.ownerId !== user.tokenIdentifier)
+      throw new ConvexError("This task is not available.");
+    if (task.status === "completed")
+      throw new ConvexError("Reopen this task before rescheduling it.");
+    const parsed = createTaskSchema.safeParse({
+      ...task,
+      schedule: args.schedule,
+      subtasks: [],
+      requestId: "00000000-0000-4000-8000-000000000000",
+    });
+    if (!parsed.success) throw new ConvexError(parsed.error.issues[0].message);
+    const workDate =
+      args.schedule.type === "fixed"
+        ? localDateKey(new Date(args.schedule.startAt), task.timezone)
+        : (args.schedule.dueDate ??
+          (task.recurrence ? localDateKey(new Date(), task.timezone) : ""));
+    await ctx.db.patch(args.id, { schedule: args.schedule, workDate });
+    return null;
   },
 });
 
@@ -73,51 +120,7 @@ export const list = query({
         .paginate(options);
     }
     const page = await Promise.all(
-      rows.page.map(async (task) => {
-        const domain = task.domainId ? await ctx.db.get(task.domainId) : null;
-        return {
-          _id: task._id,
-          _creationTime: task._creationTime,
-          title: task.title,
-          ...(task.description ? { description: task.description } : {}),
-          ...(task.domainId ? { domainId: task.domainId } : {}),
-          priority: task.priority,
-          schedule: task.schedule,
-          timezone: task.timezone,
-          ...(task.estimatedMinutes
-            ? { estimatedMinutes: task.estimatedMinutes }
-            : {}),
-          subtasks: task.subtasks,
-          status: task.status,
-          workDate: task.workDate,
-          ...(task.completedAt !== undefined
-            ? { completedAt: task.completedAt }
-            : {}),
-          ...(task.recurrence ? { recurrence: task.recurrence } : {}),
-          ...(task.recurrenceAnchorDate
-            ? { recurrenceAnchorDate: task.recurrenceAnchorDate }
-            : {}),
-          ...(task.recurrenceOrdinal
-            ? { recurrenceOrdinal: task.recurrenceOrdinal }
-            : {}),
-          ...(task.recurrenceSlot
-            ? { recurrenceSlot: task.recurrenceSlot }
-            : {}),
-          ...(task.recurrenceRootId
-            ? { recurrenceRootId: task.recurrenceRootId }
-            : {}),
-          ...(task.nextOccurrenceId
-            ? { nextOccurrenceId: task.nextOccurrenceId }
-            : {}),
-          ...(task.recurrenceStartAt !== undefined
-            ? { recurrenceStartAt: task.recurrenceStartAt }
-            : {}),
-          domain:
-            domain && domain.ownerId === ownerId
-              ? { name: domain.name, color: domain.color, icon: domain.icon }
-              : null,
-        };
-      }),
+      rows.page.map((task) => toTaskView(ctx, task)),
     );
     return { ...rows, page };
   },
@@ -200,6 +203,27 @@ export const create = mutation({
   },
 });
 
+export const setProgress = mutation({
+  args: {
+    id: v.id("tasks"),
+    progress: v.union(v.literal("not_started"), v.literal("in_progress")),
+  },
+  returns: v.null(),
+  handler: async (ctx, { id, progress }) => {
+    const user = await ctx.auth.getUserIdentity();
+    if (!user) throw new ConvexError("Please sign in to update a task.");
+    const task = await ctx.db.get(id);
+    if (!task || task.ownerId !== user.tokenIdentifier)
+      throw new ConvexError("This task is not available.");
+    await ctx.db.patch(id, {
+      progress,
+      status: "open",
+      completedAt: undefined,
+    });
+    return null;
+  },
+});
+
 export const setCompleted = mutation({
   args: {
     id: v.id("tasks"),
@@ -231,6 +255,7 @@ export const setCompleted = mutation({
       await ctx.db.patch(args.id, {
         status: args.completed ? "completed" : "open",
         completedAt: args.completed ? Date.now() : undefined,
+        ...(!args.completed ? { progress: "not_started" as const } : {}),
       });
       if (args.completed && task.status !== "completed")
         return (await createNextOccurrence(ctx, task)) ?? null;

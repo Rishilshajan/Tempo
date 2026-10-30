@@ -15,6 +15,7 @@ import {
   type DomainAppearance,
 } from "@/components/domains/domain-appearance";
 import { PriorityLabel } from "./task-select";
+import { TaskPill, TaskStatusSelect } from "./task-status";
 
 export type TaskRecord = Omit<Doc<"tasks">, "ownerId" | "requestId"> & {
   domain: DomainAppearance | null;
@@ -24,15 +25,21 @@ export type SetTaskCompleted = (
   completed: boolean,
   subtaskId?: string,
 ) => Promise<unknown>;
+export type SetTaskProgress = (
+  id: Id<"tasks">,
+  progress: "not_started" | "in_progress",
+) => Promise<unknown>;
 
 export function TaskList({
   tasks,
   isToday,
   onSetCompleted,
+  onSetProgress,
 }: {
   tasks: TaskRecord[];
   isToday: boolean;
   onSetCompleted: SetTaskCompleted;
+  onSetProgress: SetTaskProgress;
 }) {
   if (isToday)
     return (
@@ -61,6 +68,7 @@ export function TaskList({
                     key={task._id}
                     task={task}
                     onSetCompleted={onSetCompleted}
+                    onSetProgress={onSetProgress}
                   />
                 ))}
               </ul>
@@ -72,7 +80,12 @@ export function TaskList({
   return (
     <ul className="space-y-2">
       {tasks.map((task) => (
-        <TaskRow key={task._id} task={task} onSetCompleted={onSetCompleted} />
+        <TaskRow
+          key={task._id}
+          task={task}
+          onSetCompleted={onSetCompleted}
+          onSetProgress={onSetProgress}
+        />
       ))}
     </ul>
   );
@@ -81,9 +94,11 @@ export function TaskList({
 function TaskRow({
   task,
   onSetCompleted,
+  onSetProgress,
 }: {
   task: TaskRecord;
   onSetCompleted: SetTaskCompleted;
+  onSetProgress: SetTaskProgress;
 }) {
   const [pending, setPending] = useState(false);
   async function toggle(completed: boolean, subtaskId?: string) {
@@ -141,6 +156,9 @@ function TaskRow({
             </p>
           )}
           <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-2 text-[11px] text-muted-foreground">
+            <TaskPill tone={fixed ? "fixed" : "flexible"}>
+              {fixed ? "Fixed" : "Flexible"}
+            </TaskPill>
             <span className="inline-flex items-center gap-1.5">
               <PriorityLabel value={task.priority} />
             </span>
@@ -160,7 +178,11 @@ function TaskRow({
             ) : task.schedule.type === "flexible" && task.schedule.dueDate ? (
               <span>Due {task.schedule.dueDate}</span>
             ) : (
-              <span>{task.recurrence ? `Repeat date ${task.workDate}` : "Flexible · no date"}</span>
+              <span>
+                {task.recurrence
+                  ? `Repeat date ${task.workDate}`
+                  : "Flexible · no date"}
+              </span>
             )}
             {task.estimatedMinutes && (
               <span>{task.estimatedMinutes} min estimate</span>
@@ -168,14 +190,24 @@ function TaskRow({
             {task.recurrence && (
               <span className="inline-flex items-center gap-1.5">
                 <Repeat2 className="size-3.5" aria-hidden="true" />
-                {task.recurrence.frequency === "custom"
-                  ? `Every ${task.recurrence.interval} ${task.recurrence.unit}${task.recurrence.interval === 1 ? "" : "s"}`
-                  : task.recurrence.frequency[0].toUpperCase() +
-                    task.recurrence.frequency.slice(1)}
+                {task.recurrence.frequency === "weekdays"
+                  ? "Weekdays (Mon–Fri)"
+                  : task.recurrence.frequency === "custom"
+                    ? `Every ${task.recurrence.interval} ${task.recurrence.unit}${task.recurrence.interval === 1 ? "" : "s"}`
+                    : task.recurrence.frequency[0].toUpperCase() +
+                      task.recurrence.frequency.slice(1)}
                 {task.recurrenceOrdinal ? ` · #${task.recurrenceOrdinal}` : ""}
               </span>
             )}
-            {task.status === "completed" && <span>Completed</span>}
+            <span className="ml-auto">
+              <TaskStatusSelect
+                task={task}
+                disabled={pending}
+                onBusyChange={setPending}
+                onSetCompleted={onSetCompleted}
+                onSetProgress={onSetProgress}
+              />
+            </span>
           </div>
           {task.subtasks.length > 0 && (
             <details className="mt-3 text-xs">

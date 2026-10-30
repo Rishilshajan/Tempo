@@ -35,6 +35,7 @@ export function DatePicker({
   required = false,
   minDate,
   maxDate,
+  showTodayAction = false,
 }: {
   value: string;
   onChange: (value: string) => void;
@@ -45,17 +46,38 @@ export function DatePicker({
   required?: boolean;
   minDate?: string;
   maxDate?: string;
+  showTodayAction?: boolean;
 }) {
   const [open, setOpen] = React.useState(false);
+  const [today, setToday] = React.useState<string | null>(null);
+  React.useEffect(() => {
+    const refresh = () => setToday(toISO(new Date()));
+    const initial = setTimeout(refresh, 0);
+    const timer = setInterval(refresh, 30000);
+    window.addEventListener("focus", refresh);
+    return () => {
+      clearTimeout(initial);
+      clearInterval(timer);
+      window.removeEventListener("focus", refresh);
+    };
+  }, []);
+  const earliestDate = today && (!minDate || minDate < today) ? today : minDate;
   const date = toDate(value);
-  const minimum = toDate(minDate);
+  const minimum = toDate(earliestDate);
   const maximum = toDate(maxDate);
   const outsideBounds =
     !!value &&
-    ((!!minDate && value < minDate) || (!!maxDate && value > maxDate));
+    ((!!earliestDate && value < earliestDate) ||
+      (!!maxDate && value > maxDate));
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover
+      open={open}
+      onOpenChange={(next) => {
+        setToday(toISO(new Date()));
+        setOpen(next);
+      }}
+    >
       <PopoverTrigger
         render={
           <Button
@@ -101,10 +123,10 @@ export function DatePicker({
           required={required}
           onSelect={(d: Date | undefined) => {
             const next = toISO(d);
-            if (
-              next &&
-              ((minDate && next < minDate) || (maxDate && next > maxDate))
-            )
+            const currentDay = toISO(new Date());
+            const liveMinimum =
+              minDate && minDate > currentDay ? minDate : currentDay;
+            if (next && (next < liveMinimum || (maxDate && next > maxDate)))
               return;
             onChange(next);
             setOpen(false);
@@ -123,6 +145,32 @@ export function DatePicker({
           >
             Clear date
           </Button>
+        )}
+        {showTodayAction && (
+          <div className="border-t border-border p-2">
+            <Button
+              type="button"
+              variant="ghost"
+              className="min-h-10 w-full text-xs"
+              disabled={
+                !today ||
+                !!(minDate && today < minDate) ||
+                !!(maxDate && today > maxDate)
+              }
+              onClick={() => {
+                const current = toISO(new Date());
+                if (
+                  (minDate && current < minDate) ||
+                  (maxDate && current > maxDate)
+                )
+                  return;
+                onChange(current);
+                setOpen(false);
+              }}
+            >
+              Today
+            </Button>
+          </div>
         )}
       </PopoverContent>
     </Popover>

@@ -4,6 +4,7 @@ import { domainColor, domainIcon } from "./domainFields";
 export const recurrenceRule = v.object({
   frequency: v.union(
     v.literal("daily"),
+    v.literal("weekdays"),
     v.literal("weekly"),
     v.literal("monthly"),
     v.literal("custom"),
@@ -54,6 +55,9 @@ export const taskFields = {
   ...taskInputFields,
   subtasks: v.array(storedSubtask),
   status: v.union(v.literal("open"), v.literal("completed")),
+  progress: v.optional(
+    v.union(v.literal("not_started"), v.literal("in_progress")),
+  ),
   completedAt: v.optional(v.number()),
   workDate: v.string(),
   recurrenceAnchorDate: v.optional(v.string()),

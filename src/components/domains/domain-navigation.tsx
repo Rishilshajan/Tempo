@@ -34,9 +34,9 @@ export function DomainNavigation({
             type="button"
             aria-current={selectedId === domain._id ? "page" : undefined}
             onClick={() => onSelect(domain)}
-            className="flex min-h-11 min-w-0 flex-1 items-center gap-2.5 rounded-lg px-3 text-left text-sm focus-visible:outline-2 focus-visible:outline-primary lg:min-h-9"
+            className="flex min-h-11 min-w-0 flex-1 items-center gap-2.5 rounded-lg px-3 text-left text-sm focus-visible:outline-2 focus-visible:outline-primary lg:min-h-8 lg:gap-2 lg:text-xs lg:[&_svg]:size-3.5"
           >
-            <DomainLabel {...domain} />
+            <DomainLabel {...domain} tonedIcon />
           </button>
           <DropdownMenu>
             <DropdownMenuTrigger
@@ -52,9 +52,7 @@ export function DomainNavigation({
               <MoreHorizontal aria-hidden="true" />
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem
-                onClick={() => onEdit(domain)}
-              >
+              <DropdownMenuItem onClick={() => onEdit(domain)}>
                 <Pencil aria-hidden="true" />
                 Edit
               </DropdownMenuItem>

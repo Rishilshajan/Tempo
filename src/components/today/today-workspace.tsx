@@ -73,10 +73,13 @@ function ConnectedToday({
   const removeDomain = useMutation(api.domains.remove);
   const createTask = useMutation(api.tasks.create);
   const setTaskCompleted = useMutation(api.tasks.setCompleted);
+  const setTaskProgress = useMutation(api.tasks.setProgress);
   const hasAnyTasks = useQuery(api.tasks.hasAny, isAuthenticated ? {} : "skip");
   const taskQuery = usePaginatedQuery(
     api.tasks.list,
-    isAuthenticated ? { ...selection, today } : "skip",
+    isAuthenticated && selection.view !== "today"
+      ? { ...selection, today }
+      : "skip",
     { initialNumItems: 30 },
   );
 
@@ -119,6 +122,7 @@ function ConnectedToday({
       onSetTaskCompleted={(id, completed, subtaskId) =>
         setTaskCompleted({ id, completed, ...(subtaskId ? { subtaskId } : {}) })
       }
+      onSetTaskProgress={(id, progress) => setTaskProgress({ id, progress })}
       domains={
         !isAuthenticated || status === "LoadingFirstPage" ? undefined : results
       }

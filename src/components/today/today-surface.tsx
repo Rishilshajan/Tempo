@@ -1,9 +1,9 @@
 "use client";
 
-import Image from "next/image";
+import { TempoLogo } from "@/components/brand/tempo-logo";
 import Link from "next/link";
 import dynamic from "next/dynamic";
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import {
   CalendarDays,
   CircleCheck,
@@ -15,7 +15,6 @@ import {
   Sun,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { TempoSignOutButton } from "@/components/auth/sign-out-button";
 import { FirstTimeEmptyState } from "./first-time-empty-state";
 import {
   CreateDomainSheet,
@@ -28,10 +27,14 @@ import {
 import { DomainNavigation } from "@/components/domains/domain-navigation";
 import { DeleteDomainDialog } from "@/components/domains/delete-domain-dialog";
 import { CreateTaskSheet } from "@/components/tasks/create-task-sheet";
+import { TaskDetailSheet } from "@/components/tasks/task-detail-sheet";
+import { TodayDashboard, type TaskPrefill } from "./today-dashboard";
+import type { Id } from "../../../convex/_generated/dataModel";
 import {
   TaskList,
   type TaskRecord,
   type SetTaskCompleted,
+  type SetTaskProgress,
 } from "@/components/tasks/task-list";
 import type { CreateTaskValues } from "@/lib/validation/task";
 import {
@@ -53,6 +56,18 @@ const WorkspaceUserButton = dynamic(
     ),
   },
 );
+const WorkspaceAccount = dynamic(
+  () =>
+    import("@/components/auth/workspace-account").then(
+      (module) => module.WorkspaceAccount,
+    ),
+  {
+    ssr: false,
+    loading: () => (
+      <div aria-hidden="true" className="h-14 rounded-xl bg-card" />
+    ),
+  },
+);
 
 const navigation = [
   { label: "Today", icon: Sun, current: true },
@@ -69,6 +84,8 @@ const mobileNavigation = [
 ];
 
 type TodaySurfaceProps = {
+  todayContent?: ReactNode;
+  todayDate?: string;
   todayLabel: string;
   taskView: "today" | "all" | "domain";
   selectedDomainId?: string;
@@ -81,6 +98,7 @@ type TodaySurfaceProps = {
   onLoadMoreTasks?: () => void;
   onCreateTask: (values: CreateTaskValues) => Promise<unknown>;
   onSetTaskCompleted: SetTaskCompleted;
+  onSetTaskProgress: SetTaskProgress;
   domains: DomainSummary[] | undefined;
   canCreateDomain: boolean;
   onCreateDomain: (values: CreateDomainValues) => Promise<unknown>;
@@ -95,6 +113,8 @@ type TodaySurfaceProps = {
 };
 
 export function TodaySurface({
+  todayContent,
+  todayDate,
   todayLabel,
   taskView,
   selectedDomainId,
@@ -107,6 +127,7 @@ export function TodaySurface({
   onLoadMoreTasks,
   onCreateTask,
   onSetTaskCompleted,
+  onSetTaskProgress,
   domains,
   canCreateDomain,
   onCreateDomain,
@@ -124,11 +145,16 @@ export function TodaySurface({
     null,
   );
   const [taskSheetOpen, setTaskSheetOpen] = useState(false);
+  const [taskPrefill, setTaskPrefill] = useState<TaskPrefill | null>(null);
+  const [dashboardDate, setDashboardDate] = useState<string>();
+  const [detailId, setDetailId] = useState<Id<"tasks"> | null>(null);
   const [moreOpen, setMoreOpen] = useState(false);
   const selectedDomain = domains?.find(
     (domain) => domain._id === selectedDomainId,
   );
   function openCreateTask() {
+    const date = todayDate ?? dashboardDate;
+    setTaskPrefill(taskView === "today" && date ? { date } : null);
     setTaskSheetOpen(true);
   }
 
@@ -177,24 +203,24 @@ export function TodaySurface({
 
       <aside
         aria-label="Workspace sidebar"
-        className="fixed inset-y-0 left-0 hidden w-56 flex-col border-r border-sidebar-border bg-sidebar px-4 py-5 lg:flex"
+        className="fixed inset-y-0 left-0 hidden w-48 flex-col border-r border-sidebar-border bg-sidebar px-3 py-4 lg:flex"
       >
         <Link
           href="/"
           aria-label="Tempo home"
-          className="mb-7 inline-flex w-fit rounded-md focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary"
+          className="mb-5 ml-3 inline-flex w-fit rounded-md focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary"
         >
-          <Image
-            src="/Tempo_Logo_original.png"
-            alt="Tempo"
-            width={866}
-            height={288}
-            priority
-            className="h-auto w-36"
-          />
+          <TempoLogo />
         </Link>
+        <Button
+          className="mb-5 min-h-10 w-full gap-2 text-xs"
+          onClick={openCreateTask}
+        >
+          <Plus aria-hidden="true" />
+          Create Task
+        </Button>
         <p className="mb-2 px-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-          Workspace
+          General
         </p>
         <nav aria-label="Workspace navigation" className="space-y-1">
           {navigation.map(({ label, icon: Icon, current }) =>
@@ -206,9 +232,9 @@ export function TodaySurface({
                 aria-current={
                   taskView === (current ? "today" : "all") ? "page" : undefined
                 }
-                className={`flex min-h-11 w-full items-center gap-3 rounded-lg px-3 text-sm font-medium focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${taskView === (current ? "today" : "all") ? "bg-sidebar-primary text-sidebar-primary-foreground" : "text-sidebar-foreground hover:bg-sidebar-accent"}`}
+                className={`flex min-h-9 w-full items-center gap-2 rounded-lg px-3 text-xs font-medium focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${taskView === (current ? "today" : "all") ? "bg-sidebar-accent text-primary" : "text-sidebar-foreground hover:bg-sidebar-accent"}`}
               >
-                <Icon size={18} aria-hidden="true" />
+                <Icon size={16} aria-hidden="true" />
                 {label}
               </button>
             ) : (
@@ -217,9 +243,9 @@ export function TodaySurface({
                 type="button"
                 disabled
                 aria-label={`${label} (coming next)`}
-                className="flex min-h-11 w-full items-center gap-3 rounded-lg px-3 text-left text-sm text-muted-foreground opacity-60"
+                className="flex min-h-9 w-full items-center gap-2 rounded-lg px-3 text-left text-xs text-muted-foreground opacity-60"
               >
-                <Icon size={18} aria-hidden="true" />
+                <Icon size={16} aria-hidden="true" />
                 {label}
               </button>
             ),
@@ -232,7 +258,7 @@ export function TodaySurface({
           <Button
             variant="ghost"
             size="icon"
-            className="min-h-11 min-w-11 text-primary"
+            className="size-8 text-primary"
             aria-label="Create domain"
             onClick={openCreateDomain}
           >
@@ -252,36 +278,28 @@ export function TodaySurface({
             </Button>
           )}
         </div>
-        <div className="mt-auto space-y-3 border-t border-sidebar-border pt-5">
+        <div className="mt-auto space-y-2 border-t border-sidebar-border pt-3">
           <button
             type="button"
             disabled
             aria-label="Settings (coming next)"
-            className="flex min-h-11 w-full items-center gap-3 px-3 text-sm text-muted-foreground opacity-60"
+            className="flex min-h-9 w-full items-center gap-2 px-3 text-xs text-muted-foreground opacity-60"
           >
-            <Settings2 size={18} aria-hidden="true" />
+            <Settings2 size={16} aria-hidden="true" />
             Settings
           </button>
-          <div className="px-2">
-            <TempoSignOutButton />
-          </div>
+          <WorkspaceAccount />
         </div>
       </aside>
 
-      <div className="lg:pl-56">
-        <header className="flex min-h-16 items-center justify-between gap-4 border-b border-border bg-card/60 px-5 sm:px-8">
+      <div className="lg:pl-48">
+        <header className="flex min-h-16 items-center justify-between gap-4 border-b border-border bg-card/60 px-4 sm:px-8">
           <Link
             href="/"
             aria-label="Tempo home"
             className="rounded-md focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary lg:hidden"
           >
-            <Image
-              src="/Tempo_Logo_original.png"
-              alt="Tempo"
-              width={866}
-              height={288}
-              className="h-auto w-32"
-            />
+            <TempoLogo />
           </Link>
           <div className="hidden w-full max-w-sm items-center gap-3 rounded-lg bg-muted/60 px-3 lg:flex">
             <Search
@@ -297,18 +315,11 @@ export function TodaySurface({
               className="h-10 min-w-0 w-full bg-transparent text-xs text-muted-foreground placeholder:text-muted-foreground"
             />
           </div>
-          <div className="flex shrink-0 items-center gap-4 sm:gap-5">
+          <div className="flex shrink-0 items-center gap-2 sm:gap-5">
             <span className="hidden items-center gap-2 text-xs text-muted-foreground sm:inline-flex">
               <CalendarDays size={14} aria-hidden="true" />
               {todayLabel}
             </span>
-            <Button
-              className="hidden min-h-10 gap-2 px-4 sm:inline-flex"
-              onClick={openCreateTask}
-            >
-              <Plus size={15} aria-hidden="true" />
-              Create Task
-            </Button>
             <div className="size-8 shrink-0">
               <WorkspaceUserButton />
             </div>
@@ -317,36 +328,38 @@ export function TodaySurface({
 
         <main
           id="today-content"
-          className="mx-auto w-full max-w-6xl px-4 pb-28 pt-7 sm:px-8 sm:pt-10 lg:pb-10"
+          className="w-full min-w-0 px-4 pb-28 pt-6 sm:px-8 lg:pb-10"
         >
-          <div className="flex items-center justify-between gap-3">
-            <div className="flex min-w-0 items-center gap-2 px-2 text-xs font-medium text-primary">
-              {selectedDomain ? (
-                <DomainLabel {...selectedDomain} />
-              ) : taskView === "all" ? (
-                <>
-                  <CircleCheck size={16} aria-hidden="true" />
-                  <span>My Tasks</span>
-                </>
-              ) : (
-                <>
-                  <Sun size={16} aria-hidden="true" />
-                  <span>Today</span>
-                </>
+          {taskView !== "today" && (
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex min-w-0 items-center gap-2 px-2 text-xs font-medium text-primary">
+                {selectedDomain ? (
+                  <DomainLabel {...selectedDomain} />
+                ) : taskView === "all" ? (
+                  <>
+                    <CircleCheck size={16} aria-hidden="true" />
+                    <span>My Tasks</span>
+                  </>
+                ) : (
+                  <>
+                    <Sun size={16} aria-hidden="true" />
+                    <span>Today</span>
+                  </>
+                )}
+              </div>
+              {tasks && tasks.length > 0 && (
+                <Button
+                  className="min-h-10 gap-2 text-xs lg:hidden"
+                  onClick={openCreateTask}
+                >
+                  <Plus aria-hidden="true" />
+                  Create Task
+                </Button>
               )}
             </div>
-            {tasks && tasks.length > 0 && (
-              <Button
-                className="min-h-10 gap-2 sm:hidden"
-                onClick={openCreateTask}
-              >
-                <Plus aria-hidden="true" />
-                Create Task
-              </Button>
-            )}
-          </div>
+          )}
           {domains === undefined ||
-          tasks === undefined ||
+          (taskView !== "today" && tasks === undefined) ||
           hasAnyTasks === undefined ? (
             <p
               role="status"
@@ -354,7 +367,28 @@ export function TodaySurface({
             >
               Connecting your workspace…
             </p>
-          ) : tasks.length > 0 ? (
+          ) : taskView === "today" && !hasAnyTasks && domains.length === 0 ? (
+            <FirstTimeEmptyState
+              taskCount={0}
+              domainCount={0}
+              onCreateTask={openCreateTask}
+              onCreateDomain={openCreateDomain}
+            />
+          ) : taskView === "today" ? (
+            (todayContent ?? (
+              <TodayDashboard
+                onSelectedDateChange={setDashboardDate}
+                domains={domains}
+                onCreateTask={(prefill) => {
+                  setTaskPrefill(prefill);
+                  setTaskSheetOpen(true);
+                }}
+                onOpenTask={(task) => setDetailId(task._id)}
+                onSetCompleted={onSetTaskCompleted}
+                onSetProgress={onSetTaskProgress}
+              />
+            ))
+          ) : tasks && tasks.length > 0 ? (
             <section aria-labelledby="tasks-heading" className="mt-7">
               <h1
                 id="tasks-heading"
@@ -371,8 +405,9 @@ export function TodaySurface({
               <div className="mt-5">
                 <TaskList
                   tasks={tasks}
-                  isToday={taskView === "today"}
+                  isToday={false}
                   onSetCompleted={onSetTaskCompleted}
+                  onSetProgress={onSetTaskProgress}
                 />
               </div>
               {hasMoreTasks && (
@@ -386,13 +421,6 @@ export function TodaySurface({
                 </Button>
               )}
             </section>
-          ) : taskView === "today" && !hasAnyTasks && domains.length === 0 ? (
-            <FirstTimeEmptyState
-              taskCount={0}
-              domainCount={0}
-              onCreateTask={openCreateTask}
-              onCreateDomain={openCreateDomain}
-            />
           ) : (
             <section
               aria-labelledby="tasks-empty-heading"
@@ -409,9 +437,7 @@ export function TodaySurface({
                     : "No tasks for today"}
               </h1>
               <p className="mt-3 max-w-lg text-sm leading-6 text-muted-foreground">
-                {taskView === "today" && hasAnyTasks
-                  ? "Your other tasks are in My Tasks. Add a task when you’re ready to begin."
-                  : "There are no tasks here yet."}
+                There are no tasks here yet.
               </p>
               <Button
                 className="mt-7 min-h-11 gap-2 px-5"
@@ -505,11 +531,19 @@ export function TodaySurface({
         onOpenChange={setTaskSheetOpen}
         domains={domains}
         initialDomainId={selectedDomain?._id}
+        initialDate={taskPrefill?.date}
+        initialStartAt={taskPrefill?.startAt}
         canSubmit={canCreateDomain}
         onCreate={onCreateTask}
         hasMoreDomains={hasMoreDomains}
         loadingMoreDomains={loadingMoreDomains}
         onLoadMoreDomains={onLoadMoreDomains}
+      />
+      <TaskDetailSheet
+        id={detailId}
+        onClose={() => setDetailId(null)}
+        onSetCompleted={onSetTaskCompleted}
+        onSetProgress={onSetTaskProgress}
       />
       <CreateDomainSheet
         open={domainSheetOpen}

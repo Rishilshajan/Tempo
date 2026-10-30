@@ -6,6 +6,7 @@ import {
   occurrenceDate,
   recurrenceAllows,
   shiftDate,
+  weekdayDistance,
 } from "../src/lib/validation/recurrence";
 import { calendarDateSchema, localDateKey } from "../src/lib/validation/task";
 
@@ -16,7 +17,9 @@ function nextEligibleSlot(task: Doc<"tasks">, anchor: string, now: number) {
   const offsets = task.subtasks.flatMap((step) =>
     step.dueDate ? [dateDistance(task.workDate || anchor, step.dueDate)] : [],
   );
-  const minimumDate = shiftDate(today, -Math.min(0, ...offsets));
+  const earliest = shiftDate(today, -Math.min(0, ...offsets));
+  const afterCurrent = shiftDate(task.workDate || anchor, 1);
+  const minimumDate = earliest > afterCurrent ? earliest : afterCurrent;
   const maximumDate = shiftDate("9999-12-31", -Math.max(0, ...offsets));
   if (
     !calendarDateSchema.safeParse(minimumDate).success ||
@@ -26,12 +29,16 @@ function nextEligibleSlot(task: Doc<"tasks">, anchor: string, now: number) {
   const [year, month] = anchor.split("-").map(Number);
   const [lastYear, lastMonth] = maximumDate.split("-").map(Number);
   const maximumOffset =
-    rule.unit === "month"
-      ? Math.floor(((lastYear - year) * 12 + lastMonth - month) / rule.interval)
-      : Math.floor(
-          dateDistance(anchor, maximumDate) /
-            (rule.interval * (rule.unit === "week" ? 7 : 1)),
-        );
+    rule.frequency === "weekdays"
+      ? weekdayDistance(anchor, maximumDate)
+      : rule.unit === "month"
+        ? Math.floor(
+            ((lastYear - year) * 12 + lastMonth - month) / rule.interval,
+          )
+        : Math.floor(
+            dateDistance(anchor, maximumDate) /
+              (rule.interval * (rule.unit === "week" ? 7 : 1)),
+          );
   let low = (task.recurrenceSlot ?? task.recurrenceOrdinal ?? 1) + 1;
   let high = maximumOffset + 1;
   if (high >= low && occurrenceDate(anchor, rule, high) > maximumDate)

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { auth } from "@clerk/nextjs/server";
 import { TodayWorkspace } from "@/components/today/today-workspace";
+import { DemoWorkspace } from "@/components/today/demo-workspace";
 import { isClerkConfigured } from "@/lib/auth/config";
 
 export const metadata: Metadata = { title: "Today · Tempo" };
@@ -14,14 +15,11 @@ export default async function DashboardPage({
   const { userId } = await auth();
   if (!userId) redirect("/login");
 
-  const todayLabel = new Intl.DateTimeFormat("en-US", {
-    weekday: "short",
-    month: "short",
-    day: "numeric",
-    timeZone: "Asia/Kolkata",
-  }).format(new Date());
+  // The browser supplies its local date after mounting; do not assume a server timezone.
+  const todayLabel = "Today";
 
   const parameters = await searchParams;
+  if (parameters.demo === "1") return <DemoWorkspace />;
   return (
     <TodayWorkspace
       todayLabel={todayLabel}

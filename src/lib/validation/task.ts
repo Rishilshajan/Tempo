@@ -35,10 +35,11 @@ export const taskScheduleSchema = z.discriminatedUnion("type", [
   }),
 ]);
 
-type RecurringDateInput = {
+type TaskDateInput = {
   timezone: string;
   schedule: z.infer<typeof taskScheduleSchema>;
   recurrence?: {
+    frequency?: string;
     end:
       | { type: "date"; date: string }
       | { type: "never" }
@@ -48,12 +49,8 @@ type RecurringDateInput = {
 };
 
 /** Fresh, timezone-aware checks shared by the form and authoritative mutation. */
-export function recurringDateIssues(
-  task: RecurringDateInput,
-  now = new Date(),
-) {
+export function taskDateIssues(task: TaskDateInput, now = new Date()) {
   const issues: { path: (string | number)[]; message: string }[] = [];
-  if (!task.recurrence) return issues;
   let today: string;
   let firstDate: string;
   try {
@@ -69,9 +66,10 @@ export function recurringDateIssues(
     issues.push({
       path: ["schedule"],
       message:
-        "A repeating task cannot start on a past date. Choose today or a future date.",
+        "Task dates must be today or later. Choose today or a future date.",
     });
   } else if (
+    task.recurrence &&
     task.schedule.type === "fixed" &&
     task.schedule.startAt < Math.floor(now.getTime() / 60000) * 60000
   ) {
@@ -82,7 +80,16 @@ export function recurringDateIssues(
   }
   const minimumEnd = firstDate > today ? firstDate : today;
   if (
-    task.recurrence.end.type === "date" &&
+    task.recurrence?.frequency === "weekdays" &&
+    [0, 6].includes(new Date(`${firstDate}T12:00:00Z`).getUTCDay())
+  ) {
+    issues.push({
+      path: ["schedule"],
+      message: "Choose Monday through Friday for the first weekday occurrence.",
+    });
+  }
+  if (
+    task.recurrence?.end.type === "date" &&
     calendarDateSchema.safeParse(task.recurrence.end.date).success &&
     task.recurrence.end.date < minimumEnd
   ) {
@@ -100,7 +107,7 @@ export function recurringDateIssues(
     )
       issues.push({
         path: ["subtasks", index, "dueDate"],
-        message: `Subtask ${index + 1} has a past date. Choose today or a future date for a repeating task.`,
+        message: `Subtask ${index + 1} has a past date. Choose today or a future date.`,
       });
   });
   return issues;
@@ -150,7 +157,7 @@ export const createTaskSchema = z
     recurrence: recurrenceSchema.optional(),
   })
   .superRefine((task, ctx) => {
-    for (const issue of recurringDateIssues(task))
+    for (const issue of taskDateIssues(task))
       ctx.addIssue({ code: "custom", ...issue });
     if (task.schedule.type === "fixed") {
       if (task.schedule.endAt <= task.schedule.startAt)

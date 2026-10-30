@@ -45,16 +45,19 @@ import {
   createTaskSchema,
   durationInputSchema,
   localDateKey,
-  recurringDateIssues,
+  taskDateIssues,
   type CreateTaskValues,
 } from "@/lib/validation/task";
 import { priorities, PriorityLabel, TaskSelect } from "./task-select";
+import { zonedTimestamp } from "@/lib/validation/recurrence";
 
 type Props = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   domains: DomainSummary[] | undefined;
   initialDomainId?: string;
+  initialDate?: string;
+  initialStartAt?: number;
   canSubmit: boolean;
   onCreate: (values: CreateTaskValues) => Promise<unknown>;
   hasMoreDomains?: boolean;
@@ -114,6 +117,8 @@ type Step = { key: string; title: string; dueDate: string };
 function TaskForm({
   domains,
   initialDomainId,
+  initialDate,
+  initialStartAt,
   canSubmit,
   onCreate,
   onOpenChange,
@@ -133,16 +138,35 @@ function TaskForm({
   const [domainId, setDomainId] = useState(initialDomainId ?? "uncategorized");
   const [priority, setPriority] = useState("medium");
   const [scheduleType, setScheduleType] = useState<"fixed" | "flexible">(
-    "flexible",
+    initialStartAt === undefined ? "flexible" : "fixed",
   );
   const [timezone] = useState(
     () => Intl.DateTimeFormat().resolvedOptions().timeZone,
   );
-  const [startDate, setStartDate] = useState(() => localDateKey());
-  const [endDate, setEndDate] = useState(() => localDateKey());
-  const [startTime, setStartTime] = useState("09:00");
-  const [endTime, setEndTime] = useState("10:00");
-  const [dueDate, setDueDate] = useState("");
+  const [startDate, setStartDate] = useState(() =>
+    initialStartAt === undefined
+      ? (initialDate ?? localDateKey())
+      : localDateKey(new Date(initialStartAt)),
+  );
+  const [endDate, setEndDate] = useState(() =>
+    initialStartAt === undefined
+      ? (initialDate ?? localDateKey())
+      : localDateKey(new Date(initialStartAt + 3600000)),
+  );
+  const timeOf = (at: number) =>
+    new Intl.DateTimeFormat("en-GB", {
+      timeZone: timezone,
+      hour: "2-digit",
+      minute: "2-digit",
+      hourCycle: "h23",
+    }).format(at);
+  const [startTime, setStartTime] = useState(() =>
+    initialStartAt === undefined ? "09:00" : timeOf(initialStartAt),
+  );
+  const [endTime, setEndTime] = useState(() =>
+    initialStartAt === undefined ? "10:00" : timeOf(initialStartAt + 3600000),
+  );
+  const [dueDate, setDueDate] = useState(initialDate ?? "");
   const [duration, setDuration] = useState("none");
   const [customHours, setCustomHours] = useState("");
   const [customMinutes, setCustomMinutes] = useState("");
@@ -168,32 +192,50 @@ function TaskForm({
     };
   }, []);
   const today = localDateKey(new Date(now), timezone);
-  const currentTime = `${String(new Date(now).getHours()).padStart(2, "0")}:${String(new Date(now).getMinutes()).padStart(2, "0")}`;
+  const currentTime = timeOf(now);
   const firstDate = (scheduleType === "fixed" ? startDate : dueDate) || today;
   const minimumRepeatEnd = firstDate > today ? firstDate : today;
   const afterStart = /^\d{2}:\d{2}$/.test(startTime)
     ? Number(startTime.slice(0, 2)) * 60 + Number(startTime.slice(3)) + 1
     : null;
+  function timestamp(date: string, time: string, preferred?: number) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || !/^\d{2}:\d{2}$/.test(time))
+      return NaN;
+    return zonedTimestamp(date, time, timezone, preferred);
+  }
+  const selectedStartAt = timestamp(startDate, startTime, initialStartAt);
+  const selectedEndAt = timestamp(
+    endDate,
+    endTime,
+    initialStartAt === undefined ? undefined : initialStartAt + 3600000,
+  );
+  const foldedPrefill =
+    initialStartAt !== undefined &&
+    selectedStartAt === initialStartAt &&
+    selectedEndAt === initialStartAt + 3600000 &&
+    endDate === startDate &&
+    endTime <= startTime;
   const minimumEndTime =
-    startDate === endDate && afterStart !== null
+    startDate === endDate && afterStart !== null && !foldedPrefill
       ? `${String(Math.floor(afterStart / 60)).padStart(2, "0")}:${String(afterStart % 60).padStart(2, "0")}`
       : undefined;
   function issuesForRepeat(repeatValue = repeat) {
-    return recurringDateIssues(
+    return taskDateIssues(
       {
         timezone,
         schedule:
           scheduleType === "fixed"
             ? {
                 type: "fixed",
-                startAt: new Date(`${startDate}T${startTime}`).getTime(),
-                endAt: new Date(`${endDate}T${endTime}`).getTime(),
+                startAt: selectedStartAt,
+                endAt: selectedEndAt,
               }
             : { type: "flexible", ...(dueDate ? { dueDate } : {}) },
         recurrence:
           repeatValue === "none"
             ? undefined
             : {
+                frequency: repeatValue,
                 end:
                   repeatEnd === "date"
                     ? { type: "date", date: repeatEndDate }
@@ -272,8 +314,8 @@ function TaskForm({
       }
     }
     requestIdRef.current ??= crypto.randomUUID();
-    const startAt = new Date(`${startDate}T${startTime}`).getTime();
-    const endAt = new Date(`${endDate}T${endTime}`).getTime();
+    const startAt = selectedStartAt;
+    const endAt = selectedEndAt;
     // Date controls use the browser timezone shown below. Reject nonexistent DST times.
     if (
       scheduleType === "fixed" &&
@@ -326,7 +368,7 @@ function TaskForm({
               frequency: repeat,
               interval: repeat === "custom" ? Number(repeatInterval) : 1,
               unit:
-                repeat === "daily"
+                repeat === "daily" || repeat === "weekdays"
                   ? "day"
                   : repeat === "weekly"
                     ? "week"
@@ -522,7 +564,7 @@ function TaskForm({
                 type="date"
                 value={startDate}
                 onChange={changeValue(setStartDate)}
-                minDate={repeat !== "none" ? today : undefined}
+                minDate={today}
                 required
               />
               <DateField
@@ -542,11 +584,7 @@ function TaskForm({
                 type="date"
                 value={endDate}
                 onChange={changeValue(setEndDate)}
-                minDate={
-                  repeat !== "none" && today > startDate
-                    ? today
-                    : startDate || undefined
-                }
+                minDate={today > startDate ? today : startDate || undefined}
                 required
               />
               <DateField
@@ -564,7 +602,7 @@ function TaskForm({
               type="date"
               value={dueDate}
               onChange={changeValue(setDueDate)}
-              minDate={repeat !== "none" ? today : undefined}
+              minDate={today}
             />
           )}
           <p className="text-[11px] text-muted-foreground">
@@ -684,7 +722,7 @@ function TaskForm({
                   />
                   <div className="col-start-1 row-start-2 w-fit max-w-full sm:col-start-2 sm:row-start-1">
                     <DatePicker
-                      minDate={repeat !== "none" ? today : undefined}
+                      minDate={today}
                       ariaLabel={`Subtask ${index + 1} date (Optional)`}
                       placeholder="Add date"
                       className="!w-auto max-w-36 justify-start border-transparent bg-muted/40 text-xs"
@@ -799,6 +837,7 @@ function TaskForm({
               }}
               options={[
                 { value: "none", label: "Does not repeat" },
+                { value: "weekdays", label: "Weekdays (Mon–Fri)" },
                 ...["Daily", "Weekly", "Monthly", "Custom"].map((label) => ({
                   value: label.toLowerCase(),
                   label,
@@ -880,7 +919,9 @@ function TaskForm({
               </label>
             )}
             <p className="text-[11px] leading-5 text-muted-foreground">
-              Completing this task creates the next occurrence.
+              {repeat === "weekdays"
+                ? "Repeats Monday through Friday. Completing this task creates the next weekday occurrence."
+                : "Completing this task creates the next occurrence."}
             </p>
           </div>
         )}

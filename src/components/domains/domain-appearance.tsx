@@ -37,7 +37,12 @@ export type DomainSummary = Pick<
   "_id" | "name" | "purpose" | "color" | "icon"
 >;
 
-export function DomainLabel({ name, color, icon }: DomainAppearance) {
+export function DomainLabel({
+  name,
+  color,
+  icon,
+  tonedIcon = false,
+}: DomainAppearance & { tonedIcon?: boolean }) {
   const Icon =
     domainIcons.find((option) => option.id === icon)?.component ??
     BriefcaseBusiness;
@@ -46,11 +51,26 @@ export function DomainLabel({ name, color, icon }: DomainAppearance) {
     "var(--primary)";
   return (
     <>
-      <Icon
-        className="size-4 shrink-0"
-        style={{ color: selectedColor }}
-        aria-hidden="true"
-      />
+      {tonedIcon ? (
+        <span
+          className="flex size-5 shrink-0 items-center justify-center rounded"
+          style={{
+            backgroundColor: `color-mix(in srgb, ${selectedColor} 14%, transparent)`,
+          }}
+        >
+          <Icon
+            className="size-3.5"
+            style={{ color: selectedColor }}
+            aria-hidden="true"
+          />
+        </span>
+      ) : (
+        <Icon
+          className="size-4 shrink-0"
+          style={{ color: selectedColor }}
+          aria-hidden="true"
+        />
+      )}
       <span className="truncate">{name}</span>
     </>
   );

@@ -183,6 +183,38 @@ assert.equal(
 assert.equal((await functions.list._handler(alice, args)).page.length, 2);
 await functions.setCompleted._handler(alice, { id, completed: false });
 assert.equal(records.get(id).status, "open");
+await assert.rejects(() =>
+  functions.setProgress._handler(context(null), {
+    id,
+    progress: "in_progress",
+  }),
+);
+await assert.rejects(() =>
+  functions.setProgress._handler(bob, { id, progress: "in_progress" }),
+);
+await assert.rejects(() =>
+  functions.setProgress._handler(alice, {
+    id: "tasks-missing",
+    progress: "in_progress",
+  }),
+);
+await functions.setProgress._handler(alice, { id, progress: "in_progress" });
+assert.equal(records.get(id).status, "open");
+assert.equal(records.get(id).progress, "in_progress");
+assert.equal(
+  (await functions.get._handler(alice, { id })).progress,
+  "in_progress",
+);
+await functions.setCompleted._handler(alice, { id, completed: true });
+assert.equal(records.get(id).status, "completed");
+await functions.setProgress._handler(alice, { id, progress: "in_progress" });
+assert.equal(records.get(id).status, "open");
+assert.ok(!("completedAt" in records.get(id)));
+await functions.setProgress._handler(alice, { id, progress: "not_started" });
+assert.equal(records.get(id).progress, "not_started");
+await functions.setCompleted._handler(alice, { id, completed: true });
+await functions.setCompleted._handler(alice, { id, completed: false });
+assert.equal(records.get(id).progress, "not_started");
 console.log(
   "PASS: actual task handlers — auth, domain ownership, idempotency, atomic subtasks, owner isolation, Today versus My Tasks, deadline preservation, completion and undo.",
 );
@@ -292,6 +324,31 @@ console.log(
 );
 
 clock = RealDate.parse("2026-10-30T09:45:00Z");
+await assert.rejects(() =>
+  functions.create._handler(alice, {
+    ...base,
+    requestId: "cb21c9d0-738d-48f1-80e5-3ccbc456e5cf",
+    schedule: { type: "flexible", dueDate: "2026-10-29" },
+  }),
+);
+await assert.rejects(() =>
+  functions.create._handler(alice, {
+    ...base,
+    requestId: "5db04481-758c-43ca-8520-595b9a8d4aad",
+    subtasks: [{ title: "Past step", dueDate: "2026-10-29" }],
+  }),
+);
+await assert.rejects(() =>
+  functions.create._handler(alice, {
+    ...base,
+    requestId: "9a86a70a-7af4-4c3d-a34f-2fbb021beceb",
+    schedule: {
+      type: "fixed",
+      startAt: clock - 86400000,
+      endAt: clock - 80000000,
+    },
+  }),
+);
 const daily = {
   frequency: "daily",
   interval: 1,
@@ -405,5 +462,80 @@ assert.equal(records.get(prepared).workDate, "2026-11-20");
 assert.equal(records.get(prepared).subtasks[0].dueDate, "2026-11-11");
 console.log(
   "PASS: late completion skips expired dates/time slots, preserves actual occurrence limits, stops expired series, and keeps generated subtask dates valid.",
+);
+clock = RealDate.parse("2026-10-30T12:00:00Z");
+const weekdayRule = {
+  frequency: "weekdays",
+  interval: 1,
+  unit: "day",
+  end: { type: "count", count: 3 },
+};
+const weekdayTask = await functions.create._handler(alice, {
+  ...base,
+  timezone: "UTC",
+  requestId: "d3b4071f-7a68-4947-b357-3a335a9b4041",
+  schedule: { type: "flexible", dueDate: "2026-10-30" },
+  recurrence: weekdayRule,
+});
+await functions.setProgress._handler(alice, {
+  id: weekdayTask,
+  progress: "in_progress",
+});
+assert.ok(!records.get(weekdayTask).nextOccurrenceId);
+const monday = await functions.setCompleted._handler(alice, {
+  id: weekdayTask,
+  completed: true,
+});
+assert.equal(records.get(monday).workDate, "2026-11-02");
+assert.equal(records.get(monday).progress ?? "not_started", "not_started");
+assert.equal(
+  await functions.setCompleted._handler(alice, {
+    id: weekdayTask,
+    completed: true,
+  }),
+  null,
+);
+const tuesday = await functions.setCompleted._handler(alice, {
+  id: monday,
+  completed: true,
+});
+assert.equal(records.get(tuesday).workDate, "2026-11-03");
+assert.equal(
+  await functions.setCompleted._handler(alice, {
+    id: tuesday,
+    completed: true,
+  }),
+  null,
+);
+const expires = await functions.create._handler(alice, {
+  ...base,
+  timezone: "UTC",
+  requestId: "e187014f-fc1f-47dc-b890-d6df58b9812a",
+  schedule: { type: "flexible", dueDate: "2026-10-30" },
+  recurrence: { ...weekdayRule, end: { type: "date", date: "2026-11-01" } },
+});
+assert.equal(
+  await functions.setCompleted._handler(alice, {
+    id: expires,
+    completed: true,
+  }),
+  null,
+);
+const lateWeekday = await functions.create._handler(alice, {
+  ...base,
+  timezone: "UTC",
+  requestId: "4d1be2c3-ccbc-4fab-9de5-1467a6a7df97",
+  schedule: { type: "flexible", dueDate: "2026-10-30" },
+  recurrence: weekdayRule,
+});
+clock = RealDate.parse("2026-11-07T12:00:00Z");
+const resumedWeekday = await functions.setCompleted._handler(alice, {
+  id: lateWeekday,
+  completed: true,
+});
+assert.equal(records.get(resumedWeekday).workDate, "2026-11-09");
+assert.equal(records.get(resumedWeekday).recurrenceOrdinal, 2);
+console.log(
+  "PASS: weekday repeats skip weekends, retain count/date limits, reset status, and catch up after late completion.",
 );
 globalThis.Date = RealDate;

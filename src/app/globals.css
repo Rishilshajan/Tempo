@@ -50,6 +50,10 @@
   --color-ontrack-foreground: var(--ontrack-foreground);
   --color-rolledforward: var(--rolledforward);
   --color-rolledforward-foreground: var(--rolledforward-foreground);
+  --color-summary-active: var(--summary-active);
+  --color-summary-planned: var(--summary-planned);
+  --color-summary-carried: var(--summary-carried);
+  --color-summary-completed: var(--summary-completed);
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
@@ -79,6 +83,10 @@
   --brand: #4c9a78;            /* sage - logo & brand identity */
   --primary: #11694a;          /* deeper green - buttons/active states (contrast) */
   --primary-foreground: #ffffff;
+  --summary-active: color-mix(in srgb, var(--primary) 70%, #000000);
+  --summary-planned: color-mix(in srgb, var(--primary) 30%, #22312b);
+  --summary-carried: color-mix(in srgb, var(--rolledforward) 60%, #000000);
+  --summary-completed: color-mix(in srgb, var(--primary) 45%, #22312b);
 
   --secondary: #e9f1ec;        /* soft sage surface */
   --secondary-foreground: #22312b;

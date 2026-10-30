@@ -1,5 +1,15 @@
 import assert from "node:assert/strict";
 import { build } from "esbuild";
+const RealDate = Date;
+const clock = RealDate.parse("2026-01-01T12:00:00Z");
+globalThis.Date = class extends RealDate {
+  constructor(...args) {
+    super(...(args.length ? args : [clock]));
+  }
+  static now() {
+    return clock;
+  }
+};
 const bundled = await build({
   entryPoints: ["src/lib/validation/task.ts"],
   bundle: true,
@@ -7,14 +17,10 @@ const bundled = await build({
   format: "esm",
   write: false,
 });
-const {
-  createTaskSchema,
-  localDateKey,
-  recurringDateIssues,
-  durationInputSchema,
-} = await import(
-  `data:text/javascript;base64,${Buffer.from(bundled.outputFiles[0].text).toString("base64")}`
-);
+const { createTaskSchema, localDateKey, taskDateIssues, durationInputSchema } =
+  await import(
+    `data:text/javascript;base64,${Buffer.from(bundled.outputFiles[0].text).toString("base64")}`
+  );
 
 const base = {
   title: "  Prepare proposal  ",
@@ -25,6 +31,26 @@ const base = {
   requestId: "ea2ff0cf-5af8-43ef-ab9b-eb5314855a58",
 };
 assert.equal(createTaskSchema.parse(base).title, "Prepare proposal");
+const weekdays = {
+  frequency: "weekdays",
+  interval: 1,
+  unit: "day",
+  end: { type: "never" },
+};
+assert.ok(
+  !createTaskSchema.safeParse({
+    ...base,
+    schedule: { type: "flexible", dueDate: "2026-10-31" },
+    recurrence: weekdays,
+  }).success,
+);
+assert.ok(
+  createTaskSchema.safeParse({
+    ...base,
+    schedule: { type: "flexible", dueDate: "2026-11-02" },
+    recurrence: weekdays,
+  }).success,
+);
 assert.ok(
   createTaskSchema.safeParse({
     ...base,
@@ -72,7 +98,7 @@ console.log(
 const now = new Date("2026-10-30T09:45:00Z");
 const repeatingInput = { ...base, recurrence: { end: { type: "never" } } };
 assert.equal(
-  recurringDateIssues(
+  taskDateIssues(
     {
       ...repeatingInput,
       schedule: { type: "flexible", dueDate: "2026-10-29" },
@@ -82,7 +108,7 @@ assert.equal(
   "schedule",
 );
 assert.equal(
-  recurringDateIssues(
+  taskDateIssues(
     {
       ...repeatingInput,
       schedule: { type: "flexible", dueDate: "2026-10-30" },
@@ -92,13 +118,13 @@ assert.equal(
   0,
 );
 assert.ok(
-  recurringDateIssues(
+  taskDateIssues(
     { ...repeatingInput, subtasks: [{ dueDate: "2026-10-29" }] },
     now,
   ).length,
 );
 assert.equal(
-  recurringDateIssues(
+  taskDateIssues(
     {
       ...repeatingInput,
       schedule: { type: "flexible", dueDate: "2026-11-10" },
@@ -109,7 +135,7 @@ assert.equal(
   0,
 );
 assert.ok(
-  recurringDateIssues(
+  taskDateIssues(
     {
       ...repeatingInput,
       schedule: { type: "flexible", dueDate: "2026-11-10" },
@@ -119,7 +145,7 @@ assert.ok(
   ).length,
 );
 assert.equal(
-  recurringDateIssues(
+  taskDateIssues(
     {
       ...repeatingInput,
       schedule: { type: "flexible", dueDate: "2026-11-10" },
@@ -130,7 +156,7 @@ assert.equal(
   0,
 );
 assert.ok(
-  recurringDateIssues(
+  taskDateIssues(
     {
       ...repeatingInput,
       schedule: {
@@ -143,7 +169,7 @@ assert.ok(
   ).length,
 );
 assert.equal(
-  recurringDateIssues(
+  taskDateIssues(
     {
       ...repeatingInput,
       schedule: {
@@ -157,15 +183,15 @@ assert.equal(
   0,
 );
 assert.equal(
-  recurringDateIssues(
+  taskDateIssues(
     { ...base, schedule: { type: "flexible", dueDate: "2026-10-01" } },
     now,
   ).length,
-  0,
+  1,
 );
 const boundary = new Date("2026-10-30T00:30:00Z");
 assert.equal(
-  recurringDateIssues(
+  taskDateIssues(
     {
       ...repeatingInput,
       timezone: "America/New_York",
@@ -176,7 +202,7 @@ assert.equal(
   0,
 );
 assert.ok(
-  recurringDateIssues(
+  taskDateIssues(
     {
       ...repeatingInput,
       timezone: "Asia/Kolkata",
@@ -186,7 +212,7 @@ assert.ok(
   ).length,
 );
 assert.equal(
-  recurringDateIssues(
+  taskDateIssues(
     {
       ...repeatingInput,
       schedule: { type: "flexible", dueDate: "2026-10-30" },
@@ -205,5 +231,17 @@ for (const duration of [
   assert.equal(durationInputSchema.safeParse(duration).success, false);
 assert.ok(durationInputSchema.safeParse({ hours: 1, minutes: 28 }).success);
 console.log(
-  "PASS: repeat past dates/times, end bounds, optional subtasks, future planning steps, timezone midnight boundaries, unchanged nonrepeat dates, and hours/minutes validation.",
+  "PASS: past dates blocked for all tasks, repeat time limits, end bounds, optional subtasks, future planning steps, timezone midnight boundaries, and hours/minutes validation.",
 );
+assert.ok(
+  taskDateIssues({ ...base, subtasks: [{ dueDate: "2026-10-29" }] }, now)
+    .length,
+);
+assert.equal(
+  taskDateIssues(
+    { ...base, schedule: { type: "flexible", dueDate: "2026-10-30" } },
+    now,
+  ).length,
+  0,
+);
+globalThis.Date = RealDate;

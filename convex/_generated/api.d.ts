@@ -8,11 +8,14 @@
  * @module
  */
 
+import type * as dashboard from "../dashboard.js";
 import type * as domainFields from "../domainFields.js";
 import type * as domains from "../domains.js";
 import type * as taskFields from "../taskFields.js";
 import type * as taskRecurrence from "../taskRecurrence.js";
+import type * as taskViews from "../taskViews.js";
 import type * as tasks from "../tasks.js";
+import type * as verificationData from "../verificationData.js";
 
 import type {
   ApiFromModules,
@@ -21,11 +24,14 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  dashboard: typeof dashboard;
   domainFields: typeof domainFields;
   domains: typeof domains;
   taskFields: typeof taskFields;
   taskRecurrence: typeof taskRecurrence;
+  taskViews: typeof taskViews;
   tasks: typeof tasks;
+  verificationData: typeof verificationData;
 }>;
 
 /**

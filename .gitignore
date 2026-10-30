@@ -38,6 +38,7 @@ yarn-error.log*
 
 # typescript
 *.tsbuildinfo
+/.tempo-verification.local.json
 next-env.d.ts
 
 # keep the example env tracked

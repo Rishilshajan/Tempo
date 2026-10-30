@@ -2,7 +2,7 @@ import { z } from "zod";
 
 export const recurrenceSchema = z
   .object({
-    frequency: z.enum(["daily", "weekly", "monthly", "custom"]),
+    frequency: z.enum(["daily", "weekdays", "weekly", "monthly", "custom"]),
     interval: z
       .number()
       .int("Use a whole-number repeat interval.")
@@ -26,7 +26,12 @@ export const recurrenceSchema = z
     ]),
   })
   .superRefine((rule, ctx) => {
-    const units = { daily: "day", weekly: "week", monthly: "month" };
+    const units = {
+      daily: "day",
+      weekdays: "day",
+      weekly: "week",
+      monthly: "month",
+    };
     if (
       rule.frequency !== "custom" &&
       (rule.interval !== 1 || rule.unit !== units[rule.frequency])
@@ -52,6 +57,23 @@ export function dateDistance(first: string, second: string) {
   );
 }
 
+function weekdayAnchor(date: string) {
+  const day = new Date(`${date}T12:00:00Z`).getUTCDay();
+  return day === 6 ? shiftDate(date, 2) : day === 0 ? shiftDate(date, 1) : date;
+}
+
+/** Weekday increments after the first eligible date, without scanning years. */
+export function weekdayDistance(first: string, last: string) {
+  const anchor = weekdayAnchor(first);
+  const days = Math.max(0, dateDistance(anchor, last));
+  const weekday = new Date(`${anchor}T12:00:00Z`).getUTCDay();
+  const remainder = Array.from(
+    { length: days % 7 },
+    (_, index) => (weekday + index + 1) % 7,
+  ).filter((day) => day >= 1 && day <= 5).length;
+  return Math.floor(days / 7) * 5 + remainder;
+}
+
 /** Anchor-based calculation avoids Jan 31 → Feb 28 → Mar 28 drift. */
 export function occurrenceDate(
   anchor: string,
@@ -59,6 +81,11 @@ export function occurrenceDate(
   ordinal: number,
 ) {
   const offset = (ordinal - 1) * rule.interval;
+  if (rule.frequency === "weekdays") {
+    const first = weekdayAnchor(anchor);
+    const weekday = (new Date(`${first}T12:00:00Z`).getUTCDay() + 6) % 7;
+    return shiftDate(first, offset + Math.floor((weekday + offset) / 5) * 2);
+  }
   if (rule.unit !== "month")
     return shiftDate(anchor, offset * (rule.unit === "week" ? 7 : 1));
   const [year, month, day] = anchor.split("-").map(Number);
@@ -117,15 +144,34 @@ export function moveStartToDate(
   timezone: string,
 ) {
   const original = wallParts(startAt, timezone);
-  const [year, month, day] = date.split("-").map(Number);
-  const target = Date.UTC(
-    year,
-    month - 1,
-    day,
-    original.hour,
-    original.minute,
-    original.second,
+  return zonedTimestamp(
+    date,
+    `${original.hour}:${original.minute}:${original.second}`,
+    timezone,
   );
+}
+
+export function zonedTimestamp(
+  date: string,
+  time: string,
+  timezone: string,
+  preferredAt?: number,
+) {
+  const [hour, minute, second = 0] = time.split(":").map(Number);
+  const [year, month, day] = date.split("-").map(Number);
+  if (preferredAt !== undefined) {
+    const preferred = wallParts(preferredAt, timezone);
+    if (
+      preferred.year === year &&
+      preferred.month === month &&
+      preferred.day === day &&
+      preferred.hour === hour &&
+      preferred.minute === minute &&
+      preferred.second === second
+    )
+      return preferredAt;
+  }
+  const target = Date.UTC(year, month - 1, day, hour, minute, second);
   const offsets = new Set(
     [-36, 0, 36].map((hours) => {
       const sample = target + hours * 3600000;
