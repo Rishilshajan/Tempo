@@ -1,0 +1,409 @@
+// Exercises the real Convex handlers locally without writing live test data.
+import assert from "node:assert/strict";
+import { build } from "esbuild";
+const RealDate = Date;
+let clock = RealDate.parse("2026-01-01T12:00:00Z");
+globalThis.Date = class extends RealDate {
+  constructor(...args) {
+    super(...(args.length ? args : [clock]));
+  }
+  static now() {
+    return clock;
+  }
+};
+const compiled = await build({
+  entryPoints: ["convex/tasks.ts"],
+  bundle: true,
+  platform: "node",
+  format: "esm",
+  write: false,
+});
+const functions = await import(
+  `data:text/javascript;base64,${Buffer.from(compiled.outputFiles[0].text).toString("base64")}`
+);
+const records = new Map();
+let sequence = 0;
+const db = {
+  async get(id) {
+    return records.get(id) ?? null;
+  },
+  async insert(table, value) {
+    const id = `${table}-${++sequence}`;
+    records.set(id, {
+      ...structuredClone(value),
+      _id: id,
+      _creationTime: sequence,
+    });
+    return id;
+  },
+  async patch(id, patch) {
+    const row = { ...records.get(id), ...structuredClone(patch) };
+    for (const key of Object.keys(row))
+      if (row[key] === undefined) delete row[key];
+    records.set(id, row);
+  },
+  query(table) {
+    const conditions = [];
+    let descending = false;
+    const clauses = {
+      eq(key, value) {
+        conditions.push((row) => row[key] === value);
+        return clauses;
+      },
+      lte(key, value) {
+        conditions.push((row) => row[key] <= value);
+        return clauses;
+      },
+    };
+    const rows = () =>
+      [...records.values()]
+        .filter(
+          (row) =>
+            row._id.startsWith(`${table}-`) &&
+            conditions.every((match) => match(row)),
+        )
+        .sort((a, b) =>
+          descending
+            ? b._creationTime - a._creationTime
+            : a._creationTime - b._creationTime,
+        );
+    const query = {
+      withIndex(_name, constrain) {
+        constrain(clauses);
+        return query;
+      },
+      order(direction) {
+        descending = direction === "desc";
+        return query;
+      },
+      async unique() {
+        assert.ok(rows().length <= 1);
+        return rows()[0] ?? null;
+      },
+      async first() {
+        return rows()[0] ?? null;
+      },
+      async paginate({ numItems }) {
+        const found = rows();
+        return {
+          page: found.slice(0, numItems),
+          isDone: found.length <= numItems,
+          continueCursor: "",
+        };
+      },
+    };
+    return query;
+  },
+};
+const context = (owner) => ({
+  db,
+  auth: {
+    getUserIdentity: async () => (owner ? { tokenIdentifier: owner } : null),
+  },
+});
+const alice = context("alice");
+const bob = context("bob");
+const base = {
+  title: "  Proposal  ",
+  priority: "medium",
+  schedule: { type: "flexible" },
+  timezone: "Asia/Kolkata",
+  subtasks: [{ title: "Research" }],
+  requestId: "ea2ff0cf-5af8-43ef-ab9b-eb5314855a58",
+};
+await assert.rejects(() => functions.create._handler(context(null), base));
+await assert.rejects(() =>
+  functions.create._handler(alice, { ...base, title: " " }),
+);
+const foreignDomain = await db.insert("domains", {
+  ownerId: "bob",
+  name: "Other",
+  color: "green",
+  icon: "briefcase",
+});
+await assert.rejects(() =>
+  functions.create._handler(alice, { ...base, domainId: foreignDomain }),
+);
+const id = await functions.create._handler(alice, base);
+assert.equal(await functions.create._handler(alice, base), id);
+assert.equal(records.get(id).title, "Proposal");
+assert.equal(records.get(id).subtasks.length, 1);
+assert.equal(records.get(id).workDate, "");
+await assert.rejects(() =>
+  functions.setCompleted._handler(bob, { id, completed: true }),
+);
+const args = {
+  view: "all",
+  today: "2026-10-29",
+  paginationOpts: { numItems: 30, cursor: null },
+};
+assert.equal((await functions.list._handler(bob, args)).page.length, 0);
+const visible = (await functions.list._handler(alice, args)).page[0];
+assert.ok(!("ownerId" in visible));
+assert.ok(!("requestId" in visible));
+const future = await functions.create._handler(alice, {
+  ...base,
+  requestId: "64d9d6bb-6ea5-4c37-8d81-88e5521a4d91",
+  schedule: { type: "flexible", dueDate: "2026-10-30" },
+});
+assert.equal(
+  (await functions.list._handler(alice, { ...args, view: "today" })).page
+    .length,
+  1,
+);
+assert.equal(
+  (
+    await functions.list._handler(alice, {
+      ...args,
+      view: "today",
+      today: "2026-10-30",
+    })
+  ).page.length,
+  2,
+);
+assert.equal(records.get(future).schedule.dueDate, "2026-10-30");
+await functions.setCompleted._handler(alice, {
+  id,
+  completed: true,
+  subtaskId: records.get(id).subtasks[0].id,
+});
+assert.equal(typeof records.get(id).subtasks[0].completedAt, "number");
+await functions.setCompleted._handler(alice, {
+  id,
+  completed: false,
+  subtaskId: records.get(id).subtasks[0].id,
+});
+assert.ok(!("completedAt" in records.get(id).subtasks[0]));
+await functions.setCompleted._handler(alice, { id, completed: true });
+assert.equal(
+  (await functions.list._handler(alice, { ...args, view: "today" })).page
+    .length,
+  0,
+);
+assert.equal((await functions.list._handler(alice, args)).page.length, 2);
+await functions.setCompleted._handler(alice, { id, completed: false });
+assert.equal(records.get(id).status, "open");
+console.log(
+  "PASS: actual task handlers — auth, domain ownership, idempotency, atomic subtasks, owner isolation, Today versus My Tasks, deadline preservation, completion and undo.",
+);
+
+const repeating = await functions.create._handler(alice, {
+  ...base,
+  requestId: "5fe300ec-c322-4696-9898-72963446cc2a",
+  schedule: { type: "flexible", dueDate: "2026-01-31" },
+  subtasks: [{ title: "Follow up", dueDate: "2026-02-02" }],
+  recurrence: {
+    frequency: "monthly",
+    interval: 1,
+    unit: "month",
+    end: { type: "count", count: 3 },
+  },
+});
+const next = await functions.setCompleted._handler(alice, {
+  id: repeating,
+  completed: true,
+});
+assert.equal(records.get(next).schedule.dueDate, "2026-02-28");
+assert.equal(records.get(next).recurrenceOrdinal, 2);
+assert.equal(records.get(next).subtasks[0].dueDate, "2026-03-02");
+assert.ok(!("completedAt" in records.get(next).subtasks[0]));
+assert.equal(
+  await functions.setCompleted._handler(alice, {
+    id: repeating,
+    completed: true,
+  }),
+  null,
+);
+await functions.setCompleted._handler(alice, {
+  id: repeating,
+  completed: false,
+});
+assert.equal(
+  await functions.setCompleted._handler(alice, {
+    id: repeating,
+    completed: true,
+  }),
+  null,
+);
+assert.equal(records.get(repeating).nextOccurrenceId, next);
+const third = await functions.setCompleted._handler(alice, {
+  id: next,
+  completed: true,
+});
+assert.equal(records.get(third).schedule.dueDate, "2026-03-31");
+assert.equal(
+  await functions.setCompleted._handler(alice, { id: third, completed: true }),
+  null,
+);
+const until = await functions.create._handler(alice, {
+  ...base,
+  requestId: "bd409a5c-1072-469c-969e-90b9ebcce7e3",
+  schedule: { type: "flexible", dueDate: "2026-01-31" },
+  recurrence: {
+    frequency: "weekly",
+    interval: 1,
+    unit: "week",
+    end: { type: "date", date: "2026-02-07" },
+  },
+});
+const last = await functions.setCompleted._handler(alice, {
+  id: until,
+  completed: true,
+});
+assert.equal(records.get(last).workDate, "2026-02-07");
+assert.equal(
+  await functions.setCompleted._handler(alice, { id: last, completed: true }),
+  null,
+);
+const dst = await functions.create._handler(alice, {
+  ...base,
+  requestId: "a31d705a-0f94-451f-b572-bb01114e7c5b",
+  timezone: "America/New_York",
+  schedule: {
+    type: "fixed",
+    startAt: Date.parse("2026-03-07T07:30:00Z"),
+    endAt: Date.parse("2026-03-07T08:30:00Z"),
+  },
+  recurrence: {
+    frequency: "daily",
+    interval: 1,
+    unit: "day",
+    end: { type: "count", count: 3 },
+  },
+});
+const gap = await functions.setCompleted._handler(alice, {
+  id: dst,
+  completed: true,
+});
+const restored = await functions.setCompleted._handler(alice, {
+  id: gap,
+  completed: true,
+});
+assert.equal(
+  records.get(gap).schedule.startAt,
+  Date.parse("2026-03-08T07:30:00Z"),
+);
+assert.equal(
+  records.get(restored).schedule.startAt,
+  Date.parse("2026-03-09T06:30:00Z"),
+);
+console.log(
+  "PASS: recurring task persistence, completion generates one next occurrence, undo/re-complete safety, subtask resets, month-end dates, count/date stops, and fixed-time DST recovery.",
+);
+
+clock = RealDate.parse("2026-10-30T09:45:00Z");
+const daily = {
+  frequency: "daily",
+  interval: 1,
+  unit: "day",
+  end: { type: "never" },
+};
+await assert.rejects(() =>
+  functions.create._handler(alice, {
+    ...base,
+    requestId: "9d882f08-76f6-4c31-b4c6-d1aaf4467d01",
+    schedule: { type: "flexible", dueDate: "2026-10-29" },
+    recurrence: daily,
+  }),
+);
+await assert.rejects(() =>
+  functions.create._handler(alice, {
+    ...base,
+    requestId: "9d882f08-76f6-4c31-b4c6-d1aaf4467d02",
+    subtasks: [{ title: "Step", dueDate: "2026-10-29" }],
+    recurrence: daily,
+  }),
+);
+await assert.rejects(() =>
+  functions.create._handler(alice, {
+    ...base,
+    requestId: "9d882f08-76f6-4c31-b4c6-d1aaf4467d03",
+    schedule: {
+      type: "fixed",
+      startAt: clock - 3600000,
+      endAt: clock + 3600000,
+    },
+    recurrence: daily,
+  }),
+);
+assert.equal(
+  await functions.create._handler(alice, {
+    ...base,
+    requestId: "5fe300ec-c322-4696-9898-72963446cc2a",
+    schedule: { type: "flexible", dueDate: "2026-01-31" },
+    recurrence: daily,
+  }),
+  repeating,
+);
+console.log(
+  "PASS: authoritative past-date/time rejection and idempotent retries after the clock advances.",
+);
+const late = await functions.create._handler(alice, {
+  ...base,
+  requestId: "02f7ee95-e39f-4f48-9248-7c7cf0a58f71",
+  schedule: { type: "flexible", dueDate: "2026-10-30" },
+  recurrence: { ...daily, end: { type: "count", count: 3 } },
+});
+const expired = await functions.create._handler(alice, {
+  ...base,
+  requestId: "02f7ee95-e39f-4f48-9248-7c7cf0a58f72",
+  schedule: { type: "flexible", dueDate: "2026-10-30" },
+  recurrence: { ...daily, end: { type: "date", date: "2026-11-05" } },
+});
+const preparation = await functions.create._handler(alice, {
+  ...base,
+  requestId: "02f7ee95-e39f-4f48-9248-7c7cf0a58f73",
+  schedule: { type: "flexible", dueDate: "2026-11-10" },
+  subtasks: [{ title: "Prepare", dueDate: "2026-11-01" }],
+  recurrence: daily,
+});
+const lateFixed = await functions.create._handler(alice, {
+  ...base,
+  requestId: "02f7ee95-e39f-4f48-9248-7c7cf0a58f74",
+  schedule: { type: "fixed", startAt: clock + 3600000, endAt: clock + 7200000 },
+  recurrence: daily,
+});
+clock = RealDate.parse("2026-11-10T12:00:00Z");
+const resumed = await functions.setCompleted._handler(alice, {
+  id: late,
+  completed: true,
+});
+assert.equal(records.get(resumed).workDate, "2026-11-10");
+assert.equal(records.get(resumed).recurrenceOrdinal, 2);
+assert.equal(records.get(resumed).recurrenceSlot, 12);
+const resumedAgain = await functions.setCompleted._handler(alice, {
+  id: resumed,
+  completed: true,
+});
+assert.equal(records.get(resumedAgain).workDate, "2026-11-11");
+assert.equal(records.get(resumedAgain).recurrenceOrdinal, 3);
+assert.equal(
+  await functions.setCompleted._handler(alice, {
+    id: resumedAgain,
+    completed: true,
+  }),
+  null,
+);
+assert.equal(
+  await functions.setCompleted._handler(alice, {
+    id: expired,
+    completed: true,
+  }),
+  null,
+);
+const resumedFixed = await functions.setCompleted._handler(alice, {
+  id: lateFixed,
+  completed: true,
+});
+assert.ok(records.get(resumedFixed).schedule.startAt >= clock);
+clock = RealDate.parse("2026-11-11T12:00:00Z");
+const prepared = await functions.setCompleted._handler(alice, {
+  id: preparation,
+  completed: true,
+});
+assert.equal(records.get(prepared).workDate, "2026-11-20");
+assert.equal(records.get(prepared).subtasks[0].dueDate, "2026-11-11");
+console.log(
+  "PASS: late completion skips expired dates/time slots, preserves actual occurrence limits, stops expired series, and keeps generated subtask dates valid.",
+);
+globalThis.Date = RealDate;

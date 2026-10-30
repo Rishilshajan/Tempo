@@ -42,12 +42,16 @@ export function TimePicker({
   placeholder = "Time",
   className,
   ariaLabel,
+  required = false,
+  minTime,
 }: {
   value: string;
   onChange: (value: string) => void;
   placeholder?: string;
   className?: string;
   ariaLabel?: string;
+  required?: boolean;
+  minTime?: string;
 }) {
   const [open, setOpen] = React.useState(false);
   const selectedRef = React.useRef<HTMLButtonElement | null>(null);
@@ -66,6 +70,9 @@ export function TimePicker({
             type="button"
             variant="outline"
             aria-label={ariaLabel}
+            aria-invalid={
+              (!!value && !!minTime && value < minTime) || undefined
+            }
             className={cn(
               "w-full min-w-0 justify-start gap-2 font-normal",
               !value && "text-muted-foreground",
@@ -73,13 +80,22 @@ export function TimePicker({
             )}
           >
             <Clock className="size-4 shrink-0" />
-            <span className="truncate">{value ? label12(value) : placeholder}</span>
+            <span className="truncate">
+              {value ? label12(value) : placeholder}
+            </span>
           </Button>
         }
       />
-      <PopoverContent className="w-44 p-1" align="start">
+      <PopoverContent
+        className="w-44 p-1"
+        align="start"
+        aria-label={ariaLabel ?? "Choose a time"}
+        initialFocus={() =>
+          selectedRef.current?.disabled ? null : selectedRef.current
+        }
+      >
         <div className="max-h-56 overflow-y-auto">
-          {value && (
+          {value && !required && (
             <button
               type="button"
               onClick={() => {
@@ -98,12 +114,14 @@ export function TimePicker({
                 key={t}
                 type="button"
                 ref={active ? selectedRef : undefined}
+                aria-pressed={active}
+                disabled={!!minTime && t < minTime}
                 onClick={() => {
                   onChange(t);
                   setOpen(false);
                 }}
                 className={cn(
-                  "flex w-full items-center rounded-md px-3 py-1.5 text-sm transition-colors",
+                  "flex w-full items-center rounded-md px-3 py-1.5 text-sm transition-colors disabled:cursor-not-allowed disabled:opacity-40",
                   active
                     ? "bg-primary/10 font-semibold text-primary"
                     : "hover:bg-secondary",

@@ -1,0 +1,983 @@
+"use client";
+
+import { useEffect, useRef, useState, type FormEvent } from "react";
+import { ConvexError } from "convex/values";
+import { toast } from "sonner";
+import {
+  ArrowDown,
+  ArrowUp,
+  CalendarDays,
+  Check,
+  Clock3,
+  Flag,
+  Layers,
+  ListPlus,
+  LoaderCircle,
+  MoreHorizontal,
+  Plus,
+  Repeat2,
+  Trash2,
+  X,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { DatePicker } from "@/components/ui/date-picker";
+import { TimePicker } from "@/components/ui/time-picker";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
+import {
+  DomainLabel,
+  type DomainSummary,
+} from "@/components/domains/domain-appearance";
+import {
+  createTaskSchema,
+  durationInputSchema,
+  localDateKey,
+  recurringDateIssues,
+  type CreateTaskValues,
+} from "@/lib/validation/task";
+import { priorities, PriorityLabel, TaskSelect } from "./task-select";
+
+type Props = {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  domains: DomainSummary[] | undefined;
+  initialDomainId?: string;
+  canSubmit: boolean;
+  onCreate: (values: CreateTaskValues) => Promise<unknown>;
+  hasMoreDomains?: boolean;
+  loadingMoreDomains?: boolean;
+  onLoadMoreDomains?: () => void;
+};
+
+export function CreateTaskSheet(props: Props) {
+  const [saving, setSaving] = useState(false);
+  const inFlightRef = useRef(false);
+  return (
+    <Sheet
+      open={props.open}
+      onOpenChange={(open) => {
+        if (!inFlightRef.current) props.onOpenChange(open);
+      }}
+    >
+      <SheetContent
+        showCloseButton={false}
+        initialFocus={() => document.getElementById("task-title")}
+        className="!inset-y-auto !top-0 !h-dvh !w-full !max-w-[460px] gap-0 bg-card motion-reduce:transition-none"
+      >
+        <SheetHeader className="relative shrink-0 border-b border-border px-5 py-5 pr-14">
+          <SheetTitle className="flex items-center gap-2 text-lg font-semibold">
+            <ListPlus className="size-5 text-primary" aria-hidden="true" />
+            Create New Task
+          </SheetTitle>
+          <SheetDescription className="mt-1 text-xs leading-5">
+            Capture the task, then choose how and when to work on it.
+          </SheetDescription>
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            aria-label="Close Create New Task"
+            disabled={saving}
+            className="absolute right-3 top-3 size-9"
+            onClick={() => props.onOpenChange(false)}
+          >
+            <X aria-hidden="true" />
+          </Button>
+        </SheetHeader>
+        {props.open && (
+          <TaskForm
+            {...props}
+            saving={saving}
+            setSaving={setSaving}
+            inFlightRef={inFlightRef}
+          />
+        )}
+      </SheetContent>
+    </Sheet>
+  );
+}
+
+type Step = { key: string; title: string; dueDate: string };
+
+function TaskForm({
+  domains,
+  initialDomainId,
+  canSubmit,
+  onCreate,
+  onOpenChange,
+  saving,
+  setSaving,
+  inFlightRef,
+  hasMoreDomains,
+  loadingMoreDomains,
+  onLoadMoreDomains,
+}: Props & {
+  saving: boolean;
+  setSaving: (saving: boolean) => void;
+  inFlightRef: React.RefObject<boolean>;
+}) {
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [domainId, setDomainId] = useState(initialDomainId ?? "uncategorized");
+  const [priority, setPriority] = useState("medium");
+  const [scheduleType, setScheduleType] = useState<"fixed" | "flexible">(
+    "flexible",
+  );
+  const [timezone] = useState(
+    () => Intl.DateTimeFormat().resolvedOptions().timeZone,
+  );
+  const [startDate, setStartDate] = useState(() => localDateKey());
+  const [endDate, setEndDate] = useState(() => localDateKey());
+  const [startTime, setStartTime] = useState("09:00");
+  const [endTime, setEndTime] = useState("10:00");
+  const [dueDate, setDueDate] = useState("");
+  const [duration, setDuration] = useState("none");
+  const [customHours, setCustomHours] = useState("");
+  const [customMinutes, setCustomMinutes] = useState("");
+  const [repeat, setRepeat] = useState("none");
+  const [repeatInterval, setRepeatInterval] = useState("1");
+  const [repeatUnit, setRepeatUnit] = useState("day");
+  const [repeatEnd, setRepeatEnd] = useState("never");
+  const [repeatEndDate, setRepeatEndDate] = useState("");
+  const [repeatCount, setRepeatCount] = useState("10");
+  const [steps, setSteps] = useState<Step[]>([]);
+  const [stepTitle, setStepTitle] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const requestIdRef = useRef<string | null>(null);
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const refresh = () => setNow(Date.now());
+    const timer = setInterval(refresh, 30000);
+    window.addEventListener("focus", refresh);
+    return () => {
+      clearInterval(timer);
+      window.removeEventListener("focus", refresh);
+    };
+  }, []);
+  const today = localDateKey(new Date(now), timezone);
+  const currentTime = `${String(new Date(now).getHours()).padStart(2, "0")}:${String(new Date(now).getMinutes()).padStart(2, "0")}`;
+  const firstDate = (scheduleType === "fixed" ? startDate : dueDate) || today;
+  const minimumRepeatEnd = firstDate > today ? firstDate : today;
+  const afterStart = /^\d{2}:\d{2}$/.test(startTime)
+    ? Number(startTime.slice(0, 2)) * 60 + Number(startTime.slice(3)) + 1
+    : null;
+  const minimumEndTime =
+    startDate === endDate && afterStart !== null
+      ? `${String(Math.floor(afterStart / 60)).padStart(2, "0")}:${String(afterStart % 60).padStart(2, "0")}`
+      : undefined;
+  function issuesForRepeat(repeatValue = repeat) {
+    return recurringDateIssues(
+      {
+        timezone,
+        schedule:
+          scheduleType === "fixed"
+            ? {
+                type: "fixed",
+                startAt: new Date(`${startDate}T${startTime}`).getTime(),
+                endAt: new Date(`${endDate}T${endTime}`).getTime(),
+              }
+            : { type: "flexible", ...(dueDate ? { dueDate } : {}) },
+        recurrence:
+          repeatValue === "none"
+            ? undefined
+            : {
+                end:
+                  repeatEnd === "date"
+                    ? { type: "date", date: repeatEndDate }
+                    : { type: "never" },
+              },
+        subtasks: steps.map((step) => ({
+          ...(step.dueDate ? { dueDate: step.dueDate } : {}),
+        })),
+      },
+      new Date(now),
+    );
+  }
+  const dateIssues = issuesForRepeat();
+
+  function notifyValidation(message: string) {
+    toast.error(message, { id: "task-validation" });
+  }
+  function changeValue(setter: (value: string) => void) {
+    return (value: string) => {
+      setErrors({});
+      setError(null);
+      setter(value);
+    };
+  }
+
+  function changeDuration(value: string) {
+    setErrors({});
+    setError(null);
+    setDuration(value);
+    if (value === "none") {
+      setCustomHours("");
+      setCustomMinutes("");
+    } else if (value !== "custom") {
+      setCustomHours(String(Math.floor(Number(value) / 60)));
+      setCustomMinutes(String(Number(value) % 60));
+    }
+  }
+
+  function addStep() {
+    if (!stepTitle.trim() || steps.length >= 30) return;
+    updateSteps((previous) => [
+      ...previous,
+      { key: crypto.randomUUID(), title: stepTitle.trim(), dueDate: "" },
+    ]);
+    setStepTitle("");
+  }
+  function updateSteps(update: (previous: Step[]) => Step[]) {
+    setErrors({});
+    setError(null);
+    setSteps(update);
+  }
+  function moveStep(index: number, direction: number) {
+    updateSteps((previous) => {
+      const next = [...previous];
+      [next[index], next[index + direction]] = [
+        next[index + direction],
+        next[index],
+      ];
+      return next;
+    });
+  }
+
+  async function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!canSubmit || inFlightRef.current) return;
+    if (duration !== "none") {
+      const estimate = durationInputSchema.safeParse({
+        hours: customHours,
+        minutes: customMinutes,
+      });
+      if (!estimate.success) {
+        const message = estimate.error.issues[0].message;
+        setErrors({ estimatedMinutes: message });
+        notifyValidation(message);
+        return;
+      }
+    }
+    requestIdRef.current ??= crypto.randomUUID();
+    const startAt = new Date(`${startDate}T${startTime}`).getTime();
+    const endAt = new Date(`${endDate}T${endTime}`).getTime();
+    // Date controls use the browser timezone shown below. Reject nonexistent DST times.
+    if (
+      scheduleType === "fixed" &&
+      [
+        [startDate, startTime, startAt],
+        [endDate, endTime, endAt],
+      ].some(([date, time, at]) => {
+        const value = new Date(Number(at));
+        return (
+          !Number.isFinite(Number(at)) ||
+          localDateKey(value, timezone) !== date ||
+          `${String(value.getHours()).padStart(2, "0")}:${String(value.getMinutes()).padStart(2, "0")}` !==
+            time
+        );
+      })
+    ) {
+      const message = "Choose valid dates and times in your timezone.";
+      setErrors({ schedule: message });
+      notifyValidation(message);
+      return;
+    }
+    const allSteps = [
+      ...steps.map(({ title, dueDate }) => ({
+        title,
+        ...(dueDate ? { dueDate } : {}),
+      })),
+      ...(stepTitle.trim() ? [{ title: stepTitle.trim() }] : []),
+    ];
+    const parsed = createTaskSchema.safeParse({
+      title,
+      description,
+      ...(domainId !== "uncategorized" ? { domainId } : {}),
+      priority,
+      schedule:
+        scheduleType === "fixed"
+          ? { type: "fixed", startAt, endAt }
+          : { type: "flexible", ...(dueDate ? { dueDate } : {}) },
+      timezone,
+      ...(duration !== "none"
+        ? {
+            estimatedMinutes:
+              Number(customHours || 0) * 60 + Number(customMinutes || 0),
+          }
+        : {}),
+      subtasks: allSteps,
+      requestId: requestIdRef.current,
+      ...(repeat !== "none"
+        ? {
+            recurrence: {
+              frequency: repeat,
+              interval: repeat === "custom" ? Number(repeatInterval) : 1,
+              unit:
+                repeat === "daily"
+                  ? "day"
+                  : repeat === "weekly"
+                    ? "week"
+                    : repeat === "monthly"
+                      ? "month"
+                      : repeatUnit,
+              end:
+                repeatEnd === "date"
+                  ? { type: "date", date: repeatEndDate }
+                  : repeatEnd === "count"
+                    ? { type: "count", count: Number(repeatCount) }
+                    : { type: "never" },
+            },
+          }
+        : {}),
+    });
+    if (!parsed.success) {
+      setErrors(
+        Object.fromEntries(
+          parsed.error.issues.map((issue) => [
+            String(issue.path[0]),
+            issue.message,
+          ]),
+        ),
+      );
+      notifyValidation(parsed.error.issues[0].message);
+      return;
+    }
+    setErrors({});
+    setError(null);
+    inFlightRef.current = true;
+    setSaving(true);
+    try {
+      await onCreate(parsed.data);
+      onOpenChange(false);
+    } catch (cause) {
+      const message =
+        cause instanceof ConvexError && typeof cause.data === "string"
+          ? cause.data
+          : "We couldn't create this task. Your changes are still here; please try again.";
+      setError(message);
+      toast.error(message, { id: "task-save-error" });
+    } finally {
+      inFlightRef.current = false;
+      setSaving(false);
+    }
+  }
+
+  return (
+    <form
+      onSubmit={submit}
+      noValidate
+      onChangeCapture={() => {
+        setErrors({});
+        setError(null);
+      }}
+      className="flex min-h-0 flex-1 flex-col"
+      aria-busy={saving}
+    >
+      <fieldset
+        disabled={saving}
+        className="min-h-0 flex-1 space-y-4 overflow-y-auto px-5 py-5"
+      >
+        <div className="space-y-1.5">
+          <label htmlFor="task-title" className="text-xs font-medium">
+            Task title <span className="text-primary">*</span>
+          </label>
+          <Input
+            id="task-title"
+            required
+            maxLength={200}
+            value={title}
+            onChange={(event) => {
+              setTitle(event.target.value);
+              setErrors((previous) => ({ ...previous, title: "" }));
+            }}
+            placeholder="e.g., Prepare the project proposal"
+            className="min-h-10 bg-muted/40"
+            aria-invalid={!!errors.title}
+            aria-describedby={errors.title ? "task-title-error" : undefined}
+          />
+          {errors.title && (
+            <p id="task-title-error" className="text-xs text-destructive">
+              {errors.title}
+            </p>
+          )}
+        </div>
+        <div className="space-y-1.5">
+          <label htmlFor="task-description" className="text-xs font-medium">
+            Description{" "}
+            <span className="font-normal text-muted-foreground">
+              (Optional)
+            </span>
+          </label>
+          <Textarea
+            id="task-description"
+            maxLength={5000}
+            value={description}
+            onChange={(event) => setDescription(event.target.value)}
+            placeholder="Add context and details..."
+            className="min-h-20 max-h-48 resize-y bg-muted/40"
+          />
+        </div>
+        <div className="grid grid-cols-[100px_minmax(0,1fr)] items-center gap-3">
+          <label
+            id="task-domain-label"
+            className="flex items-center gap-2 text-xs text-muted-foreground"
+          >
+            <Layers className="size-4" aria-hidden="true" />
+            Domain
+          </label>
+          <TaskSelect
+            label="Domain"
+            value={domainId}
+            onChange={setDomainId}
+            disabled={!domains}
+            options={[
+              { value: "uncategorized", label: "Uncategorized" },
+              ...(domains ?? []).map((domain) => ({
+                value: domain._id,
+                label: <DomainLabel {...domain} />,
+              })),
+            ]}
+          />
+        </div>
+        {hasMoreDomains && (
+          <Button
+            variant="ghost"
+            type="button"
+            className="min-h-8 text-xs"
+            disabled={loadingMoreDomains}
+            onClick={onLoadMoreDomains}
+          >
+            {loadingMoreDomains ? "Loading…" : "Load more domains"}
+          </Button>
+        )}
+        {domains?.length === 0 && (
+          <p className="text-[11px] text-muted-foreground">
+            No domains yet. You can create one separately from the Domains menu.
+          </p>
+        )}
+        <div className="grid grid-cols-[100px_minmax(0,1fr)] items-center gap-3">
+          <span className="flex items-center gap-2 text-xs text-muted-foreground">
+            <Flag className="size-4" aria-hidden="true" />
+            Priority
+          </span>
+          <TaskSelect
+            label="Priority"
+            value={priority}
+            onChange={setPriority}
+            options={priorities.map((option) => ({
+              value: option.value,
+              label: <PriorityLabel value={option.value} />,
+            }))}
+          />
+        </div>
+        <div className="space-y-3 border-t border-border pt-4">
+          <p className="flex items-center gap-2 text-xs font-medium">
+            <CalendarDays className="size-4 text-primary" aria-hidden="true" />
+            Schedule
+          </p>
+          <div
+            className="grid grid-cols-2 gap-1 rounded-lg bg-muted p-1"
+            role="group"
+            aria-label="Schedule type"
+          >
+            {(
+              [
+                ["flexible", "Flexible"],
+                ["fixed", "Fixed Time"],
+              ] as const
+            ).map(([value, label]) => (
+              <Button
+                key={value}
+                type="button"
+                variant={scheduleType === value ? "default" : "ghost"}
+                aria-pressed={scheduleType === value}
+                className="min-h-9"
+                onClick={() => {
+                  setErrors({});
+                  setError(null);
+                  setScheduleType(value);
+                }}
+              >
+                {label}
+              </Button>
+            ))}
+          </div>
+          {scheduleType === "fixed" ? (
+            <div className="grid grid-cols-2 gap-3">
+              <DateField
+                label="Start date"
+                type="date"
+                value={startDate}
+                onChange={changeValue(setStartDate)}
+                minDate={repeat !== "none" ? today : undefined}
+                required
+              />
+              <DateField
+                label="Start time"
+                type="time"
+                value={startTime}
+                onChange={changeValue(setStartTime)}
+                minTime={
+                  repeat !== "none" && startDate === today
+                    ? currentTime
+                    : undefined
+                }
+                required
+              />
+              <DateField
+                label="End date"
+                type="date"
+                value={endDate}
+                onChange={changeValue(setEndDate)}
+                minDate={
+                  repeat !== "none" && today > startDate
+                    ? today
+                    : startDate || undefined
+                }
+                required
+              />
+              <DateField
+                label="End time"
+                type="time"
+                value={endTime}
+                onChange={changeValue(setEndTime)}
+                minTime={minimumEndTime}
+                required
+              />
+            </div>
+          ) : (
+            <DateField
+              label="Due date (Optional)"
+              type="date"
+              value={dueDate}
+              onChange={changeValue(setDueDate)}
+              minDate={repeat !== "none" ? today : undefined}
+            />
+          )}
+          <p className="text-[11px] text-muted-foreground">
+            Timezone: {timezone}.{" "}
+            {scheduleType === "flexible"
+              ? "No fixed time slot is reserved."
+              : "Your chosen time window is saved as entered."}
+          </p>
+          {errors.schedule && (
+            <p role="alert" className="text-xs text-destructive">
+              {errors.schedule}
+            </p>
+          )}
+        </div>
+        <div className="grid grid-cols-[100px_minmax(0,1fr)] items-center gap-3">
+          <span className="flex items-center gap-2 text-xs text-muted-foreground">
+            <Clock3 className="size-4" aria-hidden="true" />
+            Estimate
+          </span>
+          <TaskSelect
+            label="Estimated duration"
+            value={duration}
+            onChange={changeDuration}
+            options={[
+              { value: "none", label: "No estimate" },
+              ...[15, 30, 45, 60, 120].map((minutes) => ({
+                value: String(minutes),
+                label:
+                  minutes >= 60
+                    ? `${minutes / 60} ${minutes === 60 ? "hour" : "hours"}`
+                    : `${minutes} minutes`,
+              })),
+              { value: "custom", label: "Custom" },
+            ]}
+          />
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <label className="flex min-w-0 flex-col gap-1.5 text-xs">
+            Hours
+            <Input
+              aria-label="Estimated hours"
+              type="number"
+              min={0}
+              max={24}
+              step={1}
+              placeholder="0"
+              value={customHours}
+              onChange={(event) => {
+                setDuration("custom");
+                setCustomHours(event.target.value);
+              }}
+              className="min-h-9 min-w-0 bg-muted/40"
+            />
+          </label>
+          <label className="flex min-w-0 flex-col gap-1.5 text-xs">
+            Minutes
+            <Input
+              aria-label="Estimated minutes"
+              type="number"
+              min={0}
+              max={59}
+              step={1}
+              placeholder="0"
+              value={customMinutes}
+              onChange={(event) => {
+                setDuration("custom");
+                setCustomMinutes(event.target.value);
+              }}
+              className="min-h-9 min-w-0 bg-muted/40"
+            />
+          </label>
+        </div>
+        {errors.estimatedMinutes && (
+          <p role="alert" className="text-xs text-destructive">
+            {errors.estimatedMinutes}
+          </p>
+        )}
+        <div className="space-y-2 border-t border-border pt-4">
+          <div className="flex items-center justify-between">
+            <h3 className="text-xs font-medium">Subtasks ({steps.length})</h3>
+            <span className="text-[11px] text-muted-foreground">
+              Optional · up to 30
+            </span>
+          </div>
+          {steps.length > 0 && (
+            <ol
+              aria-label="Subtasks"
+              className="max-h-72 divide-y divide-border overflow-y-auto overscroll-contain rounded-lg border border-border"
+            >
+              {steps.map((step, index) => (
+                <li
+                  key={step.key}
+                  className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-x-2 gap-y-1 p-2 sm:grid-cols-[minmax(0,1fr)_auto_auto]"
+                >
+                  <Textarea
+                    aria-label={`Subtask ${index + 1} title`}
+                    rows={1}
+                    required
+                    maxLength={200}
+                    value={step.title}
+                    onChange={(event) =>
+                      updateSteps((previous) =>
+                        previous.map((item) =>
+                          item.key === step.key
+                            ? { ...item, title: event.target.value }
+                            : item,
+                        ),
+                      )
+                    }
+                    className="col-start-1 row-start-1 !min-h-8 min-w-0 resize-none border-transparent bg-transparent px-2 py-1.5 text-sm leading-5"
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter" && !event.shiftKey) {
+                        event.preventDefault();
+                        document.getElementById("new-subtask-title")?.focus();
+                      }
+                    }}
+                  />
+                  <div className="col-start-1 row-start-2 w-fit max-w-full sm:col-start-2 sm:row-start-1">
+                    <DatePicker
+                      minDate={repeat !== "none" ? today : undefined}
+                      ariaLabel={`Subtask ${index + 1} date (Optional)`}
+                      placeholder="Add date"
+                      className="!w-auto max-w-36 justify-start border-transparent bg-muted/40 text-xs"
+                      value={step.dueDate}
+                      onChange={(value) =>
+                        updateSteps((previous) =>
+                          previous.map((item) =>
+                            item.key === step.key
+                              ? { ...item, dueDate: value }
+                              : item,
+                          ),
+                        )
+                      }
+                    />
+                  </div>
+                  <div className="col-start-2 row-start-1 sm:col-start-3">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger
+                        render={
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            aria-label={`Subtask ${index + 1} options`}
+                          />
+                        }
+                      >
+                        <MoreHorizontal aria-hidden="true" />
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem
+                          disabled={index === 0}
+                          onClick={() => moveStep(index, -1)}
+                        >
+                          <ArrowUp aria-hidden="true" />
+                          Move up
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          disabled={index === steps.length - 1}
+                          onClick={() => moveStep(index, 1)}
+                        >
+                          <ArrowDown aria-hidden="true" />
+                          Move down
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          variant="destructive"
+                          onClick={() =>
+                            updateSteps((previous) =>
+                              previous.filter((item) => item.key !== step.key),
+                            )
+                          }
+                        >
+                          <Trash2 aria-hidden="true" />
+                          Remove
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+                </li>
+              ))}
+            </ol>
+          )}
+          <div className="flex items-center gap-2">
+            <Input
+              id="new-subtask-title"
+              aria-label="New subtask title"
+              maxLength={200}
+              value={stepTitle}
+              disabled={steps.length >= 30}
+              onChange={(event) => setStepTitle(event.target.value)}
+              placeholder="Add a step (press Enter)…"
+              className="min-h-9 min-w-0"
+              onKeyDown={(event) => {
+                if (event.key === "Enter") {
+                  event.preventDefault();
+                  addStep();
+                }
+              }}
+            />
+            <Button
+              type="button"
+              variant="ghost"
+              aria-label="Add Step"
+              disabled={!stepTitle.trim() || steps.length >= 30}
+              onClick={addStep}
+            >
+              <Plus aria-hidden="true" />
+            </Button>
+          </div>
+          {errors.subtasks && (
+            <p role="alert" className="text-xs text-destructive">
+              {errors.subtasks}
+            </p>
+          )}
+        </div>
+        <div className="space-y-2 border-t border-border pt-4">
+          <div className="grid grid-cols-[100px_minmax(0,1fr)] items-center gap-3">
+            <span className="flex items-center gap-2 text-xs text-muted-foreground">
+              <Repeat2 className="size-4" aria-hidden="true" />
+              Repeat
+            </span>
+            <TaskSelect
+              label="Repeat"
+              value={repeat}
+              onChange={(value) => {
+                setErrors({});
+                setError(null);
+                setRepeat(value);
+                const issue = issuesForRepeat(value)[0];
+                if (issue) notifyValidation(issue.message);
+                else toast.dismiss("task-validation");
+              }}
+              options={[
+                { value: "none", label: "Does not repeat" },
+                ...["Daily", "Weekly", "Monthly", "Custom"].map((label) => ({
+                  value: label.toLowerCase(),
+                  label,
+                })),
+              ]}
+            />
+          </div>
+        </div>
+        {repeat !== "none" && (
+          <div className="space-y-3">
+            {repeat === "custom" && (
+              <div className="grid grid-cols-2 gap-3">
+                <label className="flex min-w-0 flex-col gap-1.5 text-xs">
+                  Every
+                  <Input
+                    aria-label="Repeat interval"
+                    type="number"
+                    min={1}
+                    max={365}
+                    step={1}
+                    required
+                    value={repeatInterval}
+                    onChange={(event) => setRepeatInterval(event.target.value)}
+                    className="min-h-10 bg-muted/40"
+                  />
+                </label>
+                <div className="flex min-w-0 flex-col gap-1.5">
+                  <p className="text-xs">Unit</p>
+                  <TaskSelect
+                    label="Repeat unit"
+                    value={repeatUnit}
+                    onChange={setRepeatUnit}
+                    options={[
+                      { value: "day", label: "Days" },
+                      { value: "week", label: "Weeks" },
+                      { value: "month", label: "Months" },
+                    ]}
+                  />
+                </div>
+              </div>
+            )}
+            <div className="grid grid-cols-[100px_minmax(0,1fr)] items-center gap-3">
+              <span className="text-xs text-muted-foreground">Ends</span>
+              <TaskSelect
+                label="Repeat ends"
+                value={repeatEnd}
+                onChange={changeValue(setRepeatEnd)}
+                options={[
+                  { value: "never", label: "Never" },
+                  { value: "date", label: "On a date" },
+                  { value: "count", label: "After occurrences" },
+                ]}
+              />
+            </div>
+            {repeatEnd === "date" && (
+              <DateField
+                label="Repeat end date"
+                type="date"
+                value={repeatEndDate}
+                onChange={changeValue(setRepeatEndDate)}
+                minDate={minimumRepeatEnd}
+                required
+              />
+            )}
+            {repeatEnd === "count" && (
+              <label className="flex flex-col gap-1.5 text-xs">
+                Occurrences (including this task)
+                <Input
+                  aria-label="Repeat occurrences"
+                  type="number"
+                  min={1}
+                  max={1000}
+                  step={1}
+                  required
+                  value={repeatCount}
+                  onChange={(event) => setRepeatCount(event.target.value)}
+                  className="min-h-10 bg-muted/40"
+                />
+              </label>
+            )}
+            <p className="text-[11px] leading-5 text-muted-foreground">
+              Completing this task creates the next occurrence.
+            </p>
+          </div>
+        )}
+        {dateIssues.length > 0 && (
+          <ul aria-live="polite" className="space-y-1 text-xs text-destructive">
+            {dateIssues.map((issue, index) => (
+              <li key={index}>{issue.message}</li>
+            ))}
+          </ul>
+        )}
+        {errors.recurrence && (
+          <p role="alert" className="text-xs text-destructive">
+            {errors.recurrence}
+          </p>
+        )}
+        {!canSubmit && (
+          <p role="status" className="text-xs text-muted-foreground">
+            Waiting for your secure workspace connection.
+          </p>
+        )}
+        {error && (
+          <p
+            role="alert"
+            className="rounded-lg bg-destructive/10 p-3 text-sm text-destructive"
+          >
+            {error}
+          </p>
+        )}
+      </fieldset>
+      <footer className="flex shrink-0 items-center justify-between gap-3 border-t border-border px-5 pt-3 pb-[max(.75rem,env(safe-area-inset-bottom))]">
+        <Button
+          type="button"
+          variant="ghost"
+          disabled={saving}
+          className="min-h-10 px-3"
+          onClick={() => onOpenChange(false)}
+        >
+          Cancel
+        </Button>
+        <Button
+          type="submit"
+          disabled={!title.trim() || !canSubmit || saving}
+          className="min-h-10 gap-2 px-4"
+        >
+          {saving ? (
+            <LoaderCircle className="animate-spin" aria-hidden="true" />
+          ) : (
+            <Check aria-hidden="true" />
+          )}
+          {saving ? "Creating…" : "Create Task"}
+        </Button>
+      </footer>
+    </form>
+  );
+}
+
+function DateField({
+  label,
+  value,
+  onChange,
+  type,
+  required,
+  minDate,
+  minTime,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  type: "date" | "time";
+  required?: boolean;
+  minDate?: string;
+  minTime?: string;
+}) {
+  return (
+    <label className="flex min-w-0 flex-col gap-1.5 text-[11px] text-muted-foreground">
+      {label}
+      {type === "date" ? (
+        <DatePicker
+          value={value}
+          onChange={onChange}
+          ariaLabel={label}
+          required={required}
+          minDate={minDate}
+          placeholder="Choose date"
+          className="min-h-9 min-w-0 bg-muted/40 text-xs text-foreground"
+        />
+      ) : (
+        <TimePicker
+          ariaLabel={label}
+          required={required}
+          minTime={minTime}
+          value={value}
+          onChange={onChange}
+          placeholder="Choose time"
+          className="min-h-9 min-w-0 max-w-full bg-muted/40 text-foreground"
+        />
+      )}
+    </label>
+  );
+}

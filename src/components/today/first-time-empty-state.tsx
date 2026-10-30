@@ -27,11 +27,11 @@ export function FirstTimeEmptyState({
     >
       <h1
         id="first-time-heading"
-        className="text-balance text-2xl font-semibold tracking-tight text-foreground sm:text-3xl"
+        className="text-balance text-[22px] font-semibold tracking-tight text-foreground sm:text-2xl"
       >
         Your day is open and clear
       </h1>
-      <p className="mt-3 max-w-md text-pretty text-sm leading-7 text-muted-foreground sm:text-base">
+      <p className="mt-3 max-w-lg text-pretty text-sm leading-6 text-muted-foreground">
         Start by creating a task or organizing your work into a domain.
       </p>
       <div className="mt-7 flex w-full max-w-xs flex-col gap-3 sm:w-auto sm:max-w-none sm:flex-row">

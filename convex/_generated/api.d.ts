@@ -8,13 +8,25 @@
  * @module
  */
 
+import type * as domainFields from "../domainFields.js";
+import type * as domains from "../domains.js";
+import type * as taskFields from "../taskFields.js";
+import type * as taskRecurrence from "../taskRecurrence.js";
+import type * as tasks from "../tasks.js";
+
 import type {
   ApiFromModules,
   FilterApi,
   FunctionReference,
 } from "convex/server";
 
-declare const fullApi: ApiFromModules<{}>;
+declare const fullApi: ApiFromModules<{
+  domainFields: typeof domainFields;
+  domains: typeof domains;
+  taskFields: typeof taskFields;
+  taskRecurrence: typeof taskRecurrence;
+  tasks: typeof tasks;
+}>;
 
 /**
  * A utility for referencing Convex functions in your app's public API.

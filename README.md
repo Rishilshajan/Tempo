@@ -45,7 +45,7 @@ npx convex login
 npx convex env set CLERK_FRONTEND_API_URL <matching-Clerk-Frontend-API-URL> --deployment giddy-corgi-8
 ```
 
-This checkout is linked to the existing `giddy-corgi-8` development deployment, and its auth configuration has been synced with the `noble-ferret-167` issuer. Use `npx convex dev --once --typecheck enable` for subsequent syncs. Do not create a different project or anonymous local backend. Existing remote functions must be inspected before pushing a new local function set. No task tables or task functions are introduced by this integration.
+This checkout is linked to the existing `giddy-corgi-8` development deployment, and its auth configuration has been synced with the `noble-ferret-167` issuer. Use `npx convex dev --once --typecheck enable` for subsequent syncs. Do not create a different project or anonymous local backend. Existing remote functions must be inspected before pushing a new local function set. Domain and task functions use this same authenticated deployment.
 
 ## Routes
 
@@ -54,24 +54,45 @@ This checkout is linked to the existing `giddy-corgi-8` development deployment, 
 | `/` | Public landing page |
 | `/login/[[...login]]` | Sign-in and Clerk's additional flow steps |
 | `/signup/[[...signup]]` | Sign-up and Clerk's additional flow steps |
-| `/dashboard` | Protected Today empty-state foundation, with sign out |
+| `/dashboard` | Protected Today task list and creation sheets |
+| `/dashboard?view=all` | My Tasks: accumulated upcoming, current, and completed tasks |
 | `/api/health` | Database-independent health response |
 
-`/sign-in` and `/sign-up` are aliases for the existing `/login` and `/signup` URLs. Former task routes redirect to `/dashboard`. The installed PWA also starts at `/dashboard`.
+`/sign-in` and `/sign-up` are aliases for the existing `/login` and `/signup` URLs. `/my-tasks` redirects to `/dashboard?view=all`; other former task routes redirect to `/dashboard`. The installed PWA also starts at `/dashboard`.
 
 ## Current scope
 
-Today currently provides a responsive shell and a minimal empty state with Create Task and Create Domain actions. At the user's request this step is UI only: the actions show a coming-next notification, search and future navigation are disabled, and no creation forms or product queries are introduced. The reusable empty-state component renders only when both supplied totals are zero; the page supplies explicit zero totals until task/domain persistence and returning-user content are implemented.
+Today provides a responsive shell and a minimal empty state with Create Task and Create Domain actions. Create Domain opens the shared right-side sheet, with name, optional purpose, seven colors, eight Lucide icons, and a live badge preview. Create Task opens a compact sheet with title, description, optional domain, priority, flexible/fixed scheduling, estimated hours/minutes, and dated or undated subtasks. The sheet reuses Select, DatePicker, Calendar, TimePicker, and Sheet. Search and remaining navigation are reserved for later steps.
+
+Domains persist in Convex through `domains.create`, `domains.update`, `domains.remove`, and an indexed, paginated `domains.list` query. Every operation requires a verified Clerk identity; ownership comes from its token identifier, never a user ID supplied by the browser. Update and delete also verify the stored owner. Reactive results update plain icon-and-text navigation rows in the sidebar and mobile More sheet. Their three-dot menus reuse the existing shared DropdownMenu, editing reuses the domain sheet, and deletion requires confirmation. Domains are classifications, so Today does not display a domain grid or domain-created onboarding content. Selecting a domain filters its tasks. Tasks retain their content if a domain is deleted and display as Uncategorized.
+
+Tasks persist in a single `tasks` table, with up to 30 embedded subtasks saved atomically. `tasks.create` validates domain ownership and uses an indexed submission UUID for idempotency. `src/lib/validation/task.ts` shares Zod rules between the sheet and mutation, including calendar dates, timezone, end-after-start, and an estimate that fits the fixed window. Estimates store whole minutes; the UI accepts hours and minutes. Completion and subtask completion timestamps are saved through owner-checked `tasks.setCompleted`.
+
+`tasks.list` uses bounded pagination and owner indexes. My Tasks includes upcoming and completed work. Today shows open tasks with a work date on or before the viewer's local date, plus undated flexible work; unfinished tasks remain visible without copying rows or changing their saved schedule/deadline. Future work stays in My Tasks until its date. Domain views show all tasks in that domain. `tasks.hasAny` prevents the initial onboarding state from appearing for an account whose tasks are only future-dated or completed.
+
+Repeat supports Daily, Weekly, Monthly, and Custom intervals in days/weeks/months, with Never, On a date, and After N occurrences endings. Completion creates one next occurrence atomically with the completion update. Each occurrence has a stable series root, ordinal, and idempotency key; undo/re-complete retains the already-created next occurrence. Count limits include the first task, and end dates are inclusive. Monthly dates stay anchored to the original day, clamping to the shorter month's last day. Fixed-time repeats preserve the original local start time and elapsed duration across DST; nonexistent times move forward and ambiguous times use the earlier occurrence. Subtasks reset and retain relative date offsets. Existing tasks without repeat settings remain ordinary tasks.
+
+Draft persistence, natural-language drafting, overlap detection, and task-detail activity remain future work. Fixed-time overlaps are saved as entered. No AI or draft controls are presented.
+
+Recurring creation blocks past first dates, elapsed fixed-time slots, past subtask dates, and an end date before the first occurrence. The shared Zod checks run on both client and server using the task's timezone; date/time pickers disable invalid options. Selecting Repeat after entering invalid dates keeps the values and explains the problem. Validation and save failures use a deduplicated toast plus inline feedback. Ordinary non-repeating tasks retain support for past dates. Retry lookup precedes clock-sensitive checks so a successful save can be retried safely after midnight.
+
+Late recurring completions advance to the next valid calendar slot rather than generating expired tasks or dated subtasks. This uses a bounded search, preserves the series anchor and relative subtask offsets, respects inclusive end dates, and counts actual generated occurrences separately from skipped slots. Existing records use optional recurrence-slot metadata for compatibility.
+
+`src/lib/validation/domain.ts` shares Zod rules between the form and mutation: trimmed name (1–80 characters), optional purpose (up to 500), supported color/icon identifiers, and a UUID submission identifier. Convex also validates arguments and results at the API boundary. Submission identifiers make retries idempotent. Errors keep the sheet open and preserve its values. Schema and functions are synced to the existing development deployment; live creation should be checked using your signed-in session.
 
 The old Supabase authentication, Drizzle/Postgres integration, task/domain/settings screens, server actions, database migration files, push delivery, and scheduled GitHub roll-forward workflow have been removed from this source tree. No remote database, account, deployment, or hosted scheduled job was deleted or changed. A preexisting `.env` was backed up locally to the ignored `.env.legacy.local` before disconnecting its old variables. That backup is not loaded by Next.js.
 
-The documents under `docs/` describe the previous application and are historical references, not the current architecture. Build the next product screens incrementally from this foundation. Convex authentication wiring is present; product tables and task functions remain to be built. Existing users and data have not been migrated into Clerk.
+The documents under `docs/` describe the previous application and are historical references, not the current architecture. Build subsequent product screens incrementally from this foundation. Existing legacy users and data have not been migrated into Clerk or Convex.
 
 ## Checks
 
 - `npm run lint`
 - `npx tsc --noEmit`
 - `npm run build`
+- `node scripts/check-domain-validation.mjs` (Node 22.18+ with native TypeScript stripping)
+- `node scripts/check-task-validation.mjs` (Node 22.18+)
+- `node scripts/check-task-handlers.mjs` (local handler tests using the existing Convex/esbuild toolchain; no live writes)
+- `node scripts/check-recurrence.mjs` (recurrence dates, ending rules, and DST)
 
 The development and production scripts use Next.js's Webpack compiler because Turbopack workers fail in this Windows environment. Next/font downloads Inter at build time, so the builder needs access to Google Fonts.
 
