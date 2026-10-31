@@ -1,4 +1,5 @@
 "use client";
+import { MyTasksBoard } from "@/components/tasks/my-tasks-board";
 
 import { TempoLogo } from "@/components/brand/tempo-logo";
 import Link from "next/link";
@@ -330,16 +331,11 @@ export function TodaySurface({
           id="today-content"
           className="w-full min-w-0 px-4 pb-28 pt-6 sm:px-8 lg:pb-10"
         >
-          {taskView !== "today" && (
+          {taskView === "domain" && (
             <div className="flex items-center justify-between gap-3">
               <div className="flex min-w-0 items-center gap-2 px-2 text-xs font-medium text-primary">
                 {selectedDomain ? (
                   <DomainLabel {...selectedDomain} />
-                ) : taskView === "all" ? (
-                  <>
-                    <CircleCheck size={16} aria-hidden="true" />
-                    <span>My Tasks</span>
-                  </>
                 ) : (
                   <>
                     <Sun size={16} aria-hidden="true" />
@@ -388,20 +384,28 @@ export function TodaySurface({
                 onSetProgress={onSetTaskProgress}
               />
             ))
+          ) : taskView === "all" ? (
+            <MyTasksBoard
+              tasks={tasks ?? []}
+              domains={domains}
+              incomplete={hasMoreTasks}
+              onCreate={openCreateTask}
+              onCreateForDate={(date, startAt) => {
+                setTaskPrefill({ date, startAt });
+                setTaskSheetOpen(true);
+              }}
+              onOpen={(task) => setDetailId(task._id)}
+              onSetCompleted={onSetTaskCompleted}
+              onSetProgress={onSetTaskProgress}
+            />
           ) : tasks && tasks.length > 0 ? (
             <section aria-labelledby="tasks-heading" className="mt-7">
               <h1
                 id="tasks-heading"
                 className="mb-2 break-words text-[22px] font-semibold tracking-tight sm:text-2xl"
               >
-                {selectedDomain?.name ??
-                  (taskView === "all" ? "My Tasks" : "Today")}
+                {selectedDomain?.name ?? "Tasks"}
               </h1>
-              {taskView === "all" && (
-                <p className="mb-6 text-sm text-muted-foreground">
-                  All your tasks, including upcoming and completed work.
-                </p>
-              )}
               <div className="mt-5">
                 <TaskList
                   tasks={tasks}

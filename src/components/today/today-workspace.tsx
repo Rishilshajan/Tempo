@@ -83,6 +83,12 @@ function ConnectedToday({
     { initialNumItems: 30 },
   );
 
+  const { status: taskStatus, loadMore: loadNextTasks } = taskQuery;
+  useEffect(() => {
+    if (selection.view === "all" && taskStatus === "CanLoadMore")
+      loadNextTasks(60);
+  }, [selection.view, taskStatus, loadNextTasks]);
+
   return (
     <TodaySurface
       todayLabel={currentLabel}

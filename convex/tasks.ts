@@ -3,6 +3,8 @@ import {
   paginationResultValidator,
 } from "convex/server";
 import { ConvexError, v } from "convex/values";
+import type { MutationCtx } from "./_generated/server";
+import type { Id } from "./_generated/dataModel";
 import { mutation, query } from "./_generated/server";
 import {
   taskInputFields,
@@ -232,38 +234,7 @@ export const setProgress = mutation({
     progress: v.union(v.literal("not_started"), v.literal("in_progress")),
   },
   returns: v.null(),
-  handler: async (ctx, { id, progress }) => {
-    const user = await ctx.auth.getUserIdentity();
-    if (!user) throw new ConvexError("Please sign in to update a task.");
-    const task = await ctx.db.get(id);
-    if (!task || task.ownerId !== user.tokenIdentifier)
-      throw new ConvexError("This task is not available.");
-    if (task.status === "open" && (task.progress ?? "not_started") === progress)
-      return null;
-    await ctx.db.patch(id, {
-      progress,
-      status: "open",
-      completedAt: undefined,
-      updatedAt: Date.now(),
-    });
-    await recordActivity(
-      ctx,
-      id,
-      user,
-      task.status === "completed" ? "task_reopened" : "status_changed",
-      progress === "in_progress"
-        ? "Status changed to In progress."
-        : "Status changed to Not started.",
-      {
-        before:
-          task.status === "completed"
-            ? "completed"
-            : (task.progress ?? "not_started"),
-        after: progress,
-      },
-    );
-    return null;
-  },
+  handler: applyTaskProgress,
 });
 
 export const setCompleted = mutation({
@@ -273,51 +244,95 @@ export const setCompleted = mutation({
     subtaskId: v.optional(v.string()),
   },
   returns: v.union(v.null(), v.id("tasks")),
-  handler: async (ctx, args) => {
-    const user = await ctx.auth.getUserIdentity();
-    if (!user) throw new ConvexError("Please sign in to update a task.");
-    const task = await ctx.db.get(args.id);
-    if (!task || task.ownerId !== user.tokenIdentifier)
-      throw new ConvexError("This task is not available.");
-    if (args.subtaskId) {
-      const rows = await normalizeSubtasks(ctx, task);
-      const step = rows.find(
-        (row) =>
-          String(row._id) === args.subtaskId || row.legacyId === args.subtaskId,
-      );
-      if (!step) throw new ConvexError("This step is not available.");
-      if ((step.completedAt !== undefined) === args.completed) return null;
-      await ctx.db.patch(step._id, {
-        completedAt: args.completed ? Date.now() : undefined,
-        updatedAt: Date.now(),
-      });
-      await ctx.db.patch(task._id, { updatedAt: Date.now() });
-      await recordActivity(
-        ctx,
-        task._id,
-        user,
-        args.completed ? "subtask_completed" : "subtask_reopened",
-        `Subtask ${args.completed ? "completed" : "reopened"}: ${step.title}`,
-        { subtaskId: step._id },
-      );
-    } else {
-      if ((task.status === "completed") === args.completed) return null;
-      await ctx.db.patch(args.id, {
-        status: args.completed ? "completed" : "open",
-        completedAt: args.completed ? Date.now() : undefined,
-        ...(!args.completed ? { progress: "not_started" as const } : {}),
-        updatedAt: Date.now(),
-      });
-      await recordActivity(
-        ctx,
-        task._id,
-        user,
-        args.completed ? "task_completed" : "task_reopened",
-        args.completed ? "Task completed." : "Task reopened.",
-      );
-      if (args.completed && task.status !== "completed")
-        return (await createNextOccurrence(ctx, task)) ?? null;
-    }
-    return null;
-  },
+  handler: applyTaskCompleted,
 });
+
+export async function applyTaskProgress(
+  ctx: MutationCtx,
+  {
+    id,
+    progress,
+  }: { id: Id<"tasks">; progress: "not_started" | "in_progress" },
+) {
+  const user = await ctx.auth.getUserIdentity();
+  if (!user) throw new ConvexError("Please sign in to update a task.");
+  const task = await ctx.db.get(id);
+  if (!task || task.ownerId !== user.tokenIdentifier)
+    throw new ConvexError("This task is not available.");
+  if (task.status === "open" && (task.progress ?? "not_started") === progress)
+    return null;
+  await ctx.db.patch(id, {
+    progress,
+    status: "open",
+    completedAt: undefined,
+    updatedAt: Date.now(),
+  });
+  await recordActivity(
+    ctx,
+    id,
+    user,
+    task.status === "completed" ? "task_reopened" : "status_changed",
+    progress === "in_progress"
+      ? "Status changed to In progress."
+      : "Status changed to Not started.",
+    {
+      before:
+        task.status === "completed"
+          ? "completed"
+          : (task.progress ?? "not_started"),
+      after: progress,
+    },
+  );
+  return null;
+}
+
+export async function applyTaskCompleted(
+  ctx: MutationCtx,
+  args: { id: Id<"tasks">; completed: boolean; subtaskId?: string },
+) {
+  const user = await ctx.auth.getUserIdentity();
+  if (!user) throw new ConvexError("Please sign in to update a task.");
+  const task = await ctx.db.get(args.id);
+  if (!task || task.ownerId !== user.tokenIdentifier)
+    throw new ConvexError("This task is not available.");
+  if (args.subtaskId) {
+    const rows = await normalizeSubtasks(ctx, task);
+    const step = rows.find(
+      (row) =>
+        String(row._id) === args.subtaskId || row.legacyId === args.subtaskId,
+    );
+    if (!step) throw new ConvexError("This step is not available.");
+    if ((step.completedAt !== undefined) === args.completed) return null;
+    await ctx.db.patch(step._id, {
+      completedAt: args.completed ? Date.now() : undefined,
+      updatedAt: Date.now(),
+    });
+    await ctx.db.patch(task._id, { updatedAt: Date.now() });
+    await recordActivity(
+      ctx,
+      task._id,
+      user,
+      args.completed ? "subtask_completed" : "subtask_reopened",
+      `Subtask ${args.completed ? "completed" : "reopened"}: ${step.title}`,
+      { subtaskId: step._id },
+    );
+  } else {
+    if ((task.status === "completed") === args.completed) return null;
+    await ctx.db.patch(args.id, {
+      status: args.completed ? "completed" : "open",
+      completedAt: args.completed ? Date.now() : undefined,
+      ...(!args.completed ? { progress: "not_started" as const } : {}),
+      updatedAt: Date.now(),
+    });
+    await recordActivity(
+      ctx,
+      task._id,
+      user,
+      args.completed ? "task_completed" : "task_reopened",
+      args.completed ? "Task completed." : "Task reopened.",
+    );
+    if (args.completed && task.status !== "completed")
+      return (await createNextOccurrence(ctx, task)) ?? null;
+  }
+  return null;
+}

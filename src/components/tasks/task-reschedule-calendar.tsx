@@ -17,10 +17,12 @@ import { detailError } from "./detail-shared";
 export function TaskRescheduleCalendar({
   task,
   disabled,
+  compact = false,
   onReschedule,
 }: {
   task: TaskRecord;
   disabled?: boolean;
+  compact?: boolean;
   onReschedule: (schedule: TaskRecord["schedule"]) => Promise<unknown>;
 }) {
   const [open, setOpen] = useState(false);
@@ -95,7 +97,11 @@ export function TaskRescheduleCalendar({
         render={
           <Button
             variant="outline"
-            className="min-h-11 px-3 text-xs"
+            className={
+              compact
+                ? "h-8 min-h-8 gap-1 rounded-full px-2 text-[10px]"
+                : "min-h-11 px-3 text-xs"
+            }
             disabled={disabled || saving}
           >
             <CalendarDays className="size-3.5" />

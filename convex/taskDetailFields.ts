@@ -58,6 +58,7 @@ export const activityMetadata = v.object({
 });
 export const activityType = v.union(
   v.literal("task_created"),
+  v.literal("task_reordered"),
   v.literal("title_changed"),
   v.literal("description_changed"),
   v.literal("status_changed"),

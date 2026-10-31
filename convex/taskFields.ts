@@ -55,6 +55,8 @@ export const taskInputFields = {
   recurrence: v.optional(recurrenceRule),
 };
 export const taskFields = {
+  boardPosition: v.optional(v.number()),
+  continuedOn: v.optional(v.string()),
   ...taskInputFields,
   subtasks: v.array(storedSubtask),
   subtasksNormalized: v.optional(v.boolean()),
