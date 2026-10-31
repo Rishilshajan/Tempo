@@ -9,13 +9,20 @@ import {
   weekdayDistance,
 } from "../src/lib/validation/recurrence";
 import { calendarDateSchema, localDateKey } from "../src/lib/validation/task";
+import {
+  normalizeSubtasks,
+  recordActivity,
+  subtaskSnapshot,
+} from "./taskDetailHelpers";
 
 function nextEligibleSlot(task: Doc<"tasks">, anchor: string, now: number) {
   const rule = task.recurrence;
   if (!rule || !calendarDateSchema.safeParse(anchor).success) return null;
   const today = localDateKey(new Date(now), task.timezone);
   const offsets = task.subtasks.flatMap((step) =>
-    step.dueDate ? [dateDistance(task.workDate || anchor, step.dueDate)] : [],
+    [step.dueDate, step.scheduledDate].flatMap((date) =>
+      date ? [dateDistance(task.workDate || anchor, date)] : [],
+    ),
   );
   const earliest = shiftDate(today, -Math.min(0, ...offsets));
   const afterCurrent = shiftDate(task.workDate || anchor, 1);
@@ -73,6 +80,8 @@ export async function createNextOccurrence(
   task: Doc<"tasks">,
 ) {
   if (!task.recurrence || task.nextOccurrenceId) return;
+  task = { ...task, subtasks: await subtaskSnapshot(ctx, task) };
+  if (!task.recurrence) return;
   const anchor = task.recurrenceAnchorDate ?? task.workDate;
   const ordinal = (task.recurrenceOrdinal ?? 1) + 1;
   if (
@@ -138,6 +147,9 @@ export async function createNextOccurrence(
       id: `${requestId}-${index}`,
       title: step.title,
       ...(step.dueDate ? { dueDate: shiftDate(step.dueDate, shift) } : {}),
+      ...(step.scheduledDate
+        ? { scheduledDate: shiftDate(step.scheduledDate, shift) }
+        : {}),
     })),
     ownerId: task.ownerId,
     requestId,
@@ -152,6 +164,16 @@ export async function createNextOccurrence(
       ? { recurrenceStartAt: task.recurrenceStartAt }
       : {}),
   });
+  const created = await ctx.db.get(nextId);
+  if (created) await normalizeSubtasks(ctx, created);
+  await recordActivity(
+    ctx,
+    nextId,
+    await ctx.auth.getUserIdentity(),
+    "task_created",
+    "Recurring task created.",
+    { previousTaskId: task._id },
+  );
   await ctx.db.patch(task._id, { nextOccurrenceId: nextId });
   return nextId;
 }

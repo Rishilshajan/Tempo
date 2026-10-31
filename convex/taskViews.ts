@@ -1,5 +1,6 @@
 import type { Doc } from "./_generated/dataModel";
 import type { QueryCtx } from "./_generated/server";
+import { subtaskSnapshot } from "./taskDetailHelpers";
 
 export async function toTaskView(
   ctx: Pick<QueryCtx, "db">,
@@ -10,6 +11,7 @@ export async function toTaskView(
   void requestId;
   return {
     ...view,
+    subtasks: await subtaskSnapshot(ctx, task),
     domain:
       domain && domain.ownerId === ownerId
         ? { name: domain.name, color: domain.color, icon: domain.icon }

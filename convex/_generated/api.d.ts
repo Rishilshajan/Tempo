@@ -11,6 +11,9 @@
 import type * as dashboard from "../dashboard.js";
 import type * as domainFields from "../domainFields.js";
 import type * as domains from "../domains.js";
+import type * as taskDetailFields from "../taskDetailFields.js";
+import type * as taskDetailHelpers from "../taskDetailHelpers.js";
+import type * as taskDetails from "../taskDetails.js";
 import type * as taskFields from "../taskFields.js";
 import type * as taskRecurrence from "../taskRecurrence.js";
 import type * as taskViews from "../taskViews.js";
@@ -27,6 +30,9 @@ declare const fullApi: ApiFromModules<{
   dashboard: typeof dashboard;
   domainFields: typeof domainFields;
   domains: typeof domains;
+  taskDetailFields: typeof taskDetailFields;
+  taskDetailHelpers: typeof taskDetailHelpers;
+  taskDetails: typeof taskDetails;
   taskFields: typeof taskFields;
   taskRecurrence: typeof taskRecurrence;
   taskViews: typeof taskViews;

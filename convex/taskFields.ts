@@ -34,6 +34,9 @@ export const storedSubtask = v.object({
   id: v.string(),
   title: v.string(),
   dueDate: v.optional(v.string()),
+  scheduledDate: v.optional(v.string()),
+  createdAt: v.optional(v.number()),
+  updatedAt: v.optional(v.number()),
   completedAt: v.optional(v.number()),
 });
 export const taskInputFields = {
@@ -54,6 +57,11 @@ export const taskInputFields = {
 export const taskFields = {
   ...taskInputFields,
   subtasks: v.array(storedSubtask),
+  subtasksNormalized: v.optional(v.boolean()),
+  lastEditRequestId: v.optional(v.string()),
+  updatedAt: v.optional(v.number()),
+  notesCount: v.optional(v.number()),
+  threadCount: v.optional(v.number()),
   status: v.union(v.literal("open"), v.literal("completed")),
   progress: v.optional(
     v.union(v.literal("not_started"), v.literal("in_progress")),

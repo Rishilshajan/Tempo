@@ -3,6 +3,7 @@ import { ConvexError, v } from "convex/values";
 import { internalMutation, internalQuery } from "./_generated/server";
 import { domainFields } from "./domainFields";
 import { taskInputFields, subtaskInput } from "./taskFields";
+import { normalizeSubtasks } from "./taskDetailHelpers";
 import { createDomainSchema } from "../src/lib/validation/domain";
 import { createTaskSchema, localDateKey } from "../src/lib/validation/task";
 import { shiftDate } from "../src/lib/validation/recurrence";
@@ -165,6 +166,8 @@ export const seed = internalMutation({
           status: input.completed ? "completed" : "open",
           ...(input.completed ? { completedAt: Date.now() } : {}),
         }));
+      const stored = await ctx.db.get(id);
+      if (stored) await normalizeSubtasks(ctx, stored);
       tasks.push({ id, requestId: input.requestId });
     }
     // Respect an existing focus choice; fixtures must never overwrite it.
@@ -203,6 +206,7 @@ export const cleanup = internalMutation({
     deletedTasks: v.number(),
     deletedDomains: v.number(),
     retainedDomains: v.array(v.id("domains")),
+    pendingTasks: v.number(),
   }),
   handler: async (ctx, args) => {
     if (args.tasks.length > 30 || args.domains.length > 4)
@@ -220,6 +224,8 @@ export const cleanup = internalMutation({
       );
     let deletedTasks = 0,
       deletedDomains = 0;
+    let pendingTasks = 0;
+    const deletedIds = new Set();
     for (const ref of args.tasks) {
       const task = await ctx.db.get(ref.id);
       if (!task) continue;
@@ -227,11 +233,79 @@ export const cleanup = internalMutation({
         throw new ConvexError(
           "This record does not match the sample manifest.",
         );
+      // Bound each cleanup transaction and preserve the parent until all child
+      // records have been removed. A later batch resumes safely with the same manifest.
+      const subtasks = await ctx.db
+        .query("subtasks")
+        .withIndex("by_parentTaskId_and_position", (q) =>
+          q.eq("parentTaskId", task._id),
+        )
+        .take(30);
+      const notes = await ctx.db
+        .query("notes")
+        .withIndex("by_taskId", (q) => q.eq("taskId", task._id))
+        .take(25);
+      const activity = await ctx.db
+        .query("activity")
+        .withIndex("by_taskId_and_timestamp", (q) => q.eq("taskId", task._id))
+        .take(100);
+      const links = await ctx.db
+        .query("threadTasks")
+        .withIndex("by_taskId", (q) => q.eq("taskId", task._id))
+        .take(20);
+      for (const row of [...subtasks, ...notes, ...activity])
+        await ctx.db.delete(row._id);
+      for (const link of links) {
+        const thread = await ctx.db.get(link.threadId);
+        if (thread && thread.ownerId !== ownerId)
+          throw new ConvexError(
+            "Review the sample task's thread relationships before cleanup.",
+          );
+        await ctx.db.delete(link._id);
+        if (thread)
+          await ctx.db.patch(thread._id, {
+            taskCount: Math.max(0, thread.taskCount - 1),
+            updatedAt: Date.now(),
+          });
+      }
+      const remainingNote = await ctx.db
+        .query("notes")
+        .withIndex("by_taskId", (q) => q.eq("taskId", task._id))
+        .first();
+      const remainingActivity = await ctx.db
+        .query("activity")
+        .withIndex("by_taskId_and_timestamp", (q) => q.eq("taskId", task._id))
+        .first();
+      const remainingStep = await ctx.db
+        .query("subtasks")
+        .withIndex("by_parentTaskId_and_position", (q) =>
+          q.eq("parentTaskId", task._id),
+        )
+        .first();
+      const remainingLink = await ctx.db
+        .query("threadTasks")
+        .withIndex("by_taskId", (q) => q.eq("taskId", task._id))
+        .first();
+      if (
+        remainingNote ||
+        remainingActivity ||
+        remainingStep ||
+        remainingLink
+      ) {
+        await ctx.db.patch(task._id, {
+          notesCount: Math.max(0, (task.notesCount ?? 0) - notes.length),
+          threadCount: Math.max(0, (task.threadCount ?? 0) - links.length),
+        });
+        pendingTasks++;
+        continue;
+      }
       await ctx.db.delete(ref.id);
+      deletedIds.add(ref.id);
       deletedTasks++;
     }
     for (const selection of focus) {
-      if (ids.has(selection.taskId)) await ctx.db.delete(selection._id);
+      if (ids.has(selection.taskId) && deletedIds.has(selection.taskId))
+        await ctx.db.delete(selection._id);
     }
     const retainedDomains = [];
     for (const ref of args.domains) {
@@ -254,6 +328,6 @@ export const cleanup = internalMutation({
       await ctx.db.delete(ref.id);
       deletedDomains++;
     }
-    return { deletedTasks, deletedDomains, retainedDomains };
+    return { deletedTasks, deletedDomains, retainedDomains, pendingTasks };
   },
 });

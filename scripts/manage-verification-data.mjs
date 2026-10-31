@@ -204,7 +204,31 @@ if (command === "seed") {
       }),
     );
   else {
-    const result = run("verificationData:cleanup", references);
+    let result;
+    const totals = {
+      deletedTasks:
+        manifest.status === "cleanup_in_progress"
+          ? (manifest.cleanup?.deletedTasks ?? 0)
+          : 0,
+      deletedDomains:
+        manifest.status === "cleanup_in_progress"
+          ? (manifest.cleanup?.deletedDomains ?? 0)
+          : 0,
+    };
+    for (let batch = 0; batch < 100; batch++) {
+      result = run("verificationData:cleanup", references);
+      totals.deletedTasks += result.deletedTasks;
+      totals.deletedDomains += result.deletedDomains;
+      manifest.status = "cleanup_in_progress";
+      manifest.cleanup = { ...result, ...totals };
+      save();
+      if (!result.pendingTasks) break;
+      if (batch === 99)
+        throw new Error(
+          "Cleanup is safely checkpointed. Run cleanup again to finish the remaining child records.",
+        );
+    }
+    result = { ...result, ...totals };
     manifest.status = "cleaned";
     manifest.cleanup = result;
     manifest.cleanedAt = new Date().toISOString();

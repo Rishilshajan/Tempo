@@ -251,6 +251,7 @@ const db = {
         assert.ok(rows().length <= 1);
         return rows()[0] ?? null;
       },
+      take: async (count) => rows().slice(0, count),
       paginate: async ({ numItems, cursor }) => {
         const offset = Number(cursor ?? 0);
         const found = rows();

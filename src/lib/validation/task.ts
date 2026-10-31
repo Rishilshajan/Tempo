@@ -40,6 +40,8 @@ type TaskDateInput = {
   schedule: z.infer<typeof taskScheduleSchema>;
   recurrence?: {
     frequency?: string;
+    interval?: number;
+    unit?: string;
     end:
       | { type: "date"; date: string }
       | { type: "never" }
@@ -180,6 +182,108 @@ export const createTaskSchema = z
   });
 
 export type CreateTaskValues = z.infer<typeof createTaskSchema>;
+
+export function sameTaskValue(left: unknown, right: unknown): boolean {
+  if (left === right) return true;
+  if (!left || !right || typeof left !== "object" || typeof right !== "object")
+    return false;
+  if (Array.isArray(left) || Array.isArray(right))
+    return (
+      Array.isArray(left) &&
+      Array.isArray(right) &&
+      left.length === right.length &&
+      left.every((value, index) => sameTaskValue(value, right[index]))
+    );
+  const a = left as Record<string, unknown>,
+    b = right as Record<string, unknown>;
+  const keys = Object.keys(a).filter((key) => a[key] !== undefined);
+  return (
+    keys.length ===
+      Object.keys(b).filter((key) => b[key] !== undefined).length &&
+    keys.every((key) => sameTaskValue(a[key], b[key]))
+  );
+}
+export function editTaskDateIssues(
+  task: TaskDateInput,
+  original: TaskDateInput,
+  stepKeys: string[],
+  originalKeys: string[],
+  now = new Date(),
+) {
+  const sameSchedule =
+    task.timezone === original.timezone &&
+    sameTaskValue(task.schedule, original.schedule);
+  const sameRecurrence = sameTaskValue(task.recurrence, original.recurrence);
+  return taskDateIssues(task, now).filter((issue) => {
+    if (
+      issue.path[0] === "schedule" &&
+      sameSchedule &&
+      (!task.recurrence || sameRecurrence)
+    )
+      return false;
+    if (issue.path[0] === "recurrence" && sameSchedule && sameRecurrence)
+      return false;
+    if (issue.path[0] === "subtasks") {
+      const index = Number(issue.path[1]);
+      const previous = original.subtasks[originalKeys.indexOf(stepKeys[index])];
+      if (previous && previous.dueDate === task.subtasks[index]?.dueDate)
+        return false;
+    }
+    return true;
+  });
+}
+
+/** Existing historical dates may stay unchanged; newly selected dates remain future-only. */
+export function editTaskSchema(
+  original: CreateTaskValues,
+  stepKeys: string[],
+  originalKeys: string[],
+) {
+  return z
+    .object({
+      ...createTaskSchema.shape,
+      subtasks: z
+        .array(
+          z.object({
+            title: z
+              .string()
+              .trim()
+              .min(1, "Every subtask needs a title.")
+              .max(240),
+            dueDate: calendarDateSchema.optional(),
+          }),
+        )
+        .max(30),
+    })
+    .superRefine((task, ctx) => {
+      for (const issue of editTaskDateIssues(
+        task,
+        original,
+        stepKeys,
+        originalKeys,
+      )) {
+        ctx.addIssue({ code: "custom", ...issue });
+      }
+      if (task.schedule.type === "fixed") {
+        if (task.schedule.endAt <= task.schedule.startAt)
+          ctx.addIssue({
+            code: "custom",
+            path: ["schedule"],
+            message: "End time must be later than start time.",
+          });
+        else if (
+          task.estimatedMinutes &&
+          task.estimatedMinutes >
+            (task.schedule.endAt - task.schedule.startAt) / 60000
+        )
+          ctx.addIssue({
+            code: "custom",
+            path: ["estimatedMinutes"],
+            message: "The estimate cannot exceed the fixed time window.",
+          });
+      }
+    });
+}
 
 export function localDateKey(
   date = new Date(),

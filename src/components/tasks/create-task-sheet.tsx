@@ -46,10 +46,13 @@ import {
   durationInputSchema,
   localDateKey,
   taskDateIssues,
+  editTaskSchema,
+  editTaskDateIssues,
   type CreateTaskValues,
 } from "@/lib/validation/task";
 import { priorities, PriorityLabel, TaskSelect } from "./task-select";
 import { zonedTimestamp } from "@/lib/validation/recurrence";
+import type { TaskRecord } from "./task-list";
 
 type Props = {
   open: boolean;
@@ -59,7 +62,8 @@ type Props = {
   initialDate?: string;
   initialStartAt?: number;
   canSubmit: boolean;
-  onCreate: (values: CreateTaskValues) => Promise<unknown>;
+  onCreate: (values: CreateTaskValues, stepKeys?: string[]) => Promise<unknown>;
+  editingTask?: TaskRecord;
   hasMoreDomains?: boolean;
   loadingMoreDomains?: boolean;
   onLoadMoreDomains?: () => void;
@@ -76,22 +80,27 @@ export function CreateTaskSheet(props: Props) {
       }}
     >
       <SheetContent
+        data-task-detail-drawer={props.editingTask ? "" : undefined}
         showCloseButton={false}
         initialFocus={() => document.getElementById("task-title")}
-        className="!inset-y-auto !top-0 !h-dvh !w-full !max-w-[460px] gap-0 bg-card motion-reduce:transition-none"
+        className={`!inset-y-auto !top-0 !h-dvh !w-full ${props.editingTask ? "!max-w-none !left-0 !right-auto !w-dvw sm:!left-auto sm:!right-0 sm:!w-full sm:!max-w-[540px]" : "!max-w-[460px]"} gap-0 bg-card motion-reduce:transition-none`}
       >
         <SheetHeader className="relative shrink-0 border-b border-border px-5 py-5 pr-14">
           <SheetTitle className="flex items-center gap-2 text-lg font-semibold">
             <ListPlus className="size-5 text-primary" aria-hidden="true" />
-            Create New Task
+            {props.editingTask ? "Edit Task" : "Create New Task"}
           </SheetTitle>
           <SheetDescription className="mt-1 text-xs leading-5">
-            Capture the task, then choose how and when to work on it.
+            {props.editingTask
+              ? "Update the task’s details, schedule, and subtasks."
+              : "Capture the task, then choose how and when to work on it."}
           </SheetDescription>
           <Button
             variant="ghost"
             size="icon-sm"
-            aria-label="Close Create New Task"
+            aria-label={
+              props.editingTask ? "Close Edit Task" : "Close Create New Task"
+            }
             disabled={saving}
             className="absolute right-3 top-3 size-9"
             onClick={() => props.onOpenChange(false)}
@@ -128,30 +137,43 @@ function TaskForm({
   hasMoreDomains,
   loadingMoreDomains,
   onLoadMoreDomains,
+  editingTask,
 }: Props & {
   saving: boolean;
   setSaving: (saving: boolean) => void;
   inFlightRef: React.RefObject<boolean>;
 }) {
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [domainId, setDomainId] = useState(initialDomainId ?? "uncategorized");
-  const [priority, setPriority] = useState("medium");
+  const [title, setTitle] = useState(editingTask?.title ?? "");
+  const [description, setDescription] = useState(
+    editingTask?.description ?? "",
+  );
+  const [domainId, setDomainId] = useState(
+    editingTask?.domainId ?? initialDomainId ?? "uncategorized",
+  );
+  const [priority, setPriority] = useState<string>(
+    editingTask?.priority ?? "medium",
+  );
   const [scheduleType, setScheduleType] = useState<"fixed" | "flexible">(
-    initialStartAt === undefined ? "flexible" : "fixed",
+    editingTask?.schedule.type ??
+      (initialStartAt === undefined ? "flexible" : "fixed"),
   );
   const [timezone] = useState(
-    () => Intl.DateTimeFormat().resolvedOptions().timeZone,
+    () =>
+      editingTask?.timezone ?? Intl.DateTimeFormat().resolvedOptions().timeZone,
   );
   const [startDate, setStartDate] = useState(() =>
-    initialStartAt === undefined
-      ? (initialDate ?? localDateKey())
-      : localDateKey(new Date(initialStartAt)),
+    editingTask?.schedule.type === "fixed"
+      ? localDateKey(new Date(editingTask.schedule.startAt), timezone)
+      : initialStartAt === undefined
+        ? (initialDate ?? localDateKey())
+        : localDateKey(new Date(initialStartAt)),
   );
   const [endDate, setEndDate] = useState(() =>
-    initialStartAt === undefined
-      ? (initialDate ?? localDateKey())
-      : localDateKey(new Date(initialStartAt + 3600000)),
+    editingTask?.schedule.type === "fixed"
+      ? localDateKey(new Date(editingTask.schedule.endAt), timezone)
+      : initialStartAt === undefined
+        ? (initialDate ?? localDateKey())
+        : localDateKey(new Date(initialStartAt + 3600000)),
   );
   const timeOf = (at: number) =>
     new Intl.DateTimeFormat("en-GB", {
@@ -161,22 +183,68 @@ function TaskForm({
       hourCycle: "h23",
     }).format(at);
   const [startTime, setStartTime] = useState(() =>
-    initialStartAt === undefined ? "09:00" : timeOf(initialStartAt),
+    editingTask?.schedule.type === "fixed"
+      ? timeOf(editingTask.schedule.startAt)
+      : initialStartAt === undefined
+        ? "09:00"
+        : timeOf(initialStartAt),
   );
   const [endTime, setEndTime] = useState(() =>
-    initialStartAt === undefined ? "10:00" : timeOf(initialStartAt + 3600000),
+    editingTask?.schedule.type === "fixed"
+      ? timeOf(editingTask.schedule.endAt)
+      : initialStartAt === undefined
+        ? "10:00"
+        : timeOf(initialStartAt + 3600000),
   );
-  const [dueDate, setDueDate] = useState(initialDate ?? "");
-  const [duration, setDuration] = useState("none");
-  const [customHours, setCustomHours] = useState("");
-  const [customMinutes, setCustomMinutes] = useState("");
-  const [repeat, setRepeat] = useState("none");
-  const [repeatInterval, setRepeatInterval] = useState("1");
-  const [repeatUnit, setRepeatUnit] = useState("day");
-  const [repeatEnd, setRepeatEnd] = useState("never");
-  const [repeatEndDate, setRepeatEndDate] = useState("");
-  const [repeatCount, setRepeatCount] = useState("10");
-  const [steps, setSteps] = useState<Step[]>([]);
+  const [dueDate, setDueDate] = useState(
+    editingTask?.schedule.type === "flexible"
+      ? (editingTask.schedule.dueDate ?? "")
+      : (initialDate ?? ""),
+  );
+  const [duration, setDuration] = useState(
+    editingTask?.estimatedMinutes ? "custom" : "none",
+  );
+  const [customHours, setCustomHours] = useState(
+    editingTask?.estimatedMinutes
+      ? String(Math.floor(editingTask.estimatedMinutes / 60))
+      : "",
+  );
+  const [customMinutes, setCustomMinutes] = useState(
+    editingTask?.estimatedMinutes
+      ? String(editingTask.estimatedMinutes % 60)
+      : "",
+  );
+  const [repeat, setRepeat] = useState<string>(
+    editingTask?.recurrence?.frequency ?? "none",
+  );
+  const [repeatInterval, setRepeatInterval] = useState(
+    String(editingTask?.recurrence?.interval ?? 1),
+  );
+  const [repeatUnit, setRepeatUnit] = useState<string>(
+    editingTask?.recurrence?.unit ?? "day",
+  );
+  const [repeatEnd, setRepeatEnd] = useState<string>(
+    editingTask?.recurrence?.end.type ?? "never",
+  );
+  const [repeatEndDate, setRepeatEndDate] = useState(
+    editingTask?.recurrence?.end.type === "date"
+      ? editingTask.recurrence.end.date
+      : "",
+  );
+  const [repeatCount, setRepeatCount] = useState(
+    String(
+      editingTask?.recurrence?.end.type === "count"
+        ? editingTask.recurrence.end.count
+        : 10,
+    ),
+  );
+  const [steps, setSteps] = useState<Step[]>(
+    editingTask?.subtasks.map((step) => ({
+      key: step.id,
+      title: step.title,
+      dueDate: step.dueDate ?? "",
+    })) ?? [],
+  );
   const [stepTitle, setStepTitle] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -203,16 +271,32 @@ function TaskForm({
       return NaN;
     return zonedTimestamp(date, time, timezone, preferred);
   }
-  const selectedStartAt = timestamp(startDate, startTime, initialStartAt);
+  const selectedStartAt = timestamp(
+    startDate,
+    startTime,
+    editingTask?.schedule.type === "fixed"
+      ? editingTask.schedule.startAt
+      : initialStartAt,
+  );
   const selectedEndAt = timestamp(
     endDate,
     endTime,
-    initialStartAt === undefined ? undefined : initialStartAt + 3600000,
+    editingTask?.schedule.type === "fixed"
+      ? editingTask.schedule.endAt
+      : initialStartAt === undefined
+        ? undefined
+        : initialStartAt + 3600000,
   );
   const foldedPrefill =
-    initialStartAt !== undefined &&
-    selectedStartAt === initialStartAt &&
-    selectedEndAt === initialStartAt + 3600000 &&
+    (editingTask?.schedule.type === "fixed" || initialStartAt !== undefined) &&
+    selectedStartAt ===
+      (editingTask?.schedule.type === "fixed"
+        ? editingTask.schedule.startAt
+        : initialStartAt) &&
+    selectedEndAt ===
+      (editingTask?.schedule.type === "fixed"
+        ? editingTask.schedule.endAt
+        : initialStartAt! + 3600000) &&
     endDate === startDate &&
     endTime <= startTime;
   const minimumEndTime =
@@ -220,33 +304,50 @@ function TaskForm({
       ? `${String(Math.floor(afterStart / 60)).padStart(2, "0")}:${String(afterStart % 60).padStart(2, "0")}`
       : undefined;
   function issuesForRepeat(repeatValue = repeat) {
-    return taskDateIssues(
-      {
-        timezone,
-        schedule:
-          scheduleType === "fixed"
-            ? {
-                type: "fixed",
-                startAt: selectedStartAt,
-                endAt: selectedEndAt,
-              }
-            : { type: "flexible", ...(dueDate ? { dueDate } : {}) },
-        recurrence:
-          repeatValue === "none"
-            ? undefined
-            : {
-                frequency: repeatValue,
-                end:
-                  repeatEnd === "date"
-                    ? { type: "date", date: repeatEndDate }
+    const candidate: Parameters<typeof taskDateIssues>[0] = {
+      timezone,
+      schedule:
+        scheduleType === "fixed"
+          ? {
+              type: "fixed",
+              startAt: selectedStartAt,
+              endAt: selectedEndAt,
+            }
+          : { type: "flexible", ...(dueDate ? { dueDate } : {}) },
+      recurrence:
+        repeatValue === "none"
+          ? undefined
+          : {
+              frequency: repeatValue,
+              interval: repeatValue === "custom" ? Number(repeatInterval) : 1,
+              unit:
+                repeatValue === "daily" || repeatValue === "weekdays"
+                  ? "day"
+                  : repeatValue === "weekly"
+                    ? "week"
+                    : repeatValue === "monthly"
+                      ? "month"
+                      : repeatUnit,
+              end:
+                repeatEnd === "date"
+                  ? { type: "date", date: repeatEndDate }
+                  : repeatEnd === "count"
+                    ? { type: "count", count: Number(repeatCount) }
                     : { type: "never" },
-              },
-        subtasks: steps.map((step) => ({
-          ...(step.dueDate ? { dueDate: step.dueDate } : {}),
-        })),
-      },
-      new Date(now),
-    );
+            },
+      subtasks: steps.map((step) => ({
+        ...(step.dueDate ? { dueDate: step.dueDate } : {}),
+      })),
+    };
+    return editingTask
+      ? editTaskDateIssues(
+          candidate,
+          editingTask,
+          steps.map((step) => step.key),
+          editingTask.subtasks.map((step) => step.id),
+          new Date(now),
+        )
+      : taskDateIssues(candidate, new Date(now));
   }
   const dateIssues = issuesForRepeat();
 
@@ -327,8 +428,7 @@ function TaskForm({
         return (
           !Number.isFinite(Number(at)) ||
           localDateKey(value, timezone) !== date ||
-          `${String(value.getHours()).padStart(2, "0")}:${String(value.getMinutes()).padStart(2, "0")}` !==
-            time
+          timeOf(Number(at)) !== time
         );
       })
     ) {
@@ -344,7 +444,18 @@ function TaskForm({
       })),
       ...(stepTitle.trim() ? [{ title: stepTitle.trim() }] : []),
     ];
-    const parsed = createTaskSchema.safeParse({
+    const stepKeys = [
+      ...steps.map((step) => step.key),
+      ...(stepTitle.trim() ? [`${requestIdRef.current}:pending`] : []),
+    ];
+    const schema = editingTask
+      ? editTaskSchema(
+          { ...editingTask, requestId: requestIdRef.current },
+          stepKeys,
+          editingTask.subtasks.map((step) => step.id),
+        )
+      : createTaskSchema;
+    const parsed = schema.safeParse({
       title,
       description,
       ...(domainId !== "uncategorized" ? { domainId } : {}),
@@ -402,13 +513,13 @@ function TaskForm({
     inFlightRef.current = true;
     setSaving(true);
     try {
-      await onCreate(parsed.data);
+      await onCreate(parsed.data, stepKeys);
       onOpenChange(false);
     } catch (cause) {
       const message =
         cause instanceof ConvexError && typeof cause.data === "string"
           ? cause.data
-          : "We couldn't create this task. Your changes are still here; please try again.";
+          : "We couldn't save this task. Your changes are still here; please try again.";
       setError(message);
       toast.error(message, { id: "task-save-error" });
     } finally {
@@ -971,7 +1082,7 @@ function TaskForm({
           ) : (
             <Check aria-hidden="true" />
           )}
-          {saving ? "Creating…" : "Create Task"}
+          {saving ? "Saving…" : editingTask ? "Save changes" : "Create Task"}
         </Button>
       </footer>
     </form>

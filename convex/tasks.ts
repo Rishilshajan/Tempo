@@ -12,6 +12,7 @@ import {
 } from "./taskFields";
 import { toTaskView } from "./taskViews";
 import { createNextOccurrence } from "./taskRecurrence";
+import { normalizeSubtasks, recordActivity } from "./taskDetailHelpers";
 import {
   calendarDateSchema,
   createTaskSchema,
@@ -67,7 +68,25 @@ export const reschedule = mutation({
         ? localDateKey(new Date(args.schedule.startAt), task.timezone)
         : (args.schedule.dueDate ??
           (task.recurrence ? localDateKey(new Date(), task.timezone) : ""));
-    await ctx.db.patch(args.id, { schedule: args.schedule, workDate });
+    if (JSON.stringify(task.schedule) === JSON.stringify(args.schedule))
+      return null;
+    await ctx.db.patch(args.id, {
+      schedule: args.schedule,
+      workDate,
+      updatedAt: Date.now(),
+    });
+    const dueChanged =
+      task.schedule.type === "flexible" &&
+      args.schedule.type === "flexible" &&
+      task.schedule.dueDate !== args.schedule.dueDate;
+    await recordActivity(
+      ctx,
+      task._id,
+      user,
+      dueChanged ? "due_date_changed" : "schedule_changed",
+      dueChanged ? "Task due date updated." : "Task rescheduled.",
+      { previousSchedule: task.schedule, schedule: args.schedule },
+    );
     return null;
   },
 });
@@ -170,7 +189,7 @@ export const create = mutation({
       : data.schedule.type === "fixed"
         ? localDateKey(new Date(data.schedule.startAt), data.timezone)
         : (data.schedule.dueDate ?? "");
-    return await ctx.db.insert("tasks", {
+    const id = await ctx.db.insert("tasks", {
       title: data.title,
       ...(data.description ? { description: data.description } : {}),
       ...(args.domainId ? { domainId: args.domainId } : {}),
@@ -200,6 +219,10 @@ export const create = mutation({
         ? { recurrenceStartAt: data.schedule.startAt }
         : {}),
     });
+    const created = await ctx.db.get(id);
+    if (created) await normalizeSubtasks(ctx, created);
+    await recordActivity(ctx, id, user, "task_created", "Task created.");
+    return id;
   },
 });
 
@@ -215,11 +238,30 @@ export const setProgress = mutation({
     const task = await ctx.db.get(id);
     if (!task || task.ownerId !== user.tokenIdentifier)
       throw new ConvexError("This task is not available.");
+    if (task.status === "open" && (task.progress ?? "not_started") === progress)
+      return null;
     await ctx.db.patch(id, {
       progress,
       status: "open",
       completedAt: undefined,
+      updatedAt: Date.now(),
     });
+    await recordActivity(
+      ctx,
+      id,
+      user,
+      task.status === "completed" ? "task_reopened" : "status_changed",
+      progress === "in_progress"
+        ? "Status changed to In progress."
+        : "Status changed to Not started.",
+      {
+        before:
+          task.status === "completed"
+            ? "completed"
+            : (task.progress ?? "not_started"),
+        after: progress,
+      },
+    );
     return null;
   },
 });
@@ -238,25 +280,41 @@ export const setCompleted = mutation({
     if (!task || task.ownerId !== user.tokenIdentifier)
       throw new ConvexError("This task is not available.");
     if (args.subtaskId) {
-      if (!task.subtasks.some((step) => step.id === args.subtaskId))
-        throw new ConvexError("This step is not available.");
-      await ctx.db.patch(args.id, {
-        subtasks: task.subtasks.map((step) => {
-          if (step.id !== args.subtaskId) return step;
-          const rest = {
-            id: step.id,
-            title: step.title,
-            ...(step.dueDate ? { dueDate: step.dueDate } : {}),
-          };
-          return args.completed ? { ...rest, completedAt: Date.now() } : rest;
-        }),
+      const rows = await normalizeSubtasks(ctx, task);
+      const step = rows.find(
+        (row) =>
+          String(row._id) === args.subtaskId || row.legacyId === args.subtaskId,
+      );
+      if (!step) throw new ConvexError("This step is not available.");
+      if ((step.completedAt !== undefined) === args.completed) return null;
+      await ctx.db.patch(step._id, {
+        completedAt: args.completed ? Date.now() : undefined,
+        updatedAt: Date.now(),
       });
+      await ctx.db.patch(task._id, { updatedAt: Date.now() });
+      await recordActivity(
+        ctx,
+        task._id,
+        user,
+        args.completed ? "subtask_completed" : "subtask_reopened",
+        `Subtask ${args.completed ? "completed" : "reopened"}: ${step.title}`,
+        { subtaskId: step._id },
+      );
     } else {
+      if ((task.status === "completed") === args.completed) return null;
       await ctx.db.patch(args.id, {
         status: args.completed ? "completed" : "open",
         completedAt: args.completed ? Date.now() : undefined,
         ...(!args.completed ? { progress: "not_started" as const } : {}),
+        updatedAt: Date.now(),
       });
+      await recordActivity(
+        ctx,
+        task._id,
+        user,
+        args.completed ? "task_completed" : "task_reopened",
+        args.completed ? "Task completed." : "Task reopened.",
+      );
       if (args.completed && task.status !== "completed")
         return (await createNextOccurrence(ctx, task)) ?? null;
     }

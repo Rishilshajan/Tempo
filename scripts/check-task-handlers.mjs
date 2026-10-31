@@ -42,12 +42,20 @@ const db = {
       if (row[key] === undefined) delete row[key];
     records.set(id, row);
   },
+  async delete(id) {
+    records.delete(id);
+  },
   query(table) {
     const conditions = [];
     let descending = false;
+    let indexName = "";
     const clauses = {
       eq(key, value) {
-        conditions.push((row) => row[key] === value);
+        conditions.push(
+          (row) =>
+            key.split(".").reduce((result, part) => result?.[part], row) ===
+            value,
+        );
         return clauses;
       },
       lte(key, value) {
@@ -62,13 +70,16 @@ const db = {
             row._id.startsWith(`${table}-`) &&
             conditions.every((match) => match(row)),
         )
-        .sort((a, b) =>
-          descending
-            ? b._creationTime - a._creationTime
-            : a._creationTime - b._creationTime,
-        );
+        .sort((a, b) => {
+          const difference =
+            indexName === "by_parentTaskId_and_position"
+              ? a.position - b.position || a._creationTime - b._creationTime
+              : a._creationTime - b._creationTime;
+          return descending ? -difference : difference;
+        });
     const query = {
       withIndex(_name, constrain) {
+        indexName = _name;
         constrain(clauses);
         return query;
       },
@@ -83,12 +94,16 @@ const db = {
       async first() {
         return rows()[0] ?? null;
       },
-      async paginate({ numItems }) {
+      async take(count) {
+        return rows().slice(0, count);
+      },
+      async paginate({ numItems, cursor }) {
         const found = rows();
+        const offset = Number(cursor || 0);
         return {
-          page: found.slice(0, numItems),
-          isDone: found.length <= numItems,
-          continueCursor: "",
+          page: found.slice(offset, offset + numItems),
+          isDone: found.length <= offset + numItems,
+          continueCursor: String(offset + numItems),
         };
       },
     };
@@ -103,6 +118,12 @@ const context = (owner) => ({
 });
 const alice = context("alice");
 const bob = context("bob");
+const steps = (taskId) =>
+  [...records.values()]
+    .filter(
+      (row) => row._id.startsWith("subtasks-") && row.parentTaskId === taskId,
+    )
+    .sort((a, b) => a.position - b.position);
 const base = {
   title: "  Proposal  ",
   priority: "medium",
@@ -127,7 +148,9 @@ await assert.rejects(() =>
 const id = await functions.create._handler(alice, base);
 assert.equal(await functions.create._handler(alice, base), id);
 assert.equal(records.get(id).title, "Proposal");
-assert.equal(records.get(id).subtasks.length, 1);
+assert.equal(records.get(id).subtasks.length, 0);
+assert.equal(records.get(id).subtasksNormalized, true);
+assert.equal(steps(id).length, 1);
 assert.equal(records.get(id).workDate, "");
 await assert.rejects(() =>
   functions.setCompleted._handler(bob, { id, completed: true }),
@@ -165,15 +188,15 @@ assert.equal(records.get(future).schedule.dueDate, "2026-10-30");
 await functions.setCompleted._handler(alice, {
   id,
   completed: true,
-  subtaskId: records.get(id).subtasks[0].id,
+  subtaskId: steps(id)[0]._id,
 });
-assert.equal(typeof records.get(id).subtasks[0].completedAt, "number");
+assert.equal(typeof steps(id)[0].completedAt, "number");
 await functions.setCompleted._handler(alice, {
   id,
   completed: false,
-  subtaskId: records.get(id).subtasks[0].id,
+  subtaskId: steps(id)[0]._id,
 });
-assert.ok(!("completedAt" in records.get(id).subtasks[0]));
+assert.ok(!("completedAt" in steps(id)[0]));
 await functions.setCompleted._handler(alice, { id, completed: true });
 assert.equal(
   (await functions.list._handler(alice, { ...args, view: "today" })).page
@@ -237,8 +260,8 @@ const next = await functions.setCompleted._handler(alice, {
 });
 assert.equal(records.get(next).schedule.dueDate, "2026-02-28");
 assert.equal(records.get(next).recurrenceOrdinal, 2);
-assert.equal(records.get(next).subtasks[0].dueDate, "2026-03-02");
-assert.ok(!("completedAt" in records.get(next).subtasks[0]));
+assert.equal(steps(next)[0].dueDate, "2026-03-02");
+assert.ok(!("completedAt" in steps(next)[0]));
 assert.equal(
   await functions.setCompleted._handler(alice, {
     id: repeating,
@@ -459,7 +482,7 @@ const prepared = await functions.setCompleted._handler(alice, {
   completed: true,
 });
 assert.equal(records.get(prepared).workDate, "2026-11-20");
-assert.equal(records.get(prepared).subtasks[0].dueDate, "2026-11-11");
+assert.equal(steps(prepared)[0].dueDate, "2026-11-11");
 console.log(
   "PASS: late completion skips expired dates/time slots, preserves actual occurrence limits, stops expired series, and keeps generated subtask dates valid.",
 );
@@ -539,3 +562,4 @@ console.log(
   "PASS: weekday repeats skip weekends, retain count/date limits, reset status, and catch up after late completion.",
 );
 globalThis.Date = RealDate;
+export { db, records, context, functions, steps };

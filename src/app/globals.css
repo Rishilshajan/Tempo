@@ -1,6 +1,14 @@
 @import "tailwindcss";
+
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
+
+/* A full-screen mobile task drawer covers the scroll-locked page's gutter. */
+@media (width < 40rem) {
+  html:has([data-task-detail-drawer]) {
+    scrollbar-gutter: auto !important;
+  }
+}
 
 @custom-variant dark (&:is(.dark *));
 
@@ -69,46 +77,51 @@
    Neutral #22312B · Background #F7F6F2 · Surface #FFFFFF
    Urgent coral #F0705A · Medium amber #F2B24C · Rolled-fwd #7C87D6
    ============================================================ */
-:root, .tempo-light {
+:root,
+.tempo-light {
   --radius: 0.75rem;
 
-  --background: #f7f6f2;       /* warm off-white (60%)  */
-  --foreground: #22312b;       /* deep slate-green text */
+  --background: #f7f6f2; /* warm off-white (60%)  */
+  --foreground: #22312b; /* deep slate-green text */
 
   --card: #ffffff;
   --card-foreground: #22312b;
   --popover: #ffffff;
   --popover-foreground: #22312b;
 
-  --brand: #4c9a78;            /* sage - logo & brand identity */
-  --primary: #11694a;          /* deeper green - buttons/active states (contrast) */
+  --brand: #4c9a78; /* sage - logo & brand identity */
+  --primary: #11694a; /* deeper green - buttons/active states (contrast) */
   --primary-foreground: #ffffff;
   --summary-active: color-mix(in srgb, var(--primary) 70%, #000000);
   --summary-planned: color-mix(in srgb, var(--primary) 30%, #22312b);
   --summary-carried: color-mix(in srgb, var(--rolledforward) 60%, #000000);
   --summary-completed: color-mix(in srgb, var(--primary) 45%, #22312b);
 
-  --secondary: #e9f1ec;        /* soft sage surface */
+  --secondary: #e9f1ec; /* soft sage surface */
   --secondary-foreground: #22312b;
 
   --muted: #eef0ea;
   --muted-foreground: #6b7b72;
 
-  --accent: #7bc96f;           /* fresh lime (energizing 10%) */
+  --accent: #7bc96f; /* fresh lime (energizing 10%) */
   --soft-lime: #e5f8a8;
   --accent-foreground: #16241c;
 
-  --destructive: #f0705a;      /* warm coral = urgent */
+  --destructive: #f0705a; /* warm coral = urgent */
 
   --border: #e3e6dd;
   --input: #e3e6dd;
   --ring: #11694a;
 
   /* status */
-  --urgent: #f0705a;              --urgent-foreground: #ffffff;
-  --medium: #f2b24c;              --medium-foreground: #3d2e0a;
-  --ontrack: #5db87e;             --ontrack-foreground: #ffffff;
-  --rolledforward: #7c87d6;       --rolledforward-foreground: #ffffff;
+  --urgent: #f0705a;
+  --urgent-foreground: #ffffff;
+  --medium: #f2b24c;
+  --medium-foreground: #3d2e0a;
+  --ontrack: #5db87e;
+  --ontrack-foreground: #ffffff;
+  --rolledforward: #7c87d6;
+  --rolledforward-foreground: #ffffff;
 
   /* charts → status spectrum */
   --chart-1: #4c9a78;
@@ -136,8 +149,8 @@
   --popover: #202b25;
   --popover-foreground: #ecf1ee;
 
-  --brand: #5db87e;            /* sage - brand identity (dark) */
-  --primary: #4db488;          /* deeper green - buttons/active (dark) */
+  --brand: #5db87e; /* sage - brand identity (dark) */
+  --primary: #4db488; /* deeper green - buttons/active (dark) */
   --primary-foreground: #06120c;
 
   --secondary: #2a362f;
@@ -155,10 +168,14 @@
   --input: oklch(1 0 0 / 15%);
   --ring: #5db87e;
 
-  --urgent: #f0705a;              --urgent-foreground: #1a0d0a;
-  --medium: #f2b24c;              --medium-foreground: #211802;
-  --ontrack: #5db87e;             --ontrack-foreground: #0e1511;
-  --rolledforward: #8f99de;       --rolledforward-foreground: #0e1016;
+  --urgent: #f0705a;
+  --urgent-foreground: #1a0d0a;
+  --medium: #f2b24c;
+  --medium-foreground: #211802;
+  --ontrack: #5db87e;
+  --ontrack-foreground: #0e1511;
+  --rolledforward: #8f99de;
+  --rolledforward-foreground: #0e1016;
 
   --chart-1: #5db87e;
   --chart-2: #7bc96f;

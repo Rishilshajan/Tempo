@@ -27,10 +27,20 @@ const db = {
   get: async (id) => records.get(id) ?? null,
   insert: async (table, value) => {
     const id = `${table}-${++sequence}`;
-    records.set(id, { ...structuredClone(value), _id: id });
+    records.set(id, {
+      ...structuredClone(value),
+      _id: id,
+      _creationTime: Date.now(),
+    });
     return id;
   },
   delete: async (id) => records.delete(id),
+  patch: async (id, patch) => {
+    const row = { ...records.get(id), ...structuredClone(patch) };
+    for (const key of Object.keys(row))
+      if (row[key] === undefined) delete row[key];
+    records.set(id, row);
+  },
   query(table) {
     const clauses = [];
     const range = {
@@ -109,9 +119,9 @@ const args = {
   ],
 };
 try {
-  assert.equal(functions.seed.isInternal,true);
-  assert.equal(functions.cleanup.isInternal,true);
-  assert.equal(functions.lookup.isInternal,true);
+  assert.equal(functions.seed.isInternal, true);
+  assert.equal(functions.cleanup.isInternal, true);
+  assert.equal(functions.lookup.isInternal, true);
   const original = await db.insert("tasks", {
     ownerId: "alice",
     requestId: randomUUID(),
@@ -179,8 +189,50 @@ try {
     title: "User-created task",
     requestId: randomUUID(),
   });
+  const sampleId = batch.tasks[0].id;
+  await db.patch(sampleId, { notesCount: 30, threadCount: 1 });
+  await db.insert("subtasks", {
+    parentTaskId: sampleId,
+    title: "Sample step",
+    position: 0,
+  });
+  for (let index = 0; index < 30; index++)
+    await db.insert("notes", {
+      taskId: sampleId,
+      content: `Sample note ${index}`,
+    });
+  for (let index = 0; index < 105; index++)
+    await db.insert("activity", {
+      taskId: sampleId,
+      timestamp: index,
+      description: "Sample event",
+    });
+  const threadId = await db.insert("threads", {
+    ownerId: "alice",
+    name: "User thread",
+    taskCount: 2,
+  });
+  await db.insert("threadTasks", { threadId, taskId: sampleId });
+  await db.insert("threadTasks", { threadId, taskId: adopted });
+  const firstCleanup = await run(functions.cleanup, "alice", batch);
+  assert.equal(firstCleanup.pendingTasks, 1);
+  assert.ok(
+    records.has(sampleId),
+    "retain parent while bounded child cleanup is pending",
+  );
+  assert.equal(records.get(sampleId).notesCount, 5);
+  assert.equal(records.get(threadId).taskCount, 1);
+  assert.ok(records.has(adopted) && records.has(threadId));
   const cleaned = await run(functions.cleanup, "alice", batch);
-  assert.equal(cleaned.deletedTasks, 2);
+  assert.equal(firstCleanup.deletedTasks + cleaned.deletedTasks, 2);
+  assert.equal(cleaned.pendingTasks, 0);
+  assert.equal(
+    [...records.values()].some(
+      (row) => row.taskId === sampleId || row.parentTaskId === sampleId,
+    ),
+    false,
+    "no orphaned child records",
+  );
   assert.deepEqual(
     cleaned.retainedDomains,
     [batch.domains[0].id],
@@ -199,7 +251,7 @@ try {
     "cleanup retries are safe",
   );
   console.log(
-    "PASS: verification fixtures — admin-only visibility, date bounds, atomic retries, ownership, exact manifest cleanup, edited samples, and preservation of real records/focus.",
+    "PASS: verification fixtures — admin-only access, exact manifest cleanup, bounded child cleanup without orphans, preserved real thread links, atomic retries, and preservation of real records/focus.",
   );
 } finally {
   globalThis.Date = RealDate;
