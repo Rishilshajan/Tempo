@@ -7,6 +7,22 @@ import {
   Heart,
   PanelsTopLeft,
   Target,
+  Code2,
+  BookOpen,
+  GraduationCap,
+  Lightbulb,
+  Palette,
+  Rocket,
+  Globe,
+  Users,
+  House,
+  Wallet,
+  Dumbbell,
+  Coffee,
+  Music,
+  Camera,
+  Leaf,
+  ShieldCheck,
 } from "lucide-react";
 import type { Doc } from "../../../convex/_generated/dataModel";
 
@@ -18,6 +34,15 @@ export const domainColors = [
   { id: "amber", label: "Amber", value: "#a77835" },
   { id: "forest", label: "Dark green", value: "#28483d" },
   { id: "coral", label: "Coral", value: "#b86351" },
+  { id: "rose", label: "Rose", value: "#be456b" },
+  { id: "pink", label: "Pink", value: "#b33b8d" },
+  { id: "violet", label: "Violet", value: "#7753bd" },
+  { id: "indigo", label: "Indigo", value: "#5260b5" },
+  { id: "sky", label: "Sky blue", value: "#237ba5" },
+  { id: "cyan", label: "Cyan", value: "#148691" },
+  { id: "lime", label: "Lime", value: "#64832c" },
+  { id: "orange", label: "Orange", value: "#bd6627" },
+  { id: "slate", label: "Slate", value: "#64748b" },
 ] as const;
 
 export const domainIcons = [
@@ -29,6 +54,22 @@ export const domainIcons = [
   { id: "heart", label: "Heart", component: Heart },
   { id: "panels", label: "Workspace", component: PanelsTopLeft },
   { id: "target", label: "Target", component: Target },
+  { id: "code", label: "Code", component: Code2 },
+  { id: "book", label: "Book", component: BookOpen },
+  { id: "education", label: "Education", component: GraduationCap },
+  { id: "idea", label: "Idea", component: Lightbulb },
+  { id: "design", label: "Design", component: Palette },
+  { id: "rocket", label: "Rocket", component: Rocket },
+  { id: "globe", label: "Globe", component: Globe },
+  { id: "team", label: "Team", component: Users },
+  { id: "home", label: "Home", component: House },
+  { id: "finance", label: "Finance", component: Wallet },
+  { id: "fitness", label: "Fitness", component: Dumbbell },
+  { id: "coffee", label: "Coffee", component: Coffee },
+  { id: "music", label: "Music", component: Music },
+  { id: "camera", label: "Camera", component: Camera },
+  { id: "nature", label: "Nature", component: Leaf },
+  { id: "security", label: "Security", component: ShieldCheck },
 ] as const;
 
 export type DomainAppearance = Pick<Doc<"domains">, "name" | "color" | "icon">;

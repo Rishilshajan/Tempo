@@ -57,7 +57,7 @@ export function CreateDomainSheet({
         initialFocus={() => document.getElementById("domain-name")}
         className="!inset-y-auto !top-0 !h-dvh !w-full !max-w-[420px] gap-0 bg-card"
       >
-        <SheetHeader className="relative shrink-0 px-6 pb-5 pt-6 pr-16">
+        <SheetHeader className="relative shrink-0 px-5 pb-4 pt-5 pr-16">
           <SheetTitle className="flex items-center gap-2 text-lg font-semibold">
             <BriefcaseBusiness
               className="size-4 text-primary"
@@ -174,7 +174,7 @@ function DomainForm({
       className="flex min-h-0 flex-1 flex-col"
       aria-busy={saving}
     >
-      <div className="min-h-0 flex-1 space-y-5 overflow-y-auto px-6 pb-6">
+      <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-5 pb-5">
         <div className="space-y-2">
           <label
             htmlFor="domain-name"
@@ -240,7 +240,7 @@ function DomainForm({
               fieldErrors.purpose ? "domain-purpose-error" : undefined
             }
             disabled={saving}
-            className="min-h-24 resize-y bg-muted/50"
+            className="min-h-18 resize-y bg-muted/50 text-sm"
           />
           {fieldErrors.purpose && (
             <p id="domain-purpose-error" className="text-xs text-destructive">
@@ -250,11 +250,12 @@ function DomainForm({
         </div>
         <fieldset disabled={saving}>
           <legend className="mb-2 text-xs font-medium">Domain Color</legend>
-          <div className="flex flex-wrap">
+          <div className="grid grid-cols-8 gap-0.5">
             {domainColors.map((option) => (
               <label
                 key={option.id}
-                className="relative flex size-11 cursor-pointer items-center justify-center"
+                title={option.label}
+                className="relative flex min-h-10 cursor-pointer items-center justify-center sm:min-h-9"
               >
                 <input
                   type="radio"
@@ -267,7 +268,7 @@ function DomainForm({
                 />
                 <span
                   style={{ backgroundColor: option.value }}
-                  className="flex size-7 items-center justify-center rounded-full text-white ring-offset-2 ring-offset-card peer-checked:ring-2 peer-checked:ring-primary peer-focus-visible:outline-2 peer-focus-visible:outline-offset-4 peer-focus-visible:outline-primary"
+                  className="flex size-6 items-center justify-center rounded-full text-white ring-offset-2 ring-offset-card peer-checked:ring-2 peer-checked:ring-primary peer-focus-visible:outline-2 peer-focus-visible:outline-offset-4 peer-focus-visible:outline-primary"
                 >
                   {color === option.id && (
                     <Check className="size-4" aria-hidden="true" />
@@ -279,9 +280,9 @@ function DomainForm({
         </fieldset>
         <fieldset disabled={saving}>
           <legend className="mb-2 text-xs font-medium">Domain Icon</legend>
-          <div className="grid grid-cols-4 gap-2">
+          <div className="grid grid-cols-6 gap-1.5">
             {domainIcons.map(({ id, label, component: Icon }) => (
-              <label key={id} className="relative cursor-pointer">
+              <label key={id} title={label} className="relative cursor-pointer">
                 <input
                   type="radio"
                   name="domain-icon"
@@ -291,7 +292,7 @@ function DomainForm({
                   onChange={() => setIcon(id)}
                   className="peer absolute inset-0 m-0 size-full cursor-pointer opacity-0"
                 />
-                <span className="flex min-h-11 items-center justify-center rounded-lg bg-muted text-muted-foreground peer-checked:bg-primary peer-checked:text-primary-foreground peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-primary">
+                <span className="flex min-h-10 items-center justify-center rounded-md bg-muted text-muted-foreground peer-checked:bg-primary peer-checked:text-primary-foreground peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-primary sm:min-h-9">
                   <Icon className="size-4" aria-hidden="true" />
                 </span>
               </label>
@@ -302,7 +303,7 @@ function DomainForm({
           <p className="mb-2 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
             Live Badge Preview
           </p>
-          <div className="flex items-center gap-2">
+          <div className="flex min-w-0 flex-wrap items-center gap-2">
             <DomainBadge name={name} color={color} icon={icon} />
             <span className="shrink-0 whitespace-nowrap text-[11px] leading-4 text-muted-foreground">
               Shown on cards &amp; task headers
