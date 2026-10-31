@@ -22,10 +22,10 @@ CLERK_FRONTEND_API_URL=<actual Clerk Production JWT issuer URL>
 NEXT_PUBLIC_CONVEX_URL=<production Convex deployment URL>
 ```
 
-Do not use the development noble-ferret issuer alongside production keys. Tempo's
-configuration guard compares the publishable key's domain with that issuer and
-disables Clerk rendering if they differ. The Frontend API proxy route is not a
-replacement for the JWT issuer: copy the Production issuer from Clerk's Convex
+Do not use the development noble-ferret issuer alongside production keys. The UI
+readiness check checks matching key environments, not decoded hostname equality.
+Clerk validates credentials and Convex validates the issuer independently. Copy
+the Production issuer from Clerk's Convex
 integration/JWT configuration and use it on the corresponding Convex deployment
 as well (`applicationID: convex`). Enable Clerk's Convex integration in Production.
 Keep development configuration and users separate.
