@@ -75,6 +75,8 @@ export const reschedule = mutation({
     await ctx.db.patch(args.id, {
       schedule: args.schedule,
       workDate,
+      lastRolledOn: undefined,
+      continuedOn: undefined,
       updatedAt: Date.now(),
     });
     const dueChanged =

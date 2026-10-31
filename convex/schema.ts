@@ -45,6 +45,7 @@ export default defineSchema({
     ownerId: v.string(),
     requestId: v.string(),
   })
+    .index("by_status", ["status"])
     .index("by_ownerId", ["ownerId"])
     .index("by_ownerId_and_requestId", ["ownerId", "requestId"])
     .index("by_ownerId_and_status_and_workDate", [

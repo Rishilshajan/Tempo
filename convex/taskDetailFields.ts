@@ -57,6 +57,7 @@ export const activityMetadata = v.object({
   afterScheduledDate: v.optional(v.string()),
 });
 export const activityType = v.union(
+  v.literal("rolled_forward"),
   v.literal("task_created"),
   v.literal("task_reordered"),
   v.literal("title_changed"),

@@ -78,6 +78,7 @@ export function MyTasksCalendar({
   function choose(next: string, scroll = true) {
     setDate(next);
     setMonth(asDate(next));
+    agenda.current?.scrollTo({ top: 0 });
     if (isMobile && scroll)
       requestAnimationFrame(() =>
         agenda.current?.scrollIntoView({
@@ -272,7 +273,7 @@ export function MyTasksCalendar({
                         aria-pressed={key === date}
                         aria-label={`${label(key, { weekday: "long", day: "numeric", month: "long" })}, ${rows.length} tasks`}
                         onClick={() => choose(key)}
-                        className={`flex min-h-8 min-w-0 flex-col items-center justify-center gap-1 overflow-hidden rounded-md px-1 text-xs sm:min-h-16 ${key === date ? "bg-primary text-primary-foreground" : outside ? "bg-muted/40 text-muted-foreground" : "bg-card text-foreground hover:bg-secondary"}`}
+                        className={`flex min-h-8 min-w-0 flex-col items-center justify-center gap-1 overflow-hidden rounded-md px-1 text-xs leading-none sm:min-h-16 ${key === date ? "bg-primary text-primary-foreground" : outside ? "bg-muted/40 text-muted-foreground" : "bg-card text-foreground hover:bg-secondary"}`}
                       >
                         <strong>{label(key, { day: "numeric" })}</strong>
                         {!isMobile && rows[0] && (
@@ -282,7 +283,9 @@ export function MyTasksCalendar({
                         )}
                         <span className="text-[9px]">
                           {rows.length
-                            ? `${rows.length} task${rows.length === 1 ? "" : "s"}`
+                            ? isMobile
+                              ? rows.length
+                              : `${rows.length} task${rows.length === 1 ? "" : "s"}`
                             : "–"}
                         </span>
                       </button>
@@ -313,10 +316,10 @@ export function MyTasksCalendar({
       <section
         ref={agenda}
         tabIndex={-1}
-        className="min-w-0 max-h-[max(6rem,calc(100svh-var(--calendar-panel-height)-6rem))] overflow-y-auto overscroll-y-auto scroll-mb-24 scroll-mt-4 space-y-3 rounded-xl border border-border bg-card p-3 focus-visible:outline-2 focus-visible:outline-ring sm:p-4 xl:max-h-[calc(100svh-2rem)]"
+        className="min-w-0 max-h-[max(6rem,calc(100svh-var(--calendar-panel-height)-7rem))] overflow-y-auto overscroll-y-auto scroll-mb-24 scroll-mt-4 space-y-3 rounded-xl border border-border bg-card p-3 focus-visible:outline-2 focus-visible:outline-ring sm:p-4 xl:max-h-[calc(100svh-2rem)]"
         aria-label="Selected day tasks"
       >
-        <div className="flex flex-wrap items-start justify-between gap-2">
+        <div className="sticky top-0 z-10 -mx-3 -mt-3 flex flex-wrap items-start justify-between gap-2 border-b border-border bg-card p-3 sm:-mx-4 sm:-mt-4 sm:p-4">
           <div>
             <h2 className="text-sm font-semibold">
               {label(date, { weekday: "long", day: "numeric", month: "short" })}

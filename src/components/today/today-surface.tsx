@@ -21,10 +21,7 @@ import {
   CreateDomainSheet,
   type CreateDomainValues,
 } from "@/components/domains/create-domain-sheet";
-import {
-  DomainLabel,
-  type DomainSummary,
-} from "@/components/domains/domain-appearance";
+import type { DomainSummary } from "@/components/domains/domain-appearance";
 import { DomainNavigation } from "@/components/domains/domain-navigation";
 import { DeleteDomainDialog } from "@/components/domains/delete-domain-dialog";
 import { CreateTaskSheet } from "@/components/tasks/create-task-sheet";
@@ -32,7 +29,6 @@ import { TaskDetailSheet } from "@/components/tasks/task-detail-sheet";
 import { TodayDashboard, type TaskPrefill } from "./today-dashboard";
 import type { Id } from "../../../convex/_generated/dataModel";
 import {
-  TaskList,
   type TaskRecord,
   type SetTaskCompleted,
   type SetTaskProgress,
@@ -124,8 +120,6 @@ export function TodaySurface({
   tasks,
   hasAnyTasks,
   hasMoreTasks,
-  loadingMoreTasks,
-  onLoadMoreTasks,
   onCreateTask,
   onSetTaskCompleted,
   onSetTaskProgress,
@@ -331,29 +325,6 @@ export function TodaySurface({
           id="today-content"
           className="w-full min-w-0 px-4 pb-28 pt-6 sm:px-8 lg:pb-10"
         >
-          {taskView === "domain" && (
-            <div className="flex items-center justify-between gap-3">
-              <div className="flex min-w-0 items-center gap-2 px-2 text-xs font-medium text-primary">
-                {selectedDomain ? (
-                  <DomainLabel {...selectedDomain} />
-                ) : (
-                  <>
-                    <Sun size={16} aria-hidden="true" />
-                    <span>Today</span>
-                  </>
-                )}
-              </div>
-              {tasks && tasks.length > 0 && (
-                <Button
-                  className="min-h-10 gap-2 text-xs lg:hidden"
-                  onClick={openCreateTask}
-                >
-                  <Plus aria-hidden="true" />
-                  Create Task
-                </Button>
-              )}
-            </div>
-          )}
           {domains === undefined ||
           (taskView !== "today" && tasks === undefined) ||
           hasAnyTasks === undefined ? (
@@ -384,8 +355,16 @@ export function TodaySurface({
                 onSetProgress={onSetTaskProgress}
               />
             ))
-          ) : taskView === "all" ? (
+          ) : (
             <MyTasksBoard
+              selectedDomainId={
+                taskView === "domain" ? (selectedDomainId ?? "") : ""
+              }
+              onDomainChange={(id) => {
+                const domain = domains.find((item) => item._id === id);
+                if (domain) onSelectDomain(domain);
+                else onViewChange("all");
+              }}
               tasks={tasks ?? []}
               domains={domains}
               incomplete={hasMoreTasks}
@@ -398,59 +377,6 @@ export function TodaySurface({
               onSetCompleted={onSetTaskCompleted}
               onSetProgress={onSetTaskProgress}
             />
-          ) : tasks && tasks.length > 0 ? (
-            <section aria-labelledby="tasks-heading" className="mt-7">
-              <h1
-                id="tasks-heading"
-                className="mb-2 break-words text-[22px] font-semibold tracking-tight sm:text-2xl"
-              >
-                {selectedDomain?.name ?? "Tasks"}
-              </h1>
-              <div className="mt-5">
-                <TaskList
-                  tasks={tasks}
-                  isToday={false}
-                  onSetCompleted={onSetTaskCompleted}
-                  onSetProgress={onSetTaskProgress}
-                />
-              </div>
-              {hasMoreTasks && (
-                <Button
-                  variant="secondary"
-                  disabled={loadingMoreTasks}
-                  className="mt-5 min-h-10"
-                  onClick={onLoadMoreTasks}
-                >
-                  {loadingMoreTasks ? "Loading…" : "Load more tasks"}
-                </Button>
-              )}
-            </section>
-          ) : (
-            <section
-              aria-labelledby="tasks-empty-heading"
-              className="flex min-h-[55svh] flex-col items-center justify-center px-4 py-12 text-center"
-            >
-              <h1
-                id="tasks-empty-heading"
-                className="text-[22px] font-semibold tracking-tight sm:text-2xl"
-              >
-                {taskView === "domain"
-                  ? "No tasks in this domain"
-                  : taskView === "all"
-                    ? "No tasks yet"
-                    : "No tasks for today"}
-              </h1>
-              <p className="mt-3 max-w-lg text-sm leading-6 text-muted-foreground">
-                There are no tasks here yet.
-              </p>
-              <Button
-                className="mt-7 min-h-11 gap-2 px-5"
-                onClick={openCreateTask}
-              >
-                <Plus aria-hidden="true" />
-                Create Task
-              </Button>
-            </section>
           )}
         </main>
       </div>

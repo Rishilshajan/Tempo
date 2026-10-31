@@ -106,6 +106,8 @@ const columns: {
   },
 ];
 type Props = {
+  selectedDomainId?: string;
+  onDomainChange?: (domainId: string) => void;
   tasks: TaskRecord[];
   domains: DomainSummary[];
   incomplete?: boolean;
@@ -116,6 +118,8 @@ type Props = {
   onSetProgress: SetTaskProgress;
 };
 export function MyTasksBoard({
+  selectedDomainId,
+  onDomainChange,
   onCreateForDate,
   tasks,
   domains,
@@ -138,7 +142,7 @@ export function MyTasksBoard({
   const [collapsed, setCollapsed] = useState<Partial<Record<Lane, boolean>>>(
     {},
   );
-  const [filters, setFilters] = useState<BoardFilters>({
+  const [localFilters, setFilters] = useState<BoardFilters>({
     domain: "",
     priority: "all",
     date: "all",
@@ -146,6 +150,11 @@ export function MyTasksBoard({
     to: "",
     sort: "manual",
   });
+  const filters = {
+    ...localFilters,
+    domain: selectedDomainId ?? localFilters.domain,
+  };
+  const currentDomain = domains.find((domain) => domain._id === filters.domain);
   const [older, setOlder] = useState(false);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [hideCompleted, setHideCompleted] = useState(false);
@@ -171,6 +180,7 @@ export function MyTasksBoard({
     }),
   );
   const update = (key: keyof BoardFilters, value: string) => {
+    if (key === "domain") onDomainChange?.(value);
     setFilters((previous) => ({ ...previous, [key]: value }));
     setHideCompleted(false);
   };
@@ -299,6 +309,11 @@ export function MyTasksBoard({
           className="text-[22px] font-semibold tracking-tight sm:text-2xl"
         >
           My Tasks
+          {currentDomain && (
+            <span className="ml-2 inline-flex align-middle rounded-full bg-secondary px-2 py-1 text-xs font-normal">
+              <DomainLabel {...currentDomain} />
+            </span>
+          )}
         </h1>
         <div
           aria-label="Task view"
@@ -847,7 +862,8 @@ function BoardCard({
       <div className="flex flex-wrap gap-2 text-[10px] text-muted-foreground">
         {lane === "carried" && (
           <TaskPill tone="carried">
-            Carried · {shortBoardDate(task.workDate)}
+            Carried{task.rollForwardCount ? ` ×${task.rollForwardCount}` : ""} ·{" "}
+            {shortBoardDate(task.originalWorkDate ?? task.workDate)}
           </TaskPill>
         )}
         {task.estimatedMinutes !== undefined && (
@@ -1024,7 +1040,8 @@ function CompactBoardRow({
           )}
           {lane === "carried" && (
             <TaskPill tone="carried">
-              Carried · {shortBoardDate(task.workDate)}
+              Carried{task.rollForwardCount ? ` ×${task.rollForwardCount}` : ""}{" "}
+              · {shortBoardDate(task.originalWorkDate ?? task.workDate)}
             </TaskPill>
           )}
         </div>

@@ -78,14 +78,14 @@ function ConnectedToday({
   const taskQuery = usePaginatedQuery(
     api.tasks.list,
     isAuthenticated && selection.view !== "today"
-      ? { ...selection, today }
+      ? { view: "all", today }
       : "skip",
     { initialNumItems: 30 },
   );
 
   const { status: taskStatus, loadMore: loadNextTasks } = taskQuery;
   useEffect(() => {
-    if (selection.view === "all" && taskStatus === "CanLoadMore")
+    if (selection.view !== "today" && taskStatus === "CanLoadMore")
       loadNextTasks(60);
   }, [selection.view, taskStatus, loadNextTasks]);
 

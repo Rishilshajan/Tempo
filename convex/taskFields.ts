@@ -55,6 +55,9 @@ export const taskInputFields = {
   recurrence: v.optional(recurrenceRule),
 };
 export const taskFields = {
+  originalWorkDate: v.optional(v.string()),
+  lastRolledOn: v.optional(v.string()),
+  rollForwardCount: v.optional(v.number()),
   boardPosition: v.optional(v.number()),
   continuedOn: v.optional(v.string()),
   ...taskInputFields,

@@ -424,9 +424,11 @@ export function TaskDetailWorkspace({
         </div>
         {task.status === "open" && task.workDate && task.workDate <= today && (
           <p className="text-[10px] leading-4 text-muted-foreground">
-            {task.workDate < today
-              ? `Carried forward from ${task.workDate}.`
-              : "Roll forward tomorrow if unfinished."}{" "}
+            {task.lastRolledOn && task.originalWorkDate
+              ? `Rolled forward ×${task.rollForwardCount ?? 1} from ${task.originalWorkDate}. Working date: ${task.workDate}.`
+              : task.workDate < today
+                ? `Carried forward from ${task.workDate}.`
+                : "Roll forward tomorrow if unfinished."}{" "}
             The original deadline stays unchanged.
           </p>
         )}

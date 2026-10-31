@@ -8,10 +8,12 @@
  * @module
  */
 
+import type * as crons from "../crons.js";
 import type * as dashboard from "../dashboard.js";
 import type * as domainFields from "../domainFields.js";
 import type * as domains from "../domains.js";
 import type * as kanban from "../kanban.js";
+import type * as rollForward from "../rollForward.js";
 import type * as taskDetailFields from "../taskDetailFields.js";
 import type * as taskDetailHelpers from "../taskDetailHelpers.js";
 import type * as taskDetails from "../taskDetails.js";
@@ -28,10 +30,12 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  crons: typeof crons;
   dashboard: typeof dashboard;
   domainFields: typeof domainFields;
   domains: typeof domains;
   kanban: typeof kanban;
+  rollForward: typeof rollForward;
   taskDetailFields: typeof taskDetailFields;
   taskDetailHelpers: typeof taskDetailHelpers;
   taskDetails: typeof taskDetails;

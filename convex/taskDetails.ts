@@ -269,7 +269,9 @@ export const updateTask = mutation({
       schedule: data.schedule,
       timezone: data.timezone,
       recurrence: data.recurrence,
-      ...(scheduleChanged || recurrenceChanged ? { workDate } : {}),
+      ...(scheduleChanged || recurrenceChanged
+        ? { workDate, lastRolledOn: undefined, continuedOn: undefined }
+        : {}),
       ...(recurrenceChanged
         ? {
             recurrenceAnchorDate: data.recurrence ? workDate : undefined,

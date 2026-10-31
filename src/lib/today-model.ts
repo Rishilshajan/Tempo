@@ -5,6 +5,7 @@ import { shiftDate, zonedTimestamp } from "./validation/recurrence";
 export type DayTask = Pick<
   Doc<"tasks">,
   | "continuedOn"
+  | "lastRolledOn"
   | "_id"
   | "title"
   | "status"
@@ -43,12 +44,15 @@ export function isCarried(task: DayTask, day: DayWindow) {
     task.continuedOn === day.date
   )
     return false;
+  if (task.lastRolledOn === day.date && task.workDate === day.date) return true;
   return task.schedule.type === "fixed"
     ? task.schedule.endAt <= day.start
     : !!task.workDate && task.workDate < day.date;
 }
 
 export function belongsToDay(task: DayTask, day: DayWindow) {
+  if (task.status === "open" && task.lastRolledOn && task.workDate === day.date)
+    return true;
   if (task.status === "open" && task.continuedOn === day.date) return true;
   if (task.schedule.type === "fixed") {
     if (task.schedule.startAt < day.end && task.schedule.endAt > day.start)
