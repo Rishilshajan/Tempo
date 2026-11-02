@@ -58,6 +58,7 @@ const db = {
         );
         return clauses;
       },
+      gte(key,value){conditions.push(row=>row[key]>=value);return clauses;},
       lte(key, value) {
         conditions.push((row) => row[key] <= value);
         return clauses;
@@ -112,10 +113,16 @@ const db = {
 };
 const context = (owner) => ({
   db,
+  scheduler: {runAfter:async()=>null},
   auth: {
     getUserIdentity: async () => (owner ? { tokenIdentifier: owner } : null),
   },
 });
+async function legacyCreate(ctx,args){
+ const id=await functions.create._handler(ctx,args);
+ if(args.recurrence)await db.patch(id,{seriesId:undefined,recurrenceManaged:undefined});
+ return id;
+}
 const alice = context("alice");
 const bob = context("bob");
 const steps = (taskId) =>
@@ -132,9 +139,9 @@ const base = {
   subtasks: [{ title: "Research" }],
   requestId: "ea2ff0cf-5af8-43ef-ab9b-eb5314855a58",
 };
-await assert.rejects(() => functions.create._handler(context(null), base));
+await assert.rejects(() => legacyCreate(context(null), base));
 await assert.rejects(() =>
-  functions.create._handler(alice, { ...base, title: " " }),
+  legacyCreate(alice, { ...base, title: " " }),
 );
 const foreignDomain = await db.insert("domains", {
   ownerId: "bob",
@@ -143,10 +150,10 @@ const foreignDomain = await db.insert("domains", {
   icon: "briefcase",
 });
 await assert.rejects(() =>
-  functions.create._handler(alice, { ...base, domainId: foreignDomain }),
+  legacyCreate(alice, { ...base, domainId: foreignDomain }),
 );
-const id = await functions.create._handler(alice, base);
-assert.equal(await functions.create._handler(alice, base), id);
+const id = await legacyCreate(alice, base);
+assert.equal(await legacyCreate(alice, base), id);
 assert.equal(records.get(id).title, "Proposal");
 assert.equal(records.get(id).subtasks.length, 0);
 assert.equal(records.get(id).subtasksNormalized, true);
@@ -164,7 +171,7 @@ assert.equal((await functions.list._handler(bob, args)).page.length, 0);
 const visible = (await functions.list._handler(alice, args)).page[0];
 assert.ok(!("ownerId" in visible));
 assert.ok(!("requestId" in visible));
-const future = await functions.create._handler(alice, {
+const future = await legacyCreate(alice, {
   ...base,
   requestId: "64d9d6bb-6ea5-4c37-8d81-88e5521a4d91",
   schedule: { type: "flexible", dueDate: "2026-10-30" },
@@ -242,7 +249,7 @@ console.log(
   "PASS: actual task handlers — auth, domain ownership, idempotency, atomic subtasks, owner isolation, Today versus My Tasks, deadline preservation, completion and undo.",
 );
 
-const repeating = await functions.create._handler(alice, {
+const repeating = await legacyCreate(alice, {
   ...base,
   requestId: "5fe300ec-c322-4696-9898-72963446cc2a",
   schedule: { type: "flexible", dueDate: "2026-01-31" },
@@ -290,7 +297,7 @@ assert.equal(
   await functions.setCompleted._handler(alice, { id: third, completed: true }),
   null,
 );
-const until = await functions.create._handler(alice, {
+const until = await legacyCreate(alice, {
   ...base,
   requestId: "bd409a5c-1072-469c-969e-90b9ebcce7e3",
   schedule: { type: "flexible", dueDate: "2026-01-31" },
@@ -310,7 +317,7 @@ assert.equal(
   await functions.setCompleted._handler(alice, { id: last, completed: true }),
   null,
 );
-const dst = await functions.create._handler(alice, {
+const dst = await legacyCreate(alice, {
   ...base,
   requestId: "a31d705a-0f94-451f-b572-bb01114e7c5b",
   timezone: "America/New_York",
@@ -343,26 +350,26 @@ assert.equal(
   Date.parse("2026-03-09T06:30:00Z"),
 );
 console.log(
-  "PASS: recurring task persistence, completion generates one next occurrence, undo/re-complete safety, subtask resets, month-end dates, count/date stops, and fixed-time DST recovery.",
+  "PASS: legacy recurring task persistence, completion generates one next occurrence, undo/re-complete safety, subtask resets, month-end dates, count/date stops, and fixed-time DST recovery.",
 );
 
 clock = RealDate.parse("2026-10-30T09:45:00Z");
 await assert.rejects(() =>
-  functions.create._handler(alice, {
+  legacyCreate(alice, {
     ...base,
     requestId: "cb21c9d0-738d-48f1-80e5-3ccbc456e5cf",
     schedule: { type: "flexible", dueDate: "2026-10-29" },
   }),
 );
 await assert.rejects(() =>
-  functions.create._handler(alice, {
+  legacyCreate(alice, {
     ...base,
     requestId: "5db04481-758c-43ca-8520-595b9a8d4aad",
     subtasks: [{ title: "Past step", dueDate: "2026-10-29" }],
   }),
 );
 await assert.rejects(() =>
-  functions.create._handler(alice, {
+  legacyCreate(alice, {
     ...base,
     requestId: "9a86a70a-7af4-4c3d-a34f-2fbb021beceb",
     schedule: {
@@ -379,7 +386,7 @@ const daily = {
   end: { type: "never" },
 };
 await assert.rejects(() =>
-  functions.create._handler(alice, {
+  legacyCreate(alice, {
     ...base,
     requestId: "9d882f08-76f6-4c31-b4c6-d1aaf4467d01",
     schedule: { type: "flexible", dueDate: "2026-10-29" },
@@ -387,7 +394,7 @@ await assert.rejects(() =>
   }),
 );
 await assert.rejects(() =>
-  functions.create._handler(alice, {
+  legacyCreate(alice, {
     ...base,
     requestId: "9d882f08-76f6-4c31-b4c6-d1aaf4467d02",
     subtasks: [{ title: "Step", dueDate: "2026-10-29" }],
@@ -395,7 +402,7 @@ await assert.rejects(() =>
   }),
 );
 await assert.rejects(() =>
-  functions.create._handler(alice, {
+  legacyCreate(alice, {
     ...base,
     requestId: "9d882f08-76f6-4c31-b4c6-d1aaf4467d03",
     schedule: {
@@ -407,7 +414,7 @@ await assert.rejects(() =>
   }),
 );
 assert.equal(
-  await functions.create._handler(alice, {
+  await legacyCreate(alice, {
     ...base,
     requestId: "5fe300ec-c322-4696-9898-72963446cc2a",
     schedule: { type: "flexible", dueDate: "2026-01-31" },
@@ -418,26 +425,26 @@ assert.equal(
 console.log(
   "PASS: authoritative past-date/time rejection and idempotent retries after the clock advances.",
 );
-const late = await functions.create._handler(alice, {
+const late = await legacyCreate(alice, {
   ...base,
   requestId: "02f7ee95-e39f-4f48-9248-7c7cf0a58f71",
   schedule: { type: "flexible", dueDate: "2026-10-30" },
   recurrence: { ...daily, end: { type: "count", count: 3 } },
 });
-const expired = await functions.create._handler(alice, {
+const expired = await legacyCreate(alice, {
   ...base,
   requestId: "02f7ee95-e39f-4f48-9248-7c7cf0a58f72",
   schedule: { type: "flexible", dueDate: "2026-10-30" },
   recurrence: { ...daily, end: { type: "date", date: "2026-11-05" } },
 });
-const preparation = await functions.create._handler(alice, {
+const preparation = await legacyCreate(alice, {
   ...base,
   requestId: "02f7ee95-e39f-4f48-9248-7c7cf0a58f73",
   schedule: { type: "flexible", dueDate: "2026-11-10" },
   subtasks: [{ title: "Prepare", dueDate: "2026-11-01" }],
   recurrence: daily,
 });
-const lateFixed = await functions.create._handler(alice, {
+const lateFixed = await legacyCreate(alice, {
   ...base,
   requestId: "02f7ee95-e39f-4f48-9248-7c7cf0a58f74",
   schedule: { type: "fixed", startAt: clock + 3600000, endAt: clock + 7200000 },
@@ -493,7 +500,7 @@ const weekdayRule = {
   unit: "day",
   end: { type: "count", count: 3 },
 };
-const weekdayTask = await functions.create._handler(alice, {
+const weekdayTask = await legacyCreate(alice, {
   ...base,
   timezone: "UTC",
   requestId: "d3b4071f-7a68-4947-b357-3a335a9b4041",
@@ -530,7 +537,7 @@ assert.equal(
   }),
   null,
 );
-const expires = await functions.create._handler(alice, {
+const expires = await legacyCreate(alice, {
   ...base,
   timezone: "UTC",
   requestId: "e187014f-fc1f-47dc-b890-d6df58b9812a",
@@ -544,7 +551,7 @@ assert.equal(
   }),
   null,
 );
-const lateWeekday = await functions.create._handler(alice, {
+const lateWeekday = await legacyCreate(alice, {
   ...base,
   timezone: "UTC",
   requestId: "4d1be2c3-ccbc-4fab-9de5-1467a6a7df97",

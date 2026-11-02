@@ -7,8 +7,8 @@ export default function manifest(): MetadataRoute.Manifest {
     description:
       "Every task, every commitment, every domain. One place to keep it all moving.",
     id: "/",
-    // Installed app launches should still open the daily workspace.
-    start_url: "/dashboard",
+    // The root routes returning members to their workspace and guests to the landing page.
+    start_url: "/",
     scope: "/",
     display: "standalone",
     orientation: "portrait",

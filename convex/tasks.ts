@@ -1,3 +1,4 @@
+import { startSeries } from "./series";
 import {
   paginationOptsValidator,
   paginationResultValidator,
@@ -41,7 +42,7 @@ export const get = query({
     const user = await ctx.auth.getUserIdentity();
     if (!user) throw new ConvexError("Please sign in to view a task.");
     const task = await ctx.db.get(id);
-    return task?.ownerId === user.tokenIdentifier
+    return task?.ownerId === user.tokenIdentifier && !task.recurrenceCancelled
       ? await toTaskView(ctx, task)
       : null;
   },
@@ -54,13 +55,18 @@ export const reschedule = mutation({
     const user = await ctx.auth.getUserIdentity();
     if (!user) throw new ConvexError("Please sign in to reschedule a task.");
     const task = await ctx.db.get(args.id);
-    if (!task || task.ownerId !== user.tokenIdentifier)
+    if (
+      !task ||
+      task.recurrenceCancelled ||
+      task.ownerId !== user.tokenIdentifier
+    )
       throw new ConvexError("This task is not available.");
     if (task.status === "completed")
       throw new ConvexError("Reopen this task before rescheduling it.");
     const parsed = createTaskSchema.safeParse({
       ...task,
       schedule: args.schedule,
+      recurrence: undefined,
       subtasks: [],
       requestId: "00000000-0000-4000-8000-000000000000",
     });
@@ -143,7 +149,9 @@ export const list = query({
         .paginate(options);
     }
     const page = await Promise.all(
-      rows.page.map((task) => toTaskView(ctx, task)),
+      rows.page
+        .filter((task) => !task.recurrenceCancelled)
+        .map((task) => toTaskView(ctx, task)),
     );
     return { ...rows, page };
   },
@@ -194,6 +202,8 @@ export const create = mutation({
         ? localDateKey(new Date(data.schedule.startAt), data.timezone)
         : (data.schedule.dueDate ?? "");
     const id = await ctx.db.insert("tasks", {
+      multiDay: data.multiDay,
+      allowOverlap: data.allowOverlap,
       title: data.title,
       ...(data.description ? { description: data.description } : {}),
       ...(args.domainId ? { domainId: args.domainId } : {}),
@@ -226,6 +236,8 @@ export const create = mutation({
     const created = await ctx.db.get(id);
     if (created) await normalizeSubtasks(ctx, created);
     await recordActivity(ctx, id, user, "task_created", "Task created.");
+    const seriesTask = await ctx.db.get(id);
+    if (seriesTask?.recurrence) await startSeries(ctx, seriesTask);
     return id;
   },
 });
@@ -259,7 +271,11 @@ export async function applyTaskProgress(
   const user = await ctx.auth.getUserIdentity();
   if (!user) throw new ConvexError("Please sign in to update a task.");
   const task = await ctx.db.get(id);
-  if (!task || task.ownerId !== user.tokenIdentifier)
+  if (
+    !task ||
+    task.recurrenceCancelled ||
+    task.ownerId !== user.tokenIdentifier
+  )
     throw new ConvexError("This task is not available.");
   if (task.status === "open" && (task.progress ?? "not_started") === progress)
     return null;
@@ -295,7 +311,11 @@ export async function applyTaskCompleted(
   const user = await ctx.auth.getUserIdentity();
   if (!user) throw new ConvexError("Please sign in to update a task.");
   const task = await ctx.db.get(args.id);
-  if (!task || task.ownerId !== user.tokenIdentifier)
+  if (
+    !task ||
+    task.recurrenceCancelled ||
+    task.ownerId !== user.tokenIdentifier
+  )
     throw new ConvexError("This task is not available.");
   if (args.subtaskId) {
     const rows = await normalizeSubtasks(ctx, task);

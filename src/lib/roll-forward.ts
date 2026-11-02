@@ -4,7 +4,8 @@ import { dateDistance } from "./validation/recurrence";
 
 /** Preserve the original schedule, including overnight blocks and recurrence anchors. */
 export function rollForwardPatch(task: Doc<"tasks">, now: number) {
-  if (task.status !== "open" || !task.workDate) return null;
+  if (task.recurrenceCancelled || task.status !== "open" || !task.workDate)
+    return null;
   const today = localDateKey(new Date(now), task.timezone);
   const lastOccupiedDate =
     task.schedule.type === "fixed"

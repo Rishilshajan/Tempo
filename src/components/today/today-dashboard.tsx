@@ -1,6 +1,13 @@
 "use client";
 
-import { Component, useEffect, useMemo, useState, type ReactNode } from "react";
+import {
+  Component,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import { useUser } from "@clerk/nextjs";
 import {
   useConvexAuth,
@@ -337,6 +344,22 @@ export function DayCommandCenter({
   const summary = summarizeDay(tasks, day);
   const [domainFilter, setDomainFilter] = useState("all");
   const [group, setGroup] = useState("all");
+  const prioritiesHeading = useRef<HTMLHeadingElement>(null);
+  function showAllocationTasks(filter: "fixed" | "flexible" | "carried") {
+    setGroup(filter);
+    // Allocation covers the whole day, so a previous domain filter must not hide its tasks.
+    setDomainFilter("all");
+    requestAnimationFrame(() => {
+      const heading = prioritiesHeading.current;
+      heading?.focus({ preventScroll: true });
+      heading?.scrollIntoView({
+        behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches
+          ? "instant"
+          : "smooth",
+        block: "start",
+      });
+    });
+  }
   const [pending, setPending] = useState<Set<string>>(() => new Set());
   const today = day.date === day.today;
   const localHour = Number(
@@ -616,20 +639,32 @@ export function DayCommandCenter({
                   />
                 ))}
             </div>
-            <div className="mt-3 flex flex-wrap gap-x-4 gap-y-2 text-[11px] text-muted-foreground">
-              <TaskPill tone="fixed" solid>
-                Fixed · {formatMinutes(summary.allocation.fixed)}
-              </TaskPill>
-              <TaskPill tone="flexible" solid>
-                Flexible · {formatMinutes(summary.allocation.flexible)}
-              </TaskPill>
-              <TaskPill tone="carried" solid>
-                Carried · {formatMinutes(summary.allocation.carried)}
-              </TaskPill>
+            <div className="mt-3 grid grid-cols-3 gap-1.5 sm:gap-2">
+              {(["fixed", "flexible", "carried"] as const).map((filter) => (
+                <Button
+                  key={filter}
+                  variant="ghost"
+                  className={`h-auto min-h-8 w-full min-w-0 rounded-full px-1 py-1.5 text-[10px] sm:px-2.5 sm:text-[11px] hover:opacity-90 hover:text-white ${allocationTones[filter]} ${filter === "fixed" ? "hover:bg-sky-800" : filter === "flexible" ? "hover:bg-teal-800" : "hover:bg-violet-800"}`}
+                  aria-label={`Show ${filter} tasks`}
+                  aria-controls="day-priorities"
+                  aria-pressed={group === filter}
+                  onClick={() => showAllocationTasks(filter)}
+                >
+                  <span className="min-w-0 whitespace-normal text-center leading-tight">
+                    {filter === "fixed"
+                      ? "Fixed"
+                      : filter === "flexible"
+                        ? "Flexible"
+                        : "Carried"}
+                    {" · "}
+                    {formatMinutes(summary.allocation[filter])}
+                  </span>
+                </Button>
+              ))}
             </div>
             <p className="mt-3 text-[11px] leading-5 text-muted-foreground">
-              Estimates, or scheduled duration when no estimate is set. Not
-              tracked time.
+              Fixed bookings count only the scheduled portion on this day.
+              Flexible and carried work use estimates. Not tracked time.
               {summary.completed.length > 0
                 ? " Includes the completed work shown here."
                 : ""}
@@ -649,11 +684,17 @@ export function DayCommandCenter({
           />
         </div>
         <section
+          id="day-priorities"
           aria-labelledby="priorities-heading"
           className="min-w-0 rounded-xl border border-border bg-card p-4"
         >
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <h2 id="priorities-heading" className="text-sm font-medium">
+            <h2
+              ref={prioritiesHeading}
+              tabIndex={-1}
+              id="priorities-heading"
+              className="scroll-mt-6 text-sm font-medium focus-visible:outline-2 focus-visible:outline-primary"
+            >
               {today ? "Today’s" : "Day"}{" "}
               {group === "fixed"
                 ? "fixed tasks"

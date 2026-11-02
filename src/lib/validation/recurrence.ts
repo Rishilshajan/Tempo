@@ -2,6 +2,16 @@ import { z } from "zod";
 
 export const recurrenceSchema = z
   .object({
+    weekdays: z
+      .array(z.number().int().min(0).max(6))
+      .min(1)
+      .max(7)
+      .refine(
+        (days) => new Set(days).size === days.length,
+        "Choose each weekday once.",
+      )
+      .optional(),
+    monthlyMissing: z.enum(["last_day", "skip"]).optional(),
     frequency: z.enum(["daily", "weekdays", "weekly", "monthly", "custom"]),
     interval: z
       .number()
@@ -80,6 +90,23 @@ export function occurrenceDate(
   rule: RecurrenceRule,
   ordinal: number,
 ) {
+  if (rule.unit === "week" && rule.weekdays?.length) {
+    const selected = [...rule.weekdays].sort(
+      (a, b) => ((a + 6) % 7) - ((b + 6) % 7),
+    );
+    const anchorDay = new Date(anchor + "T12:00:00Z").getUTCDay();
+    const monday = shiftDate(anchor, -((anchorDay + 6) % 7));
+    const first = selected
+      .map((d) => shiftDate(monday, (d + 6) % 7))
+      .filter((d) => d >= anchor);
+    if (ordinal <= first.length) return first[ordinal - 1];
+    const rest = ordinal - first.length - 1;
+    return shiftDate(
+      monday,
+      (Math.floor(rest / selected.length) + 1) * 7 * rule.interval +
+        ((selected[rest % selected.length] + 6) % 7),
+    );
+  }
   const offset = (ordinal - 1) * rule.interval;
   if (rule.frequency === "weekdays") {
     const first = weekdayAnchor(anchor);
@@ -89,7 +116,20 @@ export function occurrenceDate(
   if (rule.unit !== "month")
     return shiftDate(anchor, offset * (rule.unit === "week" ? 7 : 1));
   const [year, month, day] = anchor.split("-").map(Number);
-  const value = new Date(Date.UTC(year, month - 1 + offset, 1, 12));
+  let monthOffset = offset;
+  if (rule.monthlyMissing === "skip") {
+    let found = 0;
+    for (let slot = 0; slot <= ordinal * 48; slot++) {
+      const candidate = new Date(
+        Date.UTC(year, month - 1 + slot * rule.interval + 1, 0, 12),
+      );
+      if (candidate.getUTCDate() >= day && ++found === ordinal) {
+        monthOffset = slot * rule.interval;
+        break;
+      }
+    }
+  }
+  const value = new Date(Date.UTC(year, month - 1 + monthOffset, 1, 12));
   const last = new Date(
     Date.UTC(value.getUTCFullYear(), value.getUTCMonth() + 1, 0),
   ).getUTCDate();

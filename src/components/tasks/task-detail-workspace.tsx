@@ -1,4 +1,5 @@
 "use client";
+import { useOverlayBack } from "@/hooks/use-overlay-back";
 import { useId, useRef, useState, type ReactNode } from "react";
 import { useMutation } from "convex/react";
 import {
@@ -69,6 +70,14 @@ export function TaskDetailWorkspace({
 }) {
   const [tab, setTab] = useState("subtasks");
   const [mobileSectionOpen, setMobileSectionOpen] = useState(false);
+  useOverlayBack(
+    mobileSectionOpen,
+    () => {
+      setMobileSectionOpen(false);
+      return true;
+    },
+    true,
+  );
   const mobileSectionId = useId();
   const mobileBack = useRef<HTMLButtonElement>(null);
   const sections = [
@@ -249,7 +258,33 @@ export function TaskDetailWorkspace({
                 <DetailRow icon={<Repeat2 />} label="Repeat">
                   {task.recurrence.frequency === "weekdays"
                     ? "Monday–Friday"
-                    : `Every ${task.recurrence.interval} ${task.recurrence.unit}${task.recurrence.interval > 1 ? "s" : ""}`}
+                    : task.recurrence.weekdays?.length
+                      ? task.recurrence.weekdays
+                          .map(
+                            (day) =>
+                              ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][
+                                day
+                              ],
+                          )
+                          .join(", ")
+                      : `Every ${task.recurrence.interval} ${task.recurrence.unit}${task.recurrence.interval > 1 ? "s" : ""}`}
+                </DetailRow>
+              )}
+              {task.recurrence && (
+                <DetailRow icon={<CalendarDays />} label="Repeat ends">
+                  {task.recurrence.end.type === "date"
+                    ? new Intl.DateTimeFormat("en-GB", {
+                        day: "2-digit",
+                        month: "short",
+                        year: "numeric",
+                        timeZone: "UTC",
+                      }).format(
+                        new Date(task.recurrence.end.date + "T12:00:00Z"),
+                      )
+                    : task.recurrence.end.type === "count"
+                      ? task.recurrence.end.count +
+                        " sessions (including first)"
+                      : "No end date"}
                 </DetailRow>
               )}
             </dl>

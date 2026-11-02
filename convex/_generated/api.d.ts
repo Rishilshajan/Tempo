@@ -14,6 +14,7 @@ import type * as domainFields from "../domainFields.js";
 import type * as domains from "../domains.js";
 import type * as kanban from "../kanban.js";
 import type * as rollForward from "../rollForward.js";
+import type * as series from "../series.js";
 import type * as taskDetailFields from "../taskDetailFields.js";
 import type * as taskDetailHelpers from "../taskDetailHelpers.js";
 import type * as taskDetails from "../taskDetails.js";
@@ -36,6 +37,7 @@ declare const fullApi: ApiFromModules<{
   domains: typeof domains;
   kanban: typeof kanban;
   rollForward: typeof rollForward;
+  series: typeof series;
   taskDetailFields: typeof taskDetailFields;
   taskDetailHelpers: typeof taskDetailHelpers;
   taskDetails: typeof taskDetails;

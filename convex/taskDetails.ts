@@ -1,3 +1,4 @@
+import { updateSeries } from "./series";
 import {
   paginationOptsValidator,
   paginationResultValidator,
@@ -139,6 +140,7 @@ async function updateMetadataValues(
 
 export const updateTask = mutation({
   args: {
+    editScope: v.optional(v.union(v.literal("this"), v.literal("future"))),
     id: v.id("tasks"),
     ...taskInputFields,
     subtasks: v.array(subtaskInput),
@@ -173,6 +175,7 @@ export const updateTask = mutation({
       { ...task, subtasks: originalSteps, requestId: args.requestId },
       args.stepKeys,
       originalKeys,
+      args.editScope !== "future" && !!task.recurrence,
     ).safeParse(args);
     if (!parsed.success) throw new ConvexError(parsed.error.issues[0].message);
     const data = parsed.data;
@@ -182,9 +185,9 @@ export const updateTask = mutation({
     const recurrenceChanged = !sameTaskValue(task.recurrence, data.recurrence);
     if (task.status === "completed" && scheduleChanged)
       throw new ConvexError("Reopen this task before changing its schedule.");
-    if (recurrenceChanged && task.nextOccurrenceId)
+    if (recurrenceChanged && task.recurrence && args.editScope !== "future")
       throw new ConvexError(
-        "The next recurring task already exists. Change repeat settings on that occurrence.",
+        "Choose This and future occurrences to change repeat settings.",
       );
     await updateMetadataValues(ctx, {
       id: task._id,
@@ -266,6 +269,8 @@ export const updateTask = mutation({
         : (data.schedule.dueDate ??
           (data.recurrence ? localDateKey(new Date(), data.timezone) : ""));
     await ctx.db.patch(task._id, {
+      multiDay: data.multiDay,
+      allowOverlap: data.allowOverlap,
       schedule: data.schedule,
       timezone: data.timezone,
       recurrence: data.recurrence,
@@ -287,6 +292,7 @@ export const updateTask = mutation({
       lastEditRequestId: args.requestId,
       updatedAt: Date.now(),
     });
+    await updateSeries(ctx, task, args.editScope ?? "this");
     if (scheduleChanged)
       await recordActivity(
         ctx,

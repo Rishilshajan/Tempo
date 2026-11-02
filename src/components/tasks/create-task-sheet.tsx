@@ -51,7 +51,7 @@ import {
   type CreateTaskValues,
 } from "@/lib/validation/task";
 import { priorities, PriorityLabel, TaskSelect } from "./task-select";
-import { zonedTimestamp } from "@/lib/validation/recurrence";
+import { zonedTimestamp, shiftDate } from "@/lib/validation/recurrence";
 import type { TaskRecord } from "./task-list";
 
 type Props = {
@@ -62,7 +62,11 @@ type Props = {
   initialDate?: string;
   initialStartAt?: number;
   canSubmit: boolean;
-  onCreate: (values: CreateTaskValues, stepKeys?: string[]) => Promise<unknown>;
+  onCreate: (
+    values: CreateTaskValues,
+    stepKeys?: string[],
+    editScope?: "this" | "future",
+  ) => Promise<unknown>;
   editingTask?: TaskRecord;
   hasMoreDomains?: boolean;
   loadingMoreDomains?: boolean;
@@ -75,8 +79,9 @@ export function CreateTaskSheet(props: Props) {
   return (
     <Sheet
       open={props.open}
-      onOpenChange={(open) => {
-        if (!inFlightRef.current) props.onOpenChange(open);
+      onOpenChange={(open, details) => {
+        if (inFlightRef.current) details.cancel();
+        else props.onOpenChange(open);
       }}
     >
       <SheetContent
@@ -143,6 +148,32 @@ function TaskForm({
   setSaving: (saving: boolean) => void;
   inFlightRef: React.RefObject<boolean>;
 }) {
+  const [editScope, setEditScope] = useState<"this" | "future">("this");
+  const [multiDay, setMultiDay] = useState(
+    editingTask?.multiDay ??
+      !!(
+        editingTask?.schedule.type === "fixed" &&
+        editingTask.schedule.endAt - editingTask.schedule.startAt > 86400000
+      ),
+  );
+  const [allowOverlap, setAllowOverlap] = useState(
+    editingTask?.allowOverlap ?? false,
+  );
+  const [repeatDays, setRepeatDays] = useState<number[]>(
+    editingTask?.recurrence?.weekdays ?? [
+      new Date(
+        (editingTask?.schedule.type === "fixed"
+          ? localDateKey(
+              new Date(editingTask.schedule.startAt),
+              editingTask.timezone,
+            )
+          : (initialDate ?? localDateKey())) + "T12:00:00Z",
+      ).getUTCDay(),
+    ],
+  );
+  const [monthlyMissing, setMonthlyMissing] = useState(
+    editingTask?.recurrence?.monthlyMissing ?? "last_day",
+  );
   const [title, setTitle] = useState(editingTask?.title ?? "");
   const [description, setDescription] = useState(
     editingTask?.description ?? "",
@@ -263,9 +294,6 @@ function TaskForm({
   const currentTime = timeOf(now);
   const firstDate = (scheduleType === "fixed" ? startDate : dueDate) || today;
   const minimumRepeatEnd = firstDate > today ? firstDate : today;
-  const afterStart = /^\d{2}:\d{2}$/.test(startTime)
-    ? Number(startTime.slice(0, 2)) * 60 + Number(startTime.slice(3)) + 1
-    : null;
   function timestamp(date: string, time: string, preferred?: number) {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || !/^\d{2}:\d{2}$/.test(time))
       return NaN;
@@ -287,22 +315,6 @@ function TaskForm({
         ? undefined
         : initialStartAt + 3600000,
   );
-  const foldedPrefill =
-    (editingTask?.schedule.type === "fixed" || initialStartAt !== undefined) &&
-    selectedStartAt ===
-      (editingTask?.schedule.type === "fixed"
-        ? editingTask.schedule.startAt
-        : initialStartAt) &&
-    selectedEndAt ===
-      (editingTask?.schedule.type === "fixed"
-        ? editingTask.schedule.endAt
-        : initialStartAt! + 3600000) &&
-    endDate === startDate &&
-    endTime <= startTime;
-  const minimumEndTime =
-    startDate === endDate && afterStart !== null && !foldedPrefill
-      ? `${String(Math.floor(afterStart / 60)).padStart(2, "0")}:${String(afterStart % 60).padStart(2, "0")}`
-      : undefined;
   function issuesForRepeat(repeatValue = repeat) {
     const candidate: Parameters<typeof taskDateIssues>[0] = {
       timezone,
@@ -315,26 +327,31 @@ function TaskForm({
             }
           : { type: "flexible", ...(dueDate ? { dueDate } : {}) },
       recurrence:
-        repeatValue === "none"
-          ? undefined
-          : {
-              frequency: repeatValue,
-              interval: repeatValue === "custom" ? Number(repeatInterval) : 1,
-              unit:
-                repeatValue === "daily" || repeatValue === "weekdays"
-                  ? "day"
-                  : repeatValue === "weekly"
-                    ? "week"
-                    : repeatValue === "monthly"
-                      ? "month"
-                      : repeatUnit,
-              end:
-                repeatEnd === "date"
-                  ? { type: "date", date: repeatEndDate }
-                  : repeatEnd === "count"
-                    ? { type: "count", count: Number(repeatCount) }
-                    : { type: "never" },
-            },
+        editingTask?.recurrence && editScope === "this"
+          ? editingTask.recurrence
+          : repeatValue === "none"
+            ? undefined
+            : {
+                ...(repeatValue === "weekly" && repeatDays.length
+                  ? { weekdays: repeatDays }
+                  : {}),
+                frequency: repeatValue,
+                interval: repeatValue === "custom" ? Number(repeatInterval) : 1,
+                unit:
+                  repeatValue === "daily" || repeatValue === "weekdays"
+                    ? "day"
+                    : repeatValue === "weekly"
+                      ? "week"
+                      : repeatValue === "monthly"
+                        ? "month"
+                        : repeatUnit,
+                end:
+                  repeatEnd === "date"
+                    ? { type: "date", date: repeatEndDate }
+                    : repeatEnd === "count"
+                      ? { type: "count", count: Number(repeatCount) }
+                      : { type: "never" },
+              },
       subtasks: steps.map((step) => ({
         ...(step.dueDate ? { dueDate: step.dueDate } : {}),
       })),
@@ -346,6 +363,7 @@ function TaskForm({
           steps.map((step) => step.key),
           editingTask.subtasks.map((step) => step.id),
           new Date(now),
+          !!editingTask.recurrence && editScope === "this",
         )
       : taskDateIssues(candidate, new Date(now));
   }
@@ -453,9 +471,12 @@ function TaskForm({
           { ...editingTask, requestId: requestIdRef.current },
           stepKeys,
           editingTask.subtasks.map((step) => step.id),
+          !!editingTask.recurrence && editScope === "this",
         )
       : createTaskSchema;
     const parsed = schema.safeParse({
+      multiDay,
+      allowOverlap,
       title,
       description,
       ...(domainId !== "uncategorized" ? { domainId } : {}),
@@ -475,24 +496,32 @@ function TaskForm({
       requestId: requestIdRef.current,
       ...(repeat !== "none"
         ? {
-            recurrence: {
-              frequency: repeat,
-              interval: repeat === "custom" ? Number(repeatInterval) : 1,
-              unit:
-                repeat === "daily" || repeat === "weekdays"
-                  ? "day"
-                  : repeat === "weekly"
-                    ? "week"
-                    : repeat === "monthly"
-                      ? "month"
-                      : repeatUnit,
-              end:
-                repeatEnd === "date"
-                  ? { type: "date", date: repeatEndDate }
-                  : repeatEnd === "count"
-                    ? { type: "count", count: Number(repeatCount) }
-                    : { type: "never" },
-            },
+            recurrence:
+              editingTask?.recurrence && editScope === "this"
+                ? editingTask.recurrence
+                : {
+                    ...(repeat === "weekly" ||
+                    (repeat === "custom" && repeatUnit === "week")
+                      ? { weekdays: repeatDays }
+                      : {}),
+                    monthlyMissing,
+                    frequency: repeat,
+                    interval: repeat === "custom" ? Number(repeatInterval) : 1,
+                    unit:
+                      repeat === "daily" || repeat === "weekdays"
+                        ? "day"
+                        : repeat === "weekly"
+                          ? "week"
+                          : repeat === "monthly"
+                            ? "month"
+                            : repeatUnit,
+                    end:
+                      repeatEnd === "date"
+                        ? { type: "date", date: repeatEndDate }
+                        : repeatEnd === "count"
+                          ? { type: "count", count: Number(repeatCount) }
+                          : { type: "never" },
+                  },
           }
         : {}),
     });
@@ -513,7 +542,7 @@ function TaskForm({
     inFlightRef.current = true;
     setSaving(true);
     try {
-      await onCreate(parsed.data, stepKeys);
+      await onCreate(parsed.data, stepKeys, editScope);
       onOpenChange(false);
     } catch (cause) {
       const message =
@@ -543,6 +572,66 @@ function TaskForm({
         disabled={saving}
         className="min-h-0 flex-1 space-y-4 overflow-y-auto px-5 py-5"
       >
+        {editingTask?.recurrence && (
+          <div className="space-y-2 rounded-lg bg-muted/40 p-3">
+            <p className="text-xs font-medium">Apply changes to</p>
+            <TaskSelect
+              label="Edit recurring task"
+              value={editScope}
+              onChange={(value) => setEditScope(value as "this" | "future")}
+              options={[
+                { value: "this", label: "This occurrence only" },
+                { value: "future", label: "This and future occurrences" },
+              ]}
+            />
+            <p className="text-xs text-muted-foreground">
+              Completed sessions stay unchanged. Future open sessions are
+              replaced only when you choose the second option.
+            </p>
+          </div>
+        )}
+        {editingTask?.recurrence &&
+          editingTask.schedule.type === "fixed" &&
+          editingTask.schedule.endAt - editingTask.schedule.startAt >
+            86400000 && (
+            <div className="space-y-2 rounded-lg border border-primary/30 bg-primary/5 p-3 text-xs">
+              <p className="font-medium">
+                Possible series end entered as a session end
+              </p>
+              <p>
+                Correction preview: {startTime}–{endTime} each matching day
+                until{" "}
+                {localDateKey(new Date(editingTask.schedule.endAt), timezone)}.
+                The original stays unchanged until you save.
+              </p>
+              <Button
+                type="button"
+                size="sm"
+                variant="secondary"
+                onClick={() => {
+                  setEndDate(
+                    endTime > startTime ? startDate : shiftDate(startDate, 1),
+                  );
+                  setRepeatEnd("date");
+                  setRepeatEndDate(
+                    localDateKey(
+                      new Date(
+                        editingTask.schedule.type === "fixed"
+                          ? editingTask.schedule.endAt
+                          : 0,
+                      ),
+                      timezone,
+                    ),
+                  );
+                  setMultiDay(false);
+                  setAllowOverlap(false);
+                  setEditScope("future");
+                }}
+              >
+                Use this correction
+              </Button>
+            </div>
+          )}
         <div className="space-y-1.5">
           <label htmlFor="task-title" className="text-xs font-medium">
             Task title <span className="text-primary">*</span>
@@ -674,7 +763,22 @@ function TaskForm({
                 label="Start date"
                 type="date"
                 value={startDate}
-                onChange={changeValue(setStartDate)}
+                onChange={(value) => {
+                  const shift =
+                    endDate === startDate
+                      ? 0
+                      : Math.max(
+                          0,
+                          Math.round(
+                            (Date.parse(endDate) - Date.parse(startDate)) /
+                              86400000,
+                          ),
+                        );
+                  setStartDate(value);
+                  setEndDate(
+                    shiftDate(value, multiDay ? shift : Math.min(1, shift)),
+                  );
+                }}
                 minDate={today}
                 required
               />
@@ -690,11 +794,36 @@ function TaskForm({
                 }
                 required
               />
+              <div className="col-span-2 flex flex-wrap items-center gap-2 text-xs">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={multiDay ? "secondary" : "outline"}
+                  aria-pressed={multiDay}
+                  onClick={() => {
+                    setMultiDay(!multiDay);
+                    if (multiDay) setEndDate(startDate);
+                  }}
+                >
+                  Multi-day session
+                </Button>
+                <span className="text-muted-foreground">
+                  End dates describe one session. Set the series limit below.
+                </span>
+              </div>
               <DateField
                 label="End date"
                 type="date"
                 value={endDate}
-                onChange={changeValue(setEndDate)}
+                onChange={(value) => {
+                  if (value > shiftDate(startDate, 1) && !multiDay) {
+                    notifyValidation(
+                      "Choose Multi-day session first. Use Repeat ends for the series limit.",
+                    );
+                    return;
+                  }
+                  setEndDate(value);
+                }}
                 minDate={today > startDate ? today : startDate || undefined}
                 required
               />
@@ -703,7 +832,7 @@ function TaskForm({
                 type="time"
                 value={endTime}
                 onChange={changeValue(setEndTime)}
-                minTime={minimumEndTime}
+
                 required
               />
             </div>
@@ -715,6 +844,32 @@ function TaskForm({
               onChange={changeValue(setDueDate)}
               minDate={today}
             />
+          )}
+          {scheduleType === "fixed" &&
+            endDate === startDate &&
+            endTime <= startTime && (
+              <div className="rounded-lg border border-border p-3 text-xs">
+                <p>Ends the next day?</p>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="secondary"
+                  onClick={() => setEndDate(shiftDate(startDate, 1))}
+                >
+                  Yes, end on {shiftDate(startDate, 1)}
+                </Button>
+              </div>
+            )}
+          {scheduleType === "fixed" && multiDay && repeat !== "none" && (
+            <label className="flex items-center gap-2 text-xs">
+              <input
+                type="checkbox"
+                checked={allowOverlap}
+                onChange={(e) => setAllowOverlap(e.target.checked)}
+              />
+              Allow overlapping recurring sessions (these may reserve the same
+              hours).
+            </label>
           )}
           <p className="text-[11px] text-muted-foreground">
             Timezone: {timezone}.{" "}
@@ -929,112 +1084,177 @@ function TaskForm({
             </p>
           )}
         </div>
-        <div className="space-y-2 border-t border-border pt-4">
-          <div className="grid grid-cols-[100px_minmax(0,1fr)] items-center gap-3">
-            <span className="flex items-center gap-2 text-xs text-muted-foreground">
-              <Repeat2 className="size-4" aria-hidden="true" />
-              Repeat
-            </span>
-            <TaskSelect
-              label="Repeat"
-              value={repeat}
-              onChange={(value) => {
-                setErrors({});
-                setError(null);
-                setRepeat(value);
-                const issue = issuesForRepeat(value)[0];
-                if (issue) notifyValidation(issue.message);
-                else toast.dismiss("task-validation");
-              }}
-              options={[
-                { value: "none", label: "Does not repeat" },
-                { value: "weekdays", label: "Weekdays (Mon–Fri)" },
-                ...["Daily", "Weekly", "Monthly", "Custom"].map((label) => ({
-                  value: label.toLowerCase(),
-                  label,
-                })),
-              ]}
-            />
-          </div>
-        </div>
-        {repeat !== "none" && (
-          <div className="space-y-3">
-            {repeat === "custom" && (
-              <div className="grid grid-cols-2 gap-3">
-                <label className="flex min-w-0 flex-col gap-1.5 text-xs">
-                  Every
-                  <Input
-                    aria-label="Repeat interval"
-                    type="number"
-                    min={1}
-                    max={365}
-                    step={1}
-                    required
-                    value={repeatInterval}
-                    onChange={(event) => setRepeatInterval(event.target.value)}
-                    className="min-h-10 bg-muted/40"
-                  />
-                </label>
-                <div className="flex min-w-0 flex-col gap-1.5">
-                  <p className="text-xs">Unit</p>
+        {editingTask?.recurrence && editScope === "this" ? (
+          <p className="border-t border-border pt-3 text-xs text-muted-foreground">
+            Repeat pattern unchanged. Choose “This and future occurrences” above
+            to change the series.
+          </p>
+        ) : (
+          <>
+            <div className="space-y-2 border-t border-border pt-4">
+              <div className="grid grid-cols-[100px_minmax(0,1fr)] items-center gap-3">
+                <span className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <Repeat2 className="size-4" aria-hidden="true" />
+                  Repeat
+                </span>
+                <TaskSelect
+                  label="Repeat"
+                  value={repeat}
+                  onChange={(value) => {
+                    setErrors({});
+                    setError(null);
+                    setRepeat(value);
+                    if (value === "weekly" && !repeatDays.length)
+                      setRepeatDays([
+                        new Date(firstDate + "T12:00:00Z").getUTCDay(),
+                      ]);
+                    const issue = issuesForRepeat(value)[0];
+                    if (issue) notifyValidation(issue.message);
+                    else toast.dismiss("task-validation");
+                  }}
+                  options={[
+                    { value: "none", label: "Does not repeat" },
+                    { value: "weekdays", label: "Weekdays (Mon–Fri)" },
+                    ...["Daily", "Weekly", "Monthly", "Custom"].map(
+                      (label) => ({
+                        value: label.toLowerCase(),
+                        label,
+                      }),
+                    ),
+                  ]}
+                />
+              </div>
+            </div>
+            {repeat !== "none" && (
+              <div className="space-y-3">
+                {(repeat === "weekly" ||
+                  (repeat === "custom" && repeatUnit === "week")) && (
+                  <div
+                    className="flex flex-wrap gap-1"
+                    role="group"
+                    aria-label="Repeat weekdays"
+                  >
+                    {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map(
+                      (label, day) => (
+                        <Button
+                          key={day}
+                          type="button"
+                          size="sm"
+                          variant={
+                            repeatDays.includes(day) ? "default" : "outline"
+                          }
+                          aria-pressed={repeatDays.includes(day)}
+                          onClick={() =>
+                            setRepeatDays((days) =>
+                              days.includes(day)
+                                ? days.filter((d) => d !== day)
+                                : [...days, day],
+                            )
+                          }
+                        >
+                          {label}
+                        </Button>
+                      ),
+                    )}
+                  </div>
+                )}
+                {(repeat === "monthly" ||
+                  (repeat === "custom" && repeatUnit === "month")) && (
                   <TaskSelect
-                    label="Repeat unit"
-                    value={repeatUnit}
-                    onChange={setRepeatUnit}
+                    label="When a month has no matching date"
+                    value={monthlyMissing}
+                    onChange={(value) =>
+                      setMonthlyMissing(value as "last_day" | "skip")
+                    }
                     options={[
-                      { value: "day", label: "Days" },
-                      { value: "week", label: "Weeks" },
-                      { value: "month", label: "Months" },
+                      {
+                        value: "last_day",
+                        label: "Use the last day of shorter months",
+                      },
+                      { value: "skip", label: "Skip months without this date" },
+                    ]}
+                  />
+                )}
+                {repeat === "custom" && (
+                  <div className="grid grid-cols-2 gap-3">
+                    <label className="flex min-w-0 flex-col gap-1.5 text-xs">
+                      Every
+                      <Input
+                        aria-label="Repeat interval"
+                        type="number"
+                        min={1}
+                        max={365}
+                        step={1}
+                        required
+                        value={repeatInterval}
+                        onChange={(event) =>
+                          setRepeatInterval(event.target.value)
+                        }
+                        className="min-h-10 bg-muted/40"
+                      />
+                    </label>
+                    <div className="flex min-w-0 flex-col gap-1.5">
+                      <p className="text-xs">Unit</p>
+                      <TaskSelect
+                        label="Repeat unit"
+                        value={repeatUnit}
+                        onChange={setRepeatUnit}
+                        options={[
+                          { value: "day", label: "Days" },
+                          { value: "week", label: "Weeks" },
+                          { value: "month", label: "Months" },
+                        ]}
+                      />
+                    </div>
+                  </div>
+                )}
+                <div className="grid grid-cols-[100px_minmax(0,1fr)] items-center gap-3">
+                  <span className="text-xs text-muted-foreground">Ends</span>
+                  <TaskSelect
+                    label="Repeat ends"
+                    value={repeatEnd}
+                    onChange={changeValue(setRepeatEnd)}
+                    options={[
+                      { value: "never", label: "Never" },
+                      { value: "date", label: "On a date" },
+                      { value: "count", label: "After occurrences" },
                     ]}
                   />
                 </div>
+                {repeatEnd === "date" && (
+                  <DateField
+                    label="Repeat end date"
+                    type="date"
+                    value={repeatEndDate}
+                    onChange={changeValue(setRepeatEndDate)}
+                    minDate={minimumRepeatEnd}
+                    required
+                  />
+                )}
+                {repeatEnd === "count" && (
+                  <label className="flex flex-col gap-1.5 text-xs">
+                    Occurrences (including this task)
+                    <Input
+                      aria-label="Repeat occurrences"
+                      type="number"
+                      min={1}
+                      max={1000}
+                      step={1}
+                      required
+                      value={repeatCount}
+                      onChange={(event) => setRepeatCount(event.target.value)}
+                      className="min-h-10 bg-muted/40"
+                    />
+                  </label>
+                )}
+                <p className="text-[11px] leading-5 text-muted-foreground">
+                  {repeat === "weekdays"
+                    ? "Separate sessions Monday through Friday, prepared 30 days ahead."
+                    : "Separate sessions are prepared 30 days ahead and extended automatically. Completing late does not change the schedule."}
+                </p>
               </div>
             )}
-            <div className="grid grid-cols-[100px_minmax(0,1fr)] items-center gap-3">
-              <span className="text-xs text-muted-foreground">Ends</span>
-              <TaskSelect
-                label="Repeat ends"
-                value={repeatEnd}
-                onChange={changeValue(setRepeatEnd)}
-                options={[
-                  { value: "never", label: "Never" },
-                  { value: "date", label: "On a date" },
-                  { value: "count", label: "After occurrences" },
-                ]}
-              />
-            </div>
-            {repeatEnd === "date" && (
-              <DateField
-                label="Repeat end date"
-                type="date"
-                value={repeatEndDate}
-                onChange={changeValue(setRepeatEndDate)}
-                minDate={minimumRepeatEnd}
-                required
-              />
-            )}
-            {repeatEnd === "count" && (
-              <label className="flex flex-col gap-1.5 text-xs">
-                Occurrences (including this task)
-                <Input
-                  aria-label="Repeat occurrences"
-                  type="number"
-                  min={1}
-                  max={1000}
-                  step={1}
-                  required
-                  value={repeatCount}
-                  onChange={(event) => setRepeatCount(event.target.value)}
-                  className="min-h-10 bg-muted/40"
-                />
-              </label>
-            )}
-            <p className="text-[11px] leading-5 text-muted-foreground">
-              {repeat === "weekdays"
-                ? "Repeats Monday through Friday. Completing this task creates the next weekday occurrence."
-                : "Completing this task creates the next occurrence."}
-            </p>
-          </div>
+          </>
         )}
         {dateIssues.length > 0 && (
           <ul aria-live="polite" className="space-y-1 text-xs text-destructive">

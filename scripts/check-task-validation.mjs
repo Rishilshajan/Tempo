@@ -68,6 +68,7 @@ const fixed = {
   estimatedMinutes: 60,
 };
 assert.ok(createTaskSchema.safeParse(fixed).success);
+assert.ok(createTaskSchema.safeParse({...fixed,estimatedMinutes:61}).success,"Effort estimate is independent of booked time");
 for (const task of [
   { ...base, title: "   " },
   { ...base, title: "a".repeat(201) },
@@ -78,7 +79,6 @@ for (const task of [
   { ...base, subtasks: Array.from({ length: 31 }, () => ({ title: "Step" })) },
   { ...base, estimatedMinutes: 0 },
   { ...base, estimatedMinutes: 1.5 },
-  { ...fixed, estimatedMinutes: 61 },
   { ...fixed, schedule: { type: "fixed", startAt, endAt: startAt } },
   { ...fixed, schedule: { type: "fixed", startAt, endAt: startAt - 1 } },
 ])

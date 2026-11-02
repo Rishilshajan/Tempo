@@ -2,6 +2,8 @@ import { v } from "convex/values";
 import { domainColor, domainIcon } from "./domainFields";
 
 export const recurrenceRule = v.object({
+  weekdays: v.optional(v.array(v.number())),
+  monthlyMissing: v.optional(v.union(v.literal("last_day"), v.literal("skip"))),
   frequency: v.union(
     v.literal("daily"),
     v.literal("weekdays"),
@@ -40,6 +42,8 @@ export const storedSubtask = v.object({
   completedAt: v.optional(v.number()),
 });
 export const taskInputFields = {
+  multiDay: v.optional(v.boolean()),
+  allowOverlap: v.optional(v.boolean()),
   title: v.string(),
   description: v.optional(v.string()),
   domainId: v.optional(v.id("domains")),
@@ -55,6 +59,9 @@ export const taskInputFields = {
   recurrence: v.optional(recurrenceRule),
 };
 export const taskFields = {
+  seriesId: v.optional(v.id("taskSeries")),
+  recurrenceManaged: v.optional(v.boolean()),
+  recurrenceCancelled: v.optional(v.boolean()),
   originalWorkDate: v.optional(v.string()),
   lastRolledOn: v.optional(v.string()),
   rollForwardCount: v.optional(v.number()),

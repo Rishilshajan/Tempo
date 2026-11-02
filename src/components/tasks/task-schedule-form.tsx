@@ -86,6 +86,7 @@ export function TaskScheduleForm({
       const parsed = createTaskSchema.safeParse({
         ...task,
         schedule: next,
+        recurrence: undefined,
         subtasks: [],
         requestId: "00000000-0000-4000-8000-000000000000",
       });

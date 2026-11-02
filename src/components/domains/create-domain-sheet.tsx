@@ -48,8 +48,9 @@ export function CreateDomainSheet({
   return (
     <Sheet
       open={open}
-      onOpenChange={(next) => {
-        if (!inFlightRef.current) onOpenChange(next);
+      onOpenChange={(next, details) => {
+        if (inFlightRef.current) details.cancel();
+        else onOpenChange(next);
       }}
     >
       <SheetContent

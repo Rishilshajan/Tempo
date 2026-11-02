@@ -1,3 +1,8 @@
+import {
+  occurrenceDate,
+  moveStartToDate,
+  recurrenceAllows,
+} from "./recurrence";
 import { z } from "zod";
 import { recurrenceSchema } from "./recurrence";
 
@@ -39,6 +44,7 @@ type TaskDateInput = {
   timezone: string;
   schedule: z.infer<typeof taskScheduleSchema>;
   recurrence?: {
+    weekdays?: number[];
     frequency?: string;
     interval?: number;
     unit?: string;
@@ -64,6 +70,17 @@ export function taskDateIssues(task: TaskDateInput, now = new Date()) {
   } catch {
     return issues;
   }
+  if (
+    task.recurrence?.weekdays?.length &&
+    !task.recurrence.weekdays.includes(
+      new Date(firstDate + "T12:00:00Z").getUTCDay(),
+    )
+  )
+    issues.push({
+      path: ["recurrence"],
+      message:
+        "Include the session’s start weekday in the selected repeat days.",
+    });
   if (calendarDateSchema.safeParse(firstDate).success && firstDate < today) {
     issues.push({
       path: ["schedule"],
@@ -116,6 +133,8 @@ export function taskDateIssues(task: TaskDateInput, now = new Date()) {
 }
 export const createTaskSchema = z
   .object({
+    multiDay: z.boolean().optional(),
+    allowOverlap: z.boolean().optional(),
     title: z
       .string()
       .trim()
@@ -159,6 +178,8 @@ export const createTaskSchema = z
     recurrence: recurrenceSchema.optional(),
   })
   .superRefine((task, ctx) => {
+    for (const message of sessionIssues(task))
+      ctx.addIssue({ code: "custom", path: ["schedule"], message });
     for (const issue of taskDateIssues(task))
       ctx.addIssue({ code: "custom", ...issue });
     if (task.schedule.type === "fixed") {
@@ -167,16 +188,6 @@ export const createTaskSchema = z
           code: "custom",
           path: ["schedule"],
           message: "End time must be later than start time.",
-        });
-      else if (
-        task.estimatedMinutes &&
-        task.estimatedMinutes >
-          (task.schedule.endAt - task.schedule.startAt) / 60000
-      )
-        ctx.addIssue({
-          code: "custom",
-          path: ["estimatedMinutes"],
-          message: "The estimate cannot exceed the fixed time window.",
         });
     }
   });
@@ -209,16 +220,23 @@ export function editTaskDateIssues(
   stepKeys: string[],
   originalKeys: string[],
   now = new Date(),
+  occurrenceOnly = false,
 ) {
   const sameSchedule =
     task.timezone === original.timezone &&
     sameTaskValue(task.schedule, original.schedule);
   const sameRecurrence = sameTaskValue(task.recurrence, original.recurrence);
-  return taskDateIssues(task, now).filter((issue) => {
+  return taskDateIssues(
+    occurrenceOnly ? { ...task, recurrence: undefined } : task,
+    now,
+  ).filter((issue) => {
     if (
       issue.path[0] === "schedule" &&
-      sameSchedule &&
-      (!task.recurrence || sameRecurrence)
+      ((sameSchedule && (!task.recurrence || sameRecurrence)) ||
+        (task.schedule.type === "fixed" &&
+          original.schedule.type === "fixed" &&
+          task.timezone === original.timezone &&
+          task.schedule.startAt === original.schedule.startAt))
     )
       return false;
     if (issue.path[0] === "recurrence" && sameSchedule && sameRecurrence)
@@ -238,6 +256,7 @@ export function editTaskSchema(
   original: CreateTaskValues,
   stepKeys: string[],
   originalKeys: string[],
+  occurrenceOnly = false,
 ) {
   return z
     .object({
@@ -256,11 +275,21 @@ export function editTaskSchema(
         .max(30),
     })
     .superRefine((task, ctx) => {
+      if (
+        !sameTaskValue(task.schedule, original.schedule) ||
+        !sameTaskValue(task.recurrence, original.recurrence)
+      )
+        for (const message of sessionIssues(
+          occurrenceOnly ? { ...task, recurrence: undefined } : task,
+        ))
+          ctx.addIssue({ code: "custom", path: ["schedule"], message });
       for (const issue of editTaskDateIssues(
         task,
         original,
         stepKeys,
         originalKeys,
+        new Date(),
+        occurrenceOnly,
       )) {
         ctx.addIssue({ code: "custom", ...issue });
       }
@@ -270,16 +299,6 @@ export function editTaskSchema(
             code: "custom",
             path: ["schedule"],
             message: "End time must be later than start time.",
-          });
-        else if (
-          task.estimatedMinutes &&
-          task.estimatedMinutes >
-            (task.schedule.endAt - task.schedule.startAt) / 60000
-        )
-          ctx.addIssue({
-            code: "custom",
-            path: ["estimatedMinutes"],
-            message: "The estimate cannot exceed the fixed time window.",
           });
       }
     });
@@ -297,4 +316,54 @@ export function localDateKey(
   }).formatToParts(date);
   const get = (type: string) => parts.find((part) => part.type === type)?.value;
   return `${get("year")}-${get("month")}-${get("day")}`;
+}
+
+export function sessionIssues(task: {
+  schedule:
+    { type: "fixed"; startAt: number; endAt: number } | { type: "flexible" };
+  timezone: string;
+  multiDay?: boolean;
+  allowOverlap?: boolean;
+  recurrence?: import("./recurrence").RecurrenceRule;
+}) {
+  if (task.schedule.type !== "fixed") return [];
+  try {
+    new Intl.DateTimeFormat("en-US", { timeZone: task.timezone });
+  } catch {
+    return ["Choose a valid timezone."];
+  }
+  const { startAt, endAt } = task.schedule;
+  if (!Number.isFinite(startAt) || !Number.isFinite(endAt))
+    return ["Choose valid session dates and times."];
+  if (endAt - startAt > 86400000 && !task.multiDay)
+    return [
+      "Select Multi-day session for a booking longer than one day. Put the last repeat date under Repeat ends.",
+    ];
+  if (
+    task.recurrence &&
+    recurrenceAllows(
+      task.recurrence,
+      2,
+      occurrenceDate(
+        localDateKey(new Date(startAt), task.timezone),
+        task.recurrence,
+        2,
+      ),
+    ) &&
+    !task.allowOverlap &&
+    endAt >
+      moveStartToDate(
+        startAt,
+        occurrenceDate(
+          localDateKey(new Date(startAt), task.timezone),
+          task.recurrence,
+          2,
+        ),
+        task.timezone,
+      )
+  )
+    return [
+      "Repeating sessions overlap. Choose a shorter session or explicitly allow overlapping sessions.",
+    ];
+  return [];
 }

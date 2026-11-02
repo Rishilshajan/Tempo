@@ -79,7 +79,8 @@ export async function createNextOccurrence(
   ctx: MutationCtx,
   task: Doc<"tasks">,
 ) {
-  if (!task.recurrence || task.nextOccurrenceId) return;
+  if (task.recurrenceManaged || !task.recurrence || task.nextOccurrenceId)
+    return;
   task = { ...task, subtasks: await subtaskSnapshot(ctx, task) };
   if (!task.recurrence) return;
   const anchor = task.recurrenceAnchorDate ?? task.workDate;

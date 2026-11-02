@@ -1,7 +1,7 @@
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 import { domainFields } from "./domainFields";
-import { taskFields } from "./taskFields";
+import { taskFields, taskInputFields, storedSubtask } from "./taskFields";
 import {
   subtaskFields,
   noteFields,
@@ -10,6 +10,20 @@ import {
 } from "./taskDetailFields";
 
 export default defineSchema({
+  taskSeries: defineTable({
+    lineageRootId: v.optional(v.id("tasks")),
+    previousSeriesId: v.optional(v.id("taskSeries")),
+    previousRootId: v.optional(v.id("tasks")),
+    ownerId: v.string(),
+    rootTaskId: v.id("tasks"),
+    active: v.boolean(),
+    anchor: v.string(),
+    nextOrdinal: v.number(),
+    template: v.object({
+      ...taskInputFields,
+      subtasks: v.array(storedSubtask),
+    }),
+  }).index("by_active", ["active"]),
   subtasks: defineTable(subtaskFields)
     .index("by_parentTaskId_and_position", ["parentTaskId", "position"])
     .index("by_parentTaskId_and_requestId", ["parentTaskId", "requestId"]),
@@ -45,6 +59,20 @@ export default defineSchema({
     ownerId: v.string(),
     requestId: v.string(),
   })
+    .index("by_seriesId_and_recurrenceOrdinal", [
+      "seriesId",
+      "recurrenceOrdinal",
+    ])
+    .index("by_seriesId_and_workDate_and_status", [
+      "seriesId",
+      "workDate",
+      "status",
+    ])
+    .index("by_recurrenceRootId_and_workDate_and_status", [
+      "recurrenceRootId",
+      "workDate",
+      "status",
+    ])
     .index("by_status", ["status"])
     .index("by_ownerId", ["ownerId"])
     .index("by_ownerId_and_requestId", ["ownerId", "requestId"])
@@ -63,9 +91,11 @@ export default defineSchema({
     .index("by_ownerId_and_workDate", ["ownerId", "workDate"]),
   domains: defineTable({
     ...domainFields,
+    position: v.optional(v.number()),
     ownerId: v.string(),
     requestId: v.string(),
   })
     .index("by_ownerId", ["ownerId"])
+    .index("by_ownerId_and_position", ["ownerId", "position"])
     .index("by_ownerId_and_requestId", ["ownerId", "requestId"]),
 });

@@ -63,8 +63,9 @@ export function ConfirmDelete({
   return (
     <Dialog
       open
-      onOpenChange={(open) => {
-        if (!open && !busy) onClose();
+      onOpenChange={(open, details) => {
+        if (busy) details.cancel();
+        else if (!open) onClose();
       }}
     >
       <DialogContent>

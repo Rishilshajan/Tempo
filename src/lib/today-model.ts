@@ -85,9 +85,7 @@ export function plannedMinutes(task: DayTask, day: DayWindow) {
         Math.max(task.schedule.startAt, day.start),
     ) / 60000;
   if (!overlap) return task.estimatedMinutes ?? duration;
-  return task.estimatedMinutes
-    ? (task.estimatedMinutes * overlap) / duration
-    : overlap;
+  return overlap;
 }
 
 export function comparePriority(a: DayTask, b: DayTask) {

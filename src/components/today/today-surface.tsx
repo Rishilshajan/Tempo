@@ -1,4 +1,5 @@
 "use client";
+import { DomainSettings } from "@/components/domains/domain-settings";
 import { MyTasksBoard } from "@/components/tasks/my-tasks-board";
 
 import { TempoLogo } from "@/components/brand/tempo-logo";
@@ -84,9 +85,9 @@ type TodaySurfaceProps = {
   todayContent?: ReactNode;
   todayDate?: string;
   todayLabel: string;
-  taskView: "today" | "all" | "domain";
+  taskView: "today" | "all" | "domain" | "settings";
   selectedDomainId?: string;
-  onViewChange: (view: "today" | "all") => void;
+  onViewChange: (view: "today" | "all" | "settings") => void;
   onSelectDomain: (domain: DomainSummary) => void;
   tasks: TaskRecord[] | undefined;
   hasAnyTasks: boolean | undefined;
@@ -103,6 +104,7 @@ type TodaySurfaceProps = {
     domain: DomainSummary,
     values: CreateDomainValues,
   ) => Promise<unknown>;
+  onReorderDomains?: (ids: Id<"domains">[]) => Promise<void>;
   onDeleteDomain: (domain: DomainSummary) => Promise<unknown>;
   hasMoreDomains?: boolean;
   onLoadMoreDomains?: () => void;
@@ -128,6 +130,7 @@ export function TodaySurface({
   onCreateDomain,
   onUpdateDomain,
   onDeleteDomain,
+  onReorderDomains,
   hasMoreDomains,
   onLoadMoreDomains,
   loadingMoreDomains,
@@ -198,7 +201,7 @@ export function TodaySurface({
 
       <aside
         aria-label="Workspace sidebar"
-        className="fixed inset-y-0 left-0 hidden w-48 flex-col border-r border-sidebar-border bg-sidebar px-3 py-4 lg:flex"
+        className="fixed inset-y-0 left-0 hidden w-56 flex-col border-r border-sidebar-border bg-sidebar px-3 py-4 lg:flex"
       >
         <Link
           href="/"
@@ -276,9 +279,9 @@ export function TodaySurface({
         <div className="mt-auto space-y-2 border-t border-sidebar-border pt-3">
           <button
             type="button"
-            disabled
-            aria-label="Settings (coming next)"
-            className="flex min-h-9 w-full items-center gap-2 px-3 text-xs text-muted-foreground opacity-60"
+            onClick={() => onViewChange("settings")}
+            aria-current={taskView === "settings" ? "page" : undefined}
+            className={`flex min-h-9 w-full items-center gap-2 rounded-lg px-3 text-xs hover:bg-sidebar-accent ${taskView === "settings" ? "bg-sidebar-accent text-primary" : "text-sidebar-foreground"}`}
           >
             <Settings2 size={16} aria-hidden="true" />
             Settings
@@ -287,7 +290,7 @@ export function TodaySurface({
         </div>
       </aside>
 
-      <div className="lg:pl-48">
+      <div className="lg:pl-56">
         <header className="flex min-h-16 items-center justify-between gap-4 border-b border-border bg-card/60 px-4 sm:px-8">
           <Link
             href="/"
@@ -325,9 +328,18 @@ export function TodaySurface({
           id="today-content"
           className="w-full min-w-0 px-4 pb-28 pt-6 sm:px-8 lg:pb-10"
         >
-          {domains === undefined ||
-          (taskView !== "today" && tasks === undefined) ||
-          hasAnyTasks === undefined ? (
+          {taskView === "settings" ? (
+            <DomainSettings
+              domains={domains}
+              loading={!!hasMoreDomains}
+              onReorder={onReorderDomains}
+              onCreate={openCreateDomain}
+              onEdit={editDomain}
+              onDelete={setDeletingDomain}
+            />
+          ) : domains === undefined ||
+            (taskView !== "today" && tasks === undefined) ||
+            hasAnyTasks === undefined ? (
             <p
               role="status"
               className="py-20 text-center text-sm text-muted-foreground"
@@ -434,6 +446,17 @@ export function TodaySurface({
             </SheetDescription>
           </SheetHeader>
           <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-6">
+            <Button
+              variant="ghost"
+              className="mb-3 w-full justify-start"
+              onClick={() => {
+                setMoreOpen(false);
+                onViewChange("settings");
+              }}
+            >
+              <Settings2 />
+              Settings
+            </Button>
             {domainNavigation}
             {hasMoreDomains && (
               <Button

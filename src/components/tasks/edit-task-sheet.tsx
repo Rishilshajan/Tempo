@@ -44,9 +44,10 @@ export function EditTaskSheet({
       hasMoreDomains={domains.status === "CanLoadMore"}
       loadingMoreDomains={domains.status === "LoadingMore"}
       onLoadMoreDomains={() => domains.loadMore(30)}
-      onCreate={async (values, stepKeys) => {
+      onCreate={async (values, stepKeys, editScope) => {
         await update({
           ...values,
+          editScope,
           id: original._id,
           domainId: values.domainId as Id<"domains"> | undefined,
           stepKeys: stepKeys ?? [],

@@ -32,7 +32,11 @@ export const move = mutation({
     const user = await ctx.auth.getUserIdentity();
     if (!user) throw new ConvexError("Please sign in to move tasks.");
     const task = await ctx.db.get(args.id);
-    if (!task || task.ownerId !== user.tokenIdentifier)
+    if (
+      !task ||
+      task.recurrenceCancelled ||
+      task.ownerId !== user.tokenIdentifier
+    )
       throw new ConvexError("Task is unavailable.");
     const now = Date.now();
     if (column(task, now) !== args.from)

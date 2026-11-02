@@ -14,7 +14,11 @@ export async function ownedTask(
   if (!user)
     throw new ConvexError("Please sign in to view or update this task.");
   const task = await ctx.db.get(id);
-  if (!task || task.ownerId !== user.tokenIdentifier)
+  if (
+    !task ||
+    task.recurrenceCancelled ||
+    task.ownerId !== user.tokenIdentifier
+  )
     throw new ConvexError("This task is not available.");
   return { task, user };
 }

@@ -9,4 +9,10 @@ crons.interval(
   internal.rollForward.processBatch,
   {},
 );
+crons.interval(
+  "extend-recurring-sessions",
+  { hours: 6 },
+  internal.series.extend,
+  {},
+);
 export default crons;

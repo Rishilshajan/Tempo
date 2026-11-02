@@ -1,3 +1,4 @@
+import type { Id } from "../../../../convex/_generated/dataModel";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { auth } from "@clerk/nextjs/server";
@@ -24,6 +25,11 @@ export default async function DashboardPage({
     <TodayWorkspace
       todayLabel={todayLabel}
       initialView={parameters.view === "all" ? "all" : "today"}
+      initialDomainId={
+        typeof parameters.domain === "string"
+          ? (parameters.domain as Id<"domains">)
+          : undefined
+      }
     />
   );
 }

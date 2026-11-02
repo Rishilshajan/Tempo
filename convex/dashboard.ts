@@ -90,7 +90,11 @@ export const feed = query({
         : result.page;
     return {
       ...result,
-      page: await Promise.all(records.map((task) => toTaskView(ctx, task))),
+      page: await Promise.all(
+        records
+          .filter((task) => !task.recurrenceCancelled)
+          .map((task) => toTaskView(ctx, task)),
+      ),
     };
   },
 });

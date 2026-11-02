@@ -100,8 +100,8 @@ assert.deepEqual(
 assert.equal(summary.active[0]._id, overlap._id, "urgent priority first");
 assert.equal(
   summary.totalMinutes,
-  320,
-  "cross-midnight estimate prorates, subtasks are not additional workload",
+  350,
+  "fixed bookings count actual day overlap; subtasks are not additional workload",
 );
 assert.equal(
   model.summarizeDay(

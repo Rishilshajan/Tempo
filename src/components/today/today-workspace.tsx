@@ -16,9 +16,11 @@ import type { Id } from "../../../convex/_generated/dataModel";
 export function TodayWorkspace({
   todayLabel,
   initialView = "today",
+  initialDomainId,
 }: {
   todayLabel: string;
-  initialView?: "today" | "all";
+  initialView?: "today" | "all" | "settings";
+  initialDomainId?: Id<"domains">;
 }) {
   if (!process.env.NEXT_PUBLIC_CONVEX_URL)
     return (
@@ -26,20 +28,48 @@ export function TodayWorkspace({
         The workspace connection is not configured.
       </p>
     );
-  return <ConnectedToday todayLabel={todayLabel} initialView={initialView} />;
+  return (
+    <ConnectedToday
+      todayLabel={todayLabel}
+      initialView={initialView}
+      initialDomainId={initialDomainId}
+    />
+  );
 }
 
 function ConnectedToday({
   todayLabel,
   initialView,
+  initialDomainId,
 }: {
   todayLabel: string;
-  initialView: "today" | "all";
+  initialView: "today" | "all" | "settings";
+  initialDomainId?: Id<"domains">;
 }) {
   const [selection, setSelection] = useState<{
-    view: "today" | "all" | "domain";
+    view: "today" | "all" | "settings" | "domain";
     domainId?: Id<"domains">;
-  }>({ view: initialView });
+  }>({
+    view: initialDomainId ? "domain" : initialView,
+    domainId: initialDomainId,
+  });
+  useEffect(() => {
+    const restore = () => {
+      const url = new URL(window.location.href);
+      const domainId = url.searchParams.get("domain");
+      setSelection(
+        url.pathname === "/settings"
+          ? { view: "settings" }
+          : domainId
+            ? { view: "domain", domainId: domainId as Id<"domains"> }
+            : {
+                view: url.searchParams.get("view") === "all" ? "all" : "today",
+              },
+      );
+    };
+    window.addEventListener("popstate", restore);
+    return () => window.removeEventListener("popstate", restore);
+  }, []);
   const [today, setToday] = useState(() => localDateKey());
   const [currentLabel, setCurrentLabel] = useState(todayLabel);
   useEffect(() => {
@@ -68,6 +98,10 @@ function ConnectedToday({
     isAuthenticated ? {} : "skip",
     { initialNumItems: 30 },
   );
+  useEffect(() => {
+    if (status === "CanLoadMore") loadMore(50);
+  }, [status, loadMore]);
+  const reorderDomains = useMutation(api.domains.reorder);
   const createDomain = useMutation(api.domains.create);
   const updateDomain = useMutation(api.domains.update);
   const removeDomain = useMutation(api.domains.remove);
@@ -96,15 +130,23 @@ function ConnectedToday({
       selectedDomainId={selection.domainId}
       onViewChange={(view) => {
         setSelection({ view });
-        window.history.replaceState(
-          null,
+        window.history.pushState(
+          { ...window.history.state, __tempoOverlay: undefined },
           "",
-          view === "all" ? "/dashboard?view=all" : "/dashboard",
+          view === "settings"
+            ? "/settings"
+            : view === "all"
+              ? "/dashboard?view=all"
+              : "/dashboard",
         );
       }}
       onSelectDomain={(domain) => {
         setSelection({ view: "domain", domainId: domain._id });
-        window.history.replaceState(null, "", "/dashboard");
+        window.history.pushState(
+          { ...window.history.state, __tempoOverlay: undefined },
+          "",
+          `/dashboard?view=all&domain=${encodeURIComponent(domain._id)}`,
+        );
       }}
       hasAnyTasks={hasAnyTasks}
       tasks={
@@ -132,6 +174,9 @@ function ConnectedToday({
       domains={
         !isAuthenticated || status === "LoadingFirstPage" ? undefined : results
       }
+      onReorderDomains={async (ids) => {
+        await reorderDomains({ ids });
+      }}
       canCreateDomain={isAuthenticated}
       onCreateDomain={async (values) => {
         const id = await createDomain(values);
