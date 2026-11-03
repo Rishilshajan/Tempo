@@ -6,7 +6,11 @@
     "dev": "next dev --webpack",
     "build": "next build --webpack",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint --max-warnings 0",
+    "typecheck": "next typegen && tsc --noEmit && tsc --project convex/tsconfig.json --noEmit",
+    "test": "node scripts/run-checks.mjs",
+    "ci": "npm run lint && npm run typecheck && npm test",
+    "deploy:vercel": "node scripts/deploy-vercel.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.8.0",
@@ -36,6 +40,7 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "esbuild": "0.27.0",
     "eslint": "^9",
     "eslint-config-next": "16.3.8",
     "tailwindcss": "^4",

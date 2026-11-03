@@ -2,8 +2,6 @@
 
 import {
   useMemo,
-  useEffect,
-  type CSSProperties,
   useRef,
   useState,
   type ComponentProps,
@@ -54,23 +52,13 @@ export function MyTasksCalendar({
   const [period, setPeriod] = useState<Period>("month");
   const [month, setMonth] = useState(() => asDate(today));
   const agenda = useRef<HTMLElement>(null);
+  const agendaScroll = useRef<HTMLDivElement>(null);
   const day = dayWindow(date, timezone, now);
   const selectedTasks = useMemo(
     () => calendarTasks(tasks, date, timezone, now),
     [tasks, date, timezone, now],
   );
   const weeks = calendarMonthWeeks(localDateKey(month));
-  const calendarPanel = useRef<HTMLElement>(null);
-  const [calendarHeight, setCalendarHeight] = useState(0);
-  useEffect(() => {
-    const panel = calendarPanel.current;
-    if (!panel) return;
-    const observer = new ResizeObserver(() =>
-      setCalendarHeight(panel.getBoundingClientRect().height),
-    );
-    observer.observe(panel);
-    return () => observer.disconnect();
-  }, []);
   const planned = selectedTasks.reduce(
     (total, task) => total + plannedMinutes(task, day),
     0,
@@ -78,7 +66,7 @@ export function MyTasksCalendar({
   function choose(next: string, scroll = true) {
     setDate(next);
     setMonth(asDate(next));
-    agenda.current?.scrollTo({ top: 0 });
+    agendaScroll.current?.scrollTo({ top: 0 });
     if (isMobile && scroll)
       requestAnimationFrame(() =>
         agenda.current?.scrollIntoView({
@@ -86,7 +74,7 @@ export function MyTasksCalendar({
             .matches
             ? "auto"
             : "smooth",
-          block: "end",
+          block: "start",
         }),
       );
   }
@@ -159,15 +147,9 @@ export function MyTasksCalendar({
     [tasks, timezone, now, isMobile],
   );
   return (
-    <div
-      className="relative grid min-w-0 items-start gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(300px,0.48fr)]"
-      style={
-        { "--calendar-panel-height": `${calendarHeight}px` } as CSSProperties
-      }
-    >
+    <div className="relative grid min-w-0 items-start gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(300px,0.48fr)]">
       <section
-        ref={calendarPanel}
-        className="sticky top-0 z-10 min-w-0 space-y-3 rounded-xl border border-border bg-card p-3 sm:p-4 xl:top-4"
+        className="min-w-0 space-y-3 rounded-xl border border-border bg-card p-3 sm:p-4 xl:sticky xl:top-4"
         aria-label="Task calendar"
       >
         <div className="flex flex-wrap items-center justify-between gap-2">
@@ -316,10 +298,10 @@ export function MyTasksCalendar({
       <section
         ref={agenda}
         tabIndex={-1}
-        className="min-w-0 max-h-[max(6rem,calc(100svh-var(--calendar-panel-height)-7rem))] overflow-y-auto overscroll-y-auto scroll-mb-24 scroll-mt-4 space-y-3 rounded-xl border border-border bg-card p-3 focus-visible:outline-2 focus-visible:outline-ring sm:p-4 xl:max-h-[calc(100svh-2rem)]"
+        className="min-w-0 overflow-hidden scroll-mb-24 scroll-mt-4 rounded-xl border border-border bg-card focus-visible:outline-2 focus-visible:outline-ring xl:sticky xl:top-4"
         aria-label="Selected day tasks"
       >
-        <div className="sticky top-0 z-10 -mx-3 -mt-3 flex flex-wrap items-start justify-between gap-2 border-b border-border bg-card p-3 sm:-mx-4 sm:-mt-4 sm:p-4">
+        <div className="flex flex-wrap items-start justify-between gap-2 border-b border-border bg-card p-3 sm:p-4">
           <div>
             <h2 className="text-sm font-semibold">
               {label(date, { weekday: "long", day: "numeric", month: "short" })}
@@ -345,64 +327,71 @@ export function MyTasksCalendar({
             <Plus className="size-4" />
           </Button>
         </div>
-        {selectedTasks.length ? (
-          <div className="space-y-4">
-            {(
-              [
-                "In progress",
-                "Upcoming",
-                "Rolled forward",
-                "Completed",
-              ] as const
-            ).map((group) => {
-              const rows = selectedTasks.filter((task) => {
-                const category =
-                  task.status === "completed"
-                    ? "Completed"
-                    : isCarried(task, day)
-                      ? "Rolled forward"
-                      : task.progress === "in_progress"
-                        ? "In progress"
-                        : "Upcoming";
-                return category === group;
-              });
-              return rows.length ? (
-                <section
-                  key={group}
-                  aria-label={`${group} tasks`}
-                  className="space-y-2"
+        <div
+          ref={agendaScroll}
+          tabIndex={0}
+          aria-label="Scroll selected day tasks"
+          className="max-h-[60svh] overflow-y-auto overscroll-y-auto p-3 focus-visible:outline-2 focus-visible:outline-ring sm:p-4 xl:max-h-[calc(100svh-9rem)]"
+        >
+          {selectedTasks.length ? (
+            <div className="space-y-4">
+              {(
+                [
+                  "In progress",
+                  "Upcoming",
+                  "Rolled forward",
+                  "Completed",
+                ] as const
+              ).map((group) => {
+                const rows = selectedTasks.filter((task) => {
+                  const category =
+                    task.status === "completed"
+                      ? "Completed"
+                      : isCarried(task, day)
+                        ? "Rolled forward"
+                        : task.progress === "in_progress"
+                          ? "In progress"
+                          : "Upcoming";
+                  return category === group;
+                });
+                return rows.length ? (
+                  <section
+                    key={group}
+                    aria-label={`${group} tasks`}
+                    className="space-y-2"
+                  >
+                    <h3 className="flex items-center gap-2 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+                      {group}
+                      <span className="rounded-full bg-secondary px-1.5 py-0.5 text-primary">
+                        {rows.length}
+                      </span>
+                    </h3>
+                    {rows.map((task) => (
+                      <div key={task._id}>{renderTask(task)}</div>
+                    ))}
+                  </section>
+                ) : null;
+              })}
+            </div>
+          ) : (
+            <div className="rounded-lg border border-dashed border-border px-3 py-8 text-center">
+              <CalendarDays className="mx-auto mb-2 size-5 text-primary" />
+              <p className="text-xs font-medium">No tasks for this day</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Choose another date{date >= today ? " or add a task." : "."}
+              </p>
+              {date >= today && (
+                <Button
+                  variant="secondary"
+                  className="mt-3 min-h-8 text-xs"
+                  onClick={() => onCreate(date)}
                 >
-                  <h3 className="flex items-center gap-2 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
-                    {group}
-                    <span className="rounded-full bg-secondary px-1.5 py-0.5 text-primary">
-                      {rows.length}
-                    </span>
-                  </h3>
-                  {rows.map((task) => (
-                    <div key={task._id}>{renderTask(task)}</div>
-                  ))}
-                </section>
-              ) : null;
-            })}
-          </div>
-        ) : (
-          <div className="rounded-lg border border-dashed border-border px-3 py-8 text-center">
-            <CalendarDays className="mx-auto mb-2 size-5 text-primary" />
-            <p className="text-xs font-medium">No tasks for this day</p>
-            <p className="mt-1 text-xs text-muted-foreground">
-              Choose another date{date >= today ? " or add a task." : "."}
-            </p>
-            {date >= today && (
-              <Button
-                variant="secondary"
-                className="mt-3 min-h-8 text-xs"
-                onClick={() => onCreate(date)}
-              >
-                Create Task
-              </Button>
-            )}
-          </div>
-        )}
+                  Create Task
+                </Button>
+              )}
+            </div>
+          )}
+        </div>
       </section>
     </div>
   );

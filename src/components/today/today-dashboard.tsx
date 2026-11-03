@@ -40,6 +40,7 @@ import type {
   SetTaskProgress,
   TaskRecord,
 } from "@/components/tasks/task-list";
+import { TaskMetadataPills } from "@/components/tasks/task-metadata-pills";
 import { PriorityLabel, TaskSelect } from "@/components/tasks/task-select";
 import {
   TaskPill,
@@ -639,12 +640,12 @@ export function DayCommandCenter({
                   />
                 ))}
             </div>
-            <div className="mt-3 grid grid-cols-3 gap-1.5 sm:gap-2">
+            <div className="mt-3 grid grid-cols-3 gap-1.5 sm:gap-2 lg:flex lg:flex-wrap">
               {(["fixed", "flexible", "carried"] as const).map((filter) => (
                 <Button
                   key={filter}
                   variant="ghost"
-                  className={`h-auto min-h-8 w-full min-w-0 rounded-full px-1 py-1.5 text-[10px] sm:px-2.5 sm:text-[11px] hover:opacity-90 hover:text-white ${allocationTones[filter]} ${filter === "fixed" ? "hover:bg-sky-800" : filter === "flexible" ? "hover:bg-teal-800" : "hover:bg-violet-800"}`}
+                  className={`h-auto min-h-8 w-full min-w-0 rounded-full px-1 py-1.5 text-[10px] sm:px-2.5 sm:text-[11px] lg:w-auto lg:px-3 hover:opacity-90 hover:text-white ${allocationTones[filter]} ${filter === "fixed" ? "hover:bg-sky-800" : filter === "flexible" ? "hover:bg-teal-800" : "hover:bg-violet-800"}`}
                   aria-label={`Show ${filter} tasks`}
                   aria-controls="day-priorities"
                   aria-pressed={group === filter}
@@ -868,14 +869,6 @@ function DayTaskRow({
   const carried = isCarried(task, day);
   const schedule = task.schedule;
   const completed = task.status === "completed";
-  const time =
-    schedule.type === "fixed"
-      ? new Intl.DateTimeFormat(undefined, {
-          timeZone: day.timezone,
-          hour: "numeric",
-          minute: "2-digit",
-        }).formatRange(schedule.startAt, schedule.endAt)
-      : null;
   const overdue =
     !completed &&
     (carried ||
@@ -883,91 +876,63 @@ function DayTaskRow({
         schedule.endAt <= now &&
         day.date === day.today));
   return (
-    <li className="flex min-w-0 items-start gap-2 rounded-lg bg-muted/35 p-2.5">
-      <label className="flex min-h-11 w-7 shrink-0 cursor-pointer items-start justify-center pt-1">
-        <input
-          type="checkbox"
-          checked={completed}
-          disabled={pending || statusSaving}
-          onChange={onComplete}
-          aria-label={`${completed ? "Reopen" : "Complete"} ${task.title}`}
-          className="size-4 shrink-0 cursor-pointer accent-primary disabled:opacity-50"
-        />
-      </label>
-      <div className="min-w-0 flex-1">
+    <li
+      className="flex min-w-0 flex-wrap items-center gap-2 rounded-lg border border-border bg-card px-3 py-2.5 hover:border-primary/40"
+      onClick={(event) => {
+        if (
+          !(event.target as HTMLElement).closest(
+            "button, input, label, a, [role='menuitemradio'], [role='option']",
+          )
+        )
+          onOpen();
+      }}
+    >
+      <input
+        type="checkbox"
+        checked={completed}
+        disabled={pending || statusSaving}
+        onChange={onComplete}
+        aria-label={(completed ? "Reopen " : "Complete ") + task.title}
+        className="size-4 shrink-0 cursor-pointer accent-primary disabled:opacity-50"
+      />
+      <div className="min-w-0 flex-1 basis-40">
         <button
           type="button"
           onClick={onOpen}
-          className="w-full min-w-0 rounded-sm text-left focus-visible:outline-2 focus-visible:outline-ring"
+          className={
+            "w-full break-words text-left text-xs font-medium leading-5 hover:text-primary focus-visible:outline-2 focus-visible:outline-ring " +
+            (completed ? "line-through text-muted-foreground" : "")
+          }
         >
-          <span
-            className={`block break-words text-xs font-medium leading-5 ${completed ? "line-through opacity-60" : ""}`}
-          >
-            {task.title}
-          </span>
-          <span className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] text-muted-foreground">
-            <TaskPill
-              tone={
-                task.priority === "urgent"
-                  ? "overdue"
-                  : task.priority === "low"
-                    ? "completed"
-                    : "progress"
-              }
-            >
-              <PriorityLabel value={task.priority} />
-            </TaskPill>
-            {task.domain && (
-              <span className="inline-flex min-w-0 max-w-full items-center gap-1">
-                <DomainLabel {...task.domain} />
-              </span>
-            )}
-            {!!task.estimatedMinutes && (
-              <span>{formatMinutes(task.estimatedMinutes)}</span>
-            )}
-            {!!task.subtasks.length && (
-              <span>
-                {
-                  task.subtasks.filter((step) => step.completedAt !== undefined)
-                    .length
-                }
-                /{task.subtasks.length} steps
-              </span>
-            )}
-          </span>
-          {task.description && (
-            <span className="mt-1 line-clamp-1 break-words text-[11px] text-muted-foreground">
-              {task.description}
-            </span>
-          )}
-          <span
-            className={`mt-1 block text-[10px] leading-5 ${overdue ? "text-destructive" : "text-muted-foreground"}`}
-          >
-            {carried
-              ? `Carried · original date ${task.workDate}`
-              : schedule.type === "fixed"
-                ? time
-                : schedule.dueDate
-                  ? `Due ${schedule.dueDate}`
-                  : "Flexible · Anytime"}
-          </span>
+          {task.title}
         </button>
-        <div className="mt-2 flex flex-wrap items-center gap-2">
+        <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[10px] text-muted-foreground">
+          <TaskMetadataPills task={task} carried={carried} onOpen={onOpen} />
           <TaskPill tone={schedule.type === "fixed" ? "fixed" : "flexible"}>
             {schedule.type === "fixed" ? "Fixed" : "Flexible"}
           </TaskPill>
-          {carried && <TaskPill tone="carried">Carried forward</TaskPill>}
           {overdue && !carried && <TaskPill tone="overdue">Overdue</TaskPill>}
-          <span className="ml-auto">
-            <TaskStatusSelect
-              task={task}
-              disabled={pending}
-              onBusyChange={setStatusSaving}
-              onSetCompleted={onSetCompleted}
-              onSetProgress={onSetProgress}
-            />
-          </span>
         </div>
+      </div>
+      <div className="flex w-full flex-wrap items-center justify-end gap-2 pl-6 sm:w-auto sm:pl-0">
+        <TaskPill
+          tone={
+            task.priority === "urgent"
+              ? "overdue"
+              : task.priority === "high"
+                ? "progress"
+                : "neutral"
+          }
+        >
+          <PriorityLabel value={task.priority} />
+        </TaskPill>
+        <TaskStatusSelect
+          task={task}
+          disabled={pending}
+          onBusyChange={setStatusSaving}
+          onSetCompleted={onSetCompleted}
+          onSetProgress={onSetProgress}
+        />
       </div>
     </li>
   );
