@@ -3,10 +3,8 @@ import { spawnSync } from "node:child_process";
 // Vercel is the sole deployer. GitHub Actions checks PRs without deploy secrets.
 const key = process.env.CONVEX_DEPLOY_KEY?.trim();
 if (!key) throw new Error("Set CONVEX_DEPLOY_KEY in Vercel for this environment.");
+process.env.CONVEX_DEPLOY_KEY = key;
 if (process.env.VERCEL_ENV === "production") {
-  if (!key.startsWith("prod:colorless-oyster-445|")) {
-    throw new Error("Production requires the deploy key for colorless-oyster-445.");
-  }
   if (!process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY?.startsWith("pk_live_") ||
       !process.env.CLERK_SECRET_KEY?.startsWith("sk_live_")) {
     throw new Error("Vercel Production requires both live Clerk keys.");
@@ -30,4 +28,4 @@ run("npm", ["run", "ci"], process.platform === "win32");
 run(process.execPath, ["node_modules/convex/bin/main.js", "deploy",
   "--typecheck", "enable",
   "--cmd-url-env-var-name", "NEXT_PUBLIC_CONVEX_URL",
-  "--cmd", "npm run build"]);
+  "--cmd", "node scripts/build-convex-target.mjs"]);

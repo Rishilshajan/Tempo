@@ -37,8 +37,9 @@ Convex CLI builds Next.js using the target backend URL → Convex schema/functio
 indexes/crons deploy → Vercel publishes the frontend.
 
 The build command explicitly passes `NEXT_PUBLIC_CONVEX_URL` from the deploy-key
-target, avoiding a stale development URL. Production and preview keys are checked
-before any deployment command. GitHub Actions does not separately deploy Convex,
+target, avoiding a stale development URL. The resolved production URL is checked
+inside Convex's build callback before code is pushed, without assuming a secret
+key text format. GitHub Actions does not separately deploy Convex,
 so there are no competing GitHub/Vercel backend deployment jobs. A direct push
 still runs Vercel's own checks even if branch protection is bypassed.
 
