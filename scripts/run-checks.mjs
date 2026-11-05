@@ -9,6 +9,7 @@ const checks = [
   "check-recurrence", "check-session-series", "check-roll-forward",
   "check-today-dashboard", "check-calendar", "check-kanban",
   "check-overlay-history", "check-verification-data",
+  "check-notifications", "check-notification-worker",
 ];
 for (const check of checks) {
   console.log(`\nRunning ${check}`);

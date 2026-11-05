@@ -93,6 +93,13 @@ function ConnectedToday({
     };
   }, []);
   const { isAuthenticated } = useConvexAuth();
+  const ensureNotificationPreferences = useMutation(api.notifications.ensurePreferences);
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    void ensureNotificationPreferences({ timezone: Intl.DateTimeFormat().resolvedOptions().timeZone }).catch(() => {
+      toast.error("Could not initialize reminders. Open notification settings to try again.");
+    });
+  }, [isAuthenticated, ensureNotificationPreferences]);
   const { results, status, loadMore } = usePaginatedQuery(
     api.domains.list,
     isAuthenticated ? {} : "skip",
@@ -125,6 +132,7 @@ function ConnectedToday({
 
   return (
     <TodaySurface
+      notificationsEnabled={isAuthenticated}
       todayLabel={currentLabel}
       taskView={selection.view}
       selectedDomainId={selection.domainId}

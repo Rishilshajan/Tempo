@@ -2,6 +2,7 @@ import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 import { domainFields } from "./domainFields";
 import { taskFields, taskInputFields, storedSubtask } from "./taskFields";
+import { notificationPreferences, pushPlatform } from "./notificationFields";
 import {
   subtaskFields,
   noteFields,
@@ -10,6 +11,32 @@ import {
 } from "./taskDetailFields";
 
 export default defineSchema({
+  notificationAccounts: defineTable({
+    ownerId: v.string(),
+    preferences: notificationPreferences,
+    clearedThrough: v.optional(v.number()),
+    unreadCount: v.optional(v.number()),
+    latestNotificationAt: v.optional(v.number()),
+  }).index("by_owner", ["ownerId"]),
+  notifications: defineTable({
+    ownerId: v.string(),
+    key: v.string(),
+    title: v.string(),
+    body: v.string(),
+    taskId: v.optional(v.id("tasks")),
+    createdAt: v.number(),
+    visible: v.boolean(),
+    read: v.boolean(),
+  })
+    .index("by_owner_key", ["ownerId", "key"])
+    .index("by_owner_visible_created", ["ownerId", "visible", "createdAt"]),
+  pushSubscriptions: defineTable({
+    ownerId: v.string(),
+    endpoint: v.string(),
+    p256dh: v.string(),
+    auth: v.string(),
+    platform: pushPlatform,
+  }).index("by_owner", ["ownerId"]).index("by_endpoint", ["endpoint"]),
   taskSeries: defineTable({
     lineageRootId: v.optional(v.id("tasks")),
     previousSeriesId: v.optional(v.id("taskSeries")),
@@ -83,6 +110,7 @@ export default defineSchema({
     ])
     .index("by_ownerId_and_domainId", ["ownerId", "domainId"])
     .index("by_ownerId_and_completedAt", ["ownerId", "completedAt"])
+    .index("by_ownerId_and_lastRolledOn", ["ownerId", "lastRolledOn"])
     .index("by_ownerId_and_schedule_type_and_schedule_endAt", [
       "ownerId",
       "schedule.type",

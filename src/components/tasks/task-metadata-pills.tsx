@@ -7,7 +7,7 @@ import {
 import { formatMinutes } from "@/lib/today-model";
 import type { TaskRecord } from "./task-list";
 import { TaskPill } from "./task-status";
-export function TaskDomainPill({ task }: { task: TaskRecord }) {
+export function TaskDomainPill({ task }: { task: Pick<TaskRecord, "domain"> }) {
   return (
     <span
       className="inline-flex min-w-0 items-center gap-1 overflow-hidden rounded-full px-2 py-1 [&>span]:truncate"

@@ -1,11 +1,13 @@
 "use client";
+import { NotificationInbox } from "@/components/notifications/notification-inbox";
+import { NotificationSettings } from "@/components/notifications/notification-settings";
 import { DomainSettings } from "@/components/domains/domain-settings";
 import { MyTasksBoard } from "@/components/tasks/my-tasks-board";
 
 import { TempoLogo } from "@/components/brand/tempo-logo";
 import Link from "next/link";
 import dynamic from "next/dynamic";
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import {
   CalendarDays,
   CircleCheck,
@@ -83,6 +85,7 @@ const mobileNavigation = [
 
 type TodaySurfaceProps = {
   todayContent?: ReactNode;
+  notificationsEnabled?: boolean;
   todayDate?: string;
   todayLabel: string;
   taskView: "today" | "all" | "domain" | "settings";
@@ -113,6 +116,7 @@ type TodaySurfaceProps = {
 
 export function TodaySurface({
   todayContent,
+  notificationsEnabled = false,
   todayDate,
   todayLabel,
   taskView,
@@ -135,6 +139,8 @@ export function TodaySurface({
   onLoadMoreDomains,
   loadingMoreDomains,
 }: TodaySurfaceProps) {
+  const [inAppDraft, setInAppDraft] = useState<boolean>();
+  const [settingsSection, setSettingsSection] = useState<"domains" | "notifications">("domains");
   const [domainSheetOpen, setDomainSheetOpen] = useState(false);
   const [editingDomain, setEditingDomain] = useState<DomainSummary | null>(
     null,
@@ -146,6 +152,18 @@ export function TodaySurface({
   const [taskPrefill, setTaskPrefill] = useState<TaskPrefill | null>(null);
   const [dashboardDate, setDashboardDate] = useState<string>();
   const [detailId, setDetailId] = useState<Id<"tasks"> | null>(null);
+  useEffect(() => {
+    if (!notificationsEnabled) return;
+    const url = new URL(window.location.href);
+    const taskId = url.searchParams.get("notificationTask");
+    if (!taskId) return;
+    const timer = window.setTimeout(() => {
+      url.searchParams.delete("notificationTask");
+      window.history.replaceState(window.history.state, "", url);
+      if (/^[a-z0-9]{32}$/.test(taskId)) setDetailId(taskId as Id<"tasks">);
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, [notificationsEnabled]);
   const [moreOpen, setMoreOpen] = useState(false);
   const selectedDomain = domains?.find(
     (domain) => domain._id === selectedDomainId,
@@ -318,6 +336,7 @@ export function TodaySurface({
               <CalendarDays size={14} aria-hidden="true" />
               {todayLabel}
             </span>
+            {notificationsEnabled && inAppDraft !== false && <NotificationInbox onOpenTask={setDetailId} />}
             <div className="size-8 shrink-0">
               <WorkspaceUserButton />
             </div>
@@ -329,6 +348,14 @@ export function TodaySurface({
           className="w-full min-w-0 px-4 pb-28 pt-6 sm:px-8 lg:pb-10"
         >
           {taskView === "settings" ? (
+            <div className="space-y-4">
+              {notificationsEnabled && (
+                <nav aria-label="Settings sections" className="flex flex-wrap gap-2">
+                  <Button size="sm" variant={settingsSection === "domains" ? "default" : "outline"} aria-pressed={settingsSection === "domains"} onClick={() => setSettingsSection("domains")}>Domains</Button>
+                  <Button size="sm" variant={settingsSection === "notifications" ? "default" : "outline"} aria-pressed={settingsSection === "notifications"} onClick={() => setSettingsSection("notifications")}>Notifications &amp; Reminders</Button>
+                </nav>
+              )}
+              {settingsSection === "notifications" && notificationsEnabled ? <NotificationSettings onInAppDraftChange={setInAppDraft} /> : (
             <DomainSettings
               domains={domains}
               loading={!!hasMoreDomains}
@@ -337,6 +364,8 @@ export function TodaySurface({
               onEdit={editDomain}
               onDelete={setDeletingDomain}
             />
+              )}
+            </div>
           ) : domains === undefined ||
             (taskView !== "today" && tasks === undefined) ||
             hasAnyTasks === undefined ? (

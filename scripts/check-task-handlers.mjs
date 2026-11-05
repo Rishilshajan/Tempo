@@ -63,6 +63,10 @@ const db = {
         conditions.push((row) => row[key] <= value);
         return clauses;
       },
+      gt(key, value) {
+        conditions.push((row) => row[key] > value);
+        return clauses;
+      },
     };
     const rows = () =>
       [...records.values()]

@@ -111,3 +111,22 @@ The development and production scripts use Next.js's Webpack compiler because Tu
 - [Clerk Next.js setup](https://clerk.com/docs/nextjs/getting-started/quickstart)
 - [Clerk SignIn component](https://clerk.com/docs/nextjs/reference/components/authentication/sign-in)
 - [Convex and Clerk](https://docs.convex.dev/auth/clerk)
+
+## Notifications and device push
+
+In-app reminders use the Convex notification cron and work independently of push.
+Deploy the Convex schema and functions along with the frontend.
+
+To enable push, generate a VAPID key pair once per environment with
+`npx web-push generate-vapid-keys`. Set `VAPID_PUBLIC_KEY`,
+`VAPID_PRIVATE_KEY`, and `VAPID_SUBJECT` (a contact mailto URI) on that
+Convex deployment. Set the same public key as `NEXT_PUBLIC_VAPID_PUBLIC_KEY`
+on the corresponding Next.js deployment and rebuild the frontend.
+Keep the private key in Convex.
+
+To verify delivery, enable notifications from Settings → Notifications &
+Reminders on each device. On iOS or iPadOS, install Tempo to the Home Screen
+and open it there before enabling push. Schedule a fixed task with a reminder
+lead time that will become due shortly, close Tempo, and confirm that the device
+shows the reminder and that tapping it opens the task. Repeat on a desktop
+browser and Android, then verify inbox clearing and both quiet-hours policies.
