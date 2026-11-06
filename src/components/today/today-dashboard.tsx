@@ -144,6 +144,17 @@ function ConnectedDay(props: Props) {
     args && date === today ? { ...args, kind: "open" } : "skip",
     { initialNumItems: 50 },
   );
+  const scheduledSteps = usePaginatedQuery(
+    api.dashboard.subtaskFeed,
+    args ? { date, kind: "scheduled" } : "skip",
+    { initialNumItems: 50 },
+  );
+  const dueSteps = usePaginatedQuery(
+    api.dashboard.subtaskFeed,
+    args ? { date, kind: "due" } : "skip",
+    { initialNumItems: 50 },
+  );
+  const steps = [...scheduledSteps.results, ...dueSteps.results];
   const dated = usePaginatedQuery(
     api.dashboard.feed,
     args ? { ...args, kind: "dated" } : "skip",
@@ -234,6 +245,31 @@ function ConnectedDay(props: Props) {
             />
           }
           key={date}
+          subtasks={
+            (steps.length > 0 || scheduledSteps.status === "CanLoadMore" ||
+              dueSteps.status === "CanLoadMore" || scheduledSteps.status === "LoadingMore" ||
+              dueSteps.status === "LoadingMore") && (
+              <section aria-labelledby="day-subtasks-heading" className="rounded-xl border border-border bg-card p-4">
+                <h2 id="day-subtasks-heading" className="font-medium">Subtasks for this day</h2>
+                <ul className="mt-2 divide-y divide-border">
+                  {steps.map((step) => (
+                    <li key={step.id}>
+                      <Button variant="ghost" className="h-auto w-full flex-col items-start gap-1 whitespace-normal py-2 text-left" onClick={() => props.onOpenTask(step.parent)}>
+                        <span className="break-words">{step.title}</span>
+                        <span className="text-xs text-muted-foreground">{step.parent.title}</span>
+                      </Button>
+                    </li>
+                  ))}
+                </ul>
+                {(scheduledSteps.status === "CanLoadMore" || dueSteps.status === "CanLoadMore") && (
+                  <Button variant="outline" size="sm" onClick={() => {
+                    if (scheduledSteps.status === "CanLoadMore") scheduledSteps.loadMore(50);
+                    if (dueSteps.status === "CanLoadMore") dueSteps.loadMore(50);
+                  }}>Load more subtasks</Button>
+                )}
+              </section>
+            )
+          }
           {...props}
           tasks={[
             ...backlog.results,
@@ -331,6 +367,7 @@ export function DayCommandCenter({
   focusSaving,
   onFocus,
   navigation,
+  subtasks,
   ...props
 }: Props & {
   tasks: TaskRecord[];
@@ -341,6 +378,7 @@ export function DayCommandCenter({
   focusSaving: boolean;
   onFocus: (id: string) => void;
   navigation?: ReactNode;
+  subtasks?: ReactNode;
 }) {
   const summary = summarizeDay(tasks, day);
   const [domainFilter, setDomainFilter] = useState("all");
@@ -684,6 +722,7 @@ export function DayCommandCenter({
             onAdd={(startAt) => props.onCreateTask({ date: day.date, startAt })}
           />
         </div>
+        {subtasks}
         <section
           id="day-priorities"
           aria-labelledby="priorities-heading"

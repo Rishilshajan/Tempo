@@ -43,15 +43,16 @@ export function TaskDetailSheet({
         showCloseButton={false}
         className="!inset-y-auto !top-0 !left-0 !right-auto !h-dvh !w-dvw !max-w-none gap-0 overflow-hidden bg-card sm:!left-auto sm:!right-0 sm:!w-full sm:!max-w-[540px]"
       >
-        {id && <DetailSession key={id} initialId={id} {...actions} />}
+        {id && <DetailSession key={id} initialId={id} onClose={onClose} {...actions} />}
       </SheetContent>
     </Sheet>
   );
 }
 function DetailSession({
   initialId,
+  onClose,
   ...actions
-}: Actions & { initialId: Id<"tasks"> }) {
+}: Actions & { initialId: Id<"tasks">; onClose: () => void }) {
   const [history, setHistory] = useState<Id<"tasks">[]>([initialId]);
   const id = history[history.length - 1];
   const task = useQuery(api.tasks.get, { id });
@@ -101,6 +102,7 @@ function DetailSession({
     <TaskDetailWorkspace
       key={id}
       task={task}
+      onDeleted={onClose}
       {...actions}
       onOpenTask={(next) => setHistory((previous) => [...previous, next])}
       onBack={

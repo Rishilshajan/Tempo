@@ -99,6 +99,43 @@ export const feed = query({
   },
 });
 
+export const subtaskFeed = query({
+  args: {
+    date: v.string(),
+    kind: v.union(v.literal("scheduled"), v.literal("due")),
+    paginationOpts: paginationOptsValidator,
+  },
+  returns: paginationResultValidator(v.object({
+    id: v.id("subtasks"),
+    title: v.string(),
+    parent: taskView,
+  })),
+  handler: async (ctx, args) => {
+    const user = await ctx.auth.getUserIdentity();
+    if (!user) throw new ConvexError("Please sign in to view your day.");
+    if (!calendarDateSchema.safeParse(args.date).success)
+      throw new ConvexError("Choose a valid date.");
+    const options = {
+      ...args.paginationOpts,
+      numItems: Math.min(args.paginationOpts.numItems, 50),
+    };
+    const subtasks = ctx.db.query("subtasks");
+    const result = args.kind === "scheduled"
+      ? await subtasks.withIndex("by_scheduledDate", (q) =>
+          q.eq("scheduledDate", args.date)).paginate(options)
+      : await subtasks.withIndex("by_dueDate_and_scheduledDate", (q) =>
+          q.eq("dueDate", args.date).eq("scheduledDate", undefined)).paginate(options);
+    const page = await Promise.all(result.page.map(async (step) => {
+      if (step.completedAt !== undefined) return null;
+      const parent = await ctx.db.get(step.parentTaskId);
+      if (!parent || parent.ownerId !== user.tokenIdentifier ||
+          parent.status !== "open" || parent.recurrenceCancelled) return null;
+      return { id: step._id, title: step.title, parent: await toTaskView(ctx, parent) };
+    }));
+    return { ...result, page: page.filter((step) => step !== null) };
+  },
+});
+
 export const focus = query({
   args: { date: v.string(), timezone: v.string(), today: v.string() },
   returns: v.union(v.null(), taskView),

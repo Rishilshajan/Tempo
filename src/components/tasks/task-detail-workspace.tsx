@@ -13,6 +13,7 @@ import {
   Clock3,
   MoreHorizontal,
   Pencil,
+  Trash2,
   Repeat2,
   X,
   CircleDot,
@@ -53,7 +54,7 @@ import { DetailNotes } from "./detail-notes";
 import { EditTaskSheet } from "./edit-task-sheet";
 import { taskTimestamp } from "@/lib/task-datetime";
 import { TaskRescheduleCalendar } from "./task-reschedule-calendar";
-import { detailError } from "./detail-shared";
+import { ConfirmDelete, detailError } from "./detail-shared";
 
 export function TaskDetailWorkspace({
   task,
@@ -61,12 +62,14 @@ export function TaskDetailWorkspace({
   onSetProgress,
   onOpenTask,
   onBack,
+  onDeleted,
 }: {
   task: TaskRecord;
   onSetCompleted: SetTaskCompleted;
   onSetProgress: SetTaskProgress;
   onOpenTask: (id: Id<"tasks">) => void;
   onBack?: () => void;
+  onDeleted: () => void;
 }) {
   const [tab, setTab] = useState("subtasks");
   const [mobileSectionOpen, setMobileSectionOpen] = useState(false);
@@ -101,8 +104,9 @@ export function TaskDetailWorkspace({
       count: task.notesCount || undefined,
     },
   ];
-  const [dialog, setDialog] = useState<"edit" | null>(null);
+  const [dialog, setDialog] = useState<"edit" | "delete" | null>(null);
   const [busy, setBusy] = useState(false);
+  const remove = useMutation(api.tasks.remove);
   const reschedule = useMutation(api.tasks.reschedule);
   const completedSteps = task.subtasks.filter(
     (step) => step.completedAt !== undefined,
@@ -184,6 +188,10 @@ export function TaskDetailWorkspace({
                   <DropdownMenuItem onClick={() => setDialog("edit")}>
                     <Pencil />
                     Edit task
+                  </DropdownMenuItem>
+                  <DropdownMenuItem variant="destructive" onClick={() => setDialog("delete")}>
+                    <Trash2 />
+                    Delete task
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -417,7 +425,7 @@ export function TaskDetailWorkspace({
         </Tabs>
       </div>
       <footer className="shrink-0 space-y-2 border-t border-border bg-muted/20 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:px-5">
-        <div className="grid grid-cols-[minmax(0,1fr)_auto_auto] gap-2">
+        <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-2">
           <Button
             className="min-h-11 text-xs"
             onClick={() => void completeTask()}
@@ -435,27 +443,7 @@ export function TaskDetailWorkspace({
             disabled={busy || task.status === "completed"}
             onReschedule={(schedule) => reschedule({ id: task._id, schedule })}
           />
-          <DropdownMenu>
-            <DropdownMenuTrigger
-              render={
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="size-11"
-                  aria-label="More task actions"
-                  disabled={busy}
-                />
-              }
-            >
-              <MoreHorizontal className="size-4" />
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-40">
-              <DropdownMenuItem onClick={() => setDialog("edit")}>
-                <Pencil />
-                Edit task
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+
         </div>
         {task.status === "open" && task.workDate && task.workDate <= today && (
           <p className="text-[10px] leading-4 text-muted-foreground">
@@ -468,6 +456,19 @@ export function TaskDetailWorkspace({
           </p>
         )}
       </footer>
+      {dialog === "delete" && (
+        <ConfirmDelete
+          title="Delete task?"
+          description={`“${task.title}” and its subtasks and notes will be permanently deleted.`}
+          confirmLabel="Delete task"
+          onClose={() => setDialog(null)}
+          onDelete={async () => {
+            await remove({ id: task._id });
+            toast.success("Task deleted.");
+            onDeleted();
+          }}
+        />
+      )}
       {dialog === "edit" && (
         <EditTaskSheet task={task} onClose={() => setDialog(null)} />
       )}

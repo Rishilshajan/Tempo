@@ -169,10 +169,41 @@ export const pushReady = query({
   args: {}, returns: v.boolean(),
   handler: async ctx => Boolean(await owner(ctx)) && isPushConfigured(),
 });
+export const sendTestPush = mutation({
+  args: { endpoint: v.string(), requestId: v.string() },
+  returns: v.number(),
+  handler: async (ctx, { endpoint, requestId }) => {
+    const ownerId = await requireOwner(ctx);
+    const device = await byEndpoint(ctx, endpoint);
+    if (!isPushConfigured() || device?.ownerId !== ownerId)
+      throw new ConvexError("Enable notifications on this device first.");
+    if (!/^[a-f0-9-]{36}$/.test(requestId))
+      throw new ConvexError("Invalid test request.");
+    const now = Date.now();
+    const key = "test-push-rate-limit";
+    const prior = await ctx.db.query("notifications")
+      .withIndex("by_owner_key", q => q.eq("ownerId", ownerId).eq("key", key)).unique();
+    if (prior && now < prior.createdAt + 5000) return prior.createdAt + 5000 - now;
+    if (prior) await ctx.db.patch(prior._id, { createdAt: now });
+    else await ctx.db.insert("notifications", {
+      ownerId, key, title: "Tempo test notification", body: "", createdAt: now,
+      visible: false, read: true,
+    });
+    await ctx.scheduler.runAfter(0, internal.notificationPush.send, {
+      ownerId, key: "test:" + requestId, endpoint, title: "Tempo test notification",
+      body: "This device can receive Tempo reminders.", expiresAt: now + 15000,
+    });
+    return 0;
+  },
+});
 export const deliveryDevices = internalQuery({
-  args: { ownerId: v.string(), digestSettings: v.optional(v.string()) },
+  args: { ownerId: v.string(), digestSettings: v.optional(v.string()), taskId: v.optional(v.id("tasks")) },
   returns: v.array(v.object(subscription)),
-  handler: async (ctx, { ownerId, digestSettings }) => {
+  handler: async (ctx, { ownerId, digestSettings, taskId }) => {
+    if (taskId) {
+      const task = await ctx.db.get(taskId);
+      if (!task || task.ownerId !== ownerId || task.status !== "open" || task.recurrenceCancelled) return [];
+    }
     if (digestSettings !== undefined) {
       const row = await account(ctx, ownerId);
       if (!row || quietSettings(row.preferences) !== digestSettings) return [];
@@ -209,17 +240,19 @@ function quietSettings(p: NotificationPreferences) {
   return JSON.stringify([p.quietEnabled, p.quietPolicy, p.timezone, p.quietStart, p.quietEnd, [...p.quietDays].sort()]);
 }
 
-type Reminder = { key: string; title: string; body: string; taskId?: Doc<"tasks">["_id"] };
+type Reminder = { key: string; title: string; body: string; taskId?: Doc<"tasks">["_id"]; expiresAt?: number; pushBody?: string };
 async function addReminder(ctx: MutationCtx, row: Doc<"notificationAccounts">, reminder: Reminder, now: number, canPush: boolean, createdAt: number) {
   const { ownerId, preferences: p } = row;
   if (await ctx.db.query("notifications").withIndex("by_owner_key", q => q.eq("ownerId", ownerId).eq("key", reminder.key)).unique()) return 0;
+  const { expiresAt, pushBody, ...entry } = reminder;
   await ctx.db.insert("notifications", {
-    ...reminder, ownerId, createdAt, visible: p.inApp, read: false,
+    ...entry, ownerId, createdAt, visible: p.inApp, read: false,
   });
   if (canPush) {
     const quiet = quietWindow(p, now);
     if (!quiet) await ctx.scheduler.runAfter(0, internal.notificationPush.send, {
-      ownerId, title: reminder.title, body: reminder.body, key: reminder.key,
+      ownerId, title: reminder.title, body: pushBody ?? reminder.body, key: reminder.key,
+      ...(expiresAt === undefined ? {} : { expiresAt }),
       ...(reminder.taskId ? { taskId: reminder.taskId } : {}),
     });
     else if (p.quietPolicy === "digest") {
@@ -276,7 +309,8 @@ export const processOwner = internalMutation({
         .filter(task => task.status === "open" && !task.recurrenceCancelled);
       if (carried.length) await add({
         key: ["carried", date].join(":"), title: "Tasks rolled forward",
-        body: carried.length === 1 ? carried[0].title : "Open Today to review your carried tasks.",
+        body: carried.slice(0, 3).map(task => task.title).join(" · ") + (carried.length > 3 ? " · More in Today" : ""),
+        ...(carried.length === 1 ? { taskId: carried[0]._id } : {}),
       });
     }
     const page = await ctx.db.query("tasks").withIndex("by_ownerId_and_status_and_workDate", q => q.eq("ownerId", ownerId).eq("status", "open"))
@@ -284,7 +318,7 @@ export const processOwner = internalMutation({
     for (const task of page.page) {
       if (task.recurrenceCancelled) continue;
       const taskId = task._id;
-      const alert = async (key: string, title: string, body: string) => add({ key: [taskId, key].join(":"), title, body, taskId });
+      const alert = async (key: string, title: string, body: string, expiresAt?: number, pushBody?: string) => add({ key: [taskId, key].join(":"), title, body, taskId, expiresAt, pushBody });
       const scheduled = task.schedule;
       const taskDate = task.timezone === p.timezone ? date : localTime(now, task.timezone).date;
       // When a task is created inside several reminder windows, send only the
@@ -294,7 +328,8 @@ export const processOwner = internalMutation({
       if (p.upcoming && scheduled.type === "fixed") {
         const lead = activeLead(scheduled.startAt, p.upcomingMinutes);
         if (lead !== undefined) {
-          await alert(["upcoming", scheduled.startAt, lead].join(":"), "Upcoming task", task.title);
+          await alert(["upcoming", scheduled.startAt, lead].join(":"), "Upcoming task",
+            task.title, scheduled.startAt, `${task.title} · Starts at ${localTime(scheduled.startAt, task.timezone).time}`);
         }
       }
       const dueDate = scheduled.type === "flexible" ? scheduled.dueDate : undefined;
@@ -302,7 +337,8 @@ export const processOwner = internalMutation({
       if (dueAt != null && p.deadlines) {
         const lead = activeLead(dueAt, p.deadlineMinutes);
         if (lead !== undefined) {
-          await alert(["deadline", dueAt, lead].join(":"), "Deadline approaching", task.title);
+          const label = new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", timeZone: task.timezone }).format(dueAt - 1);
+          await alert(["deadline", dueAt, lead].join(":"), "Deadline approaching", task.title, dueAt, `${task.title} · Due ${label}`);
         }
       }
       if (p.overdue && dueAt != null && dueAt <= now) await alert(["overdue", taskDate].join(":"), "Overdue task", task.title);

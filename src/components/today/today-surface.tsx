@@ -11,10 +11,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import {
   CalendarDays,
   CircleCheck,
-  Grid2X2,
-  History,
   Plus,
-  Search,
   Settings2,
   Sun,
 } from "lucide-react";
@@ -37,13 +34,7 @@ import {
   type SetTaskProgress,
 } from "@/components/tasks/task-list";
 import type { CreateTaskValues } from "@/lib/validation/task";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetDescription,
-} from "@/components/ui/sheet";
+import { WorkspaceSearch } from "./workspace-search";
 
 // Clerk can already be loaded in the browser while SSR has no widget markup.
 // Mount only this SDK widget on the client; keep the workspace server-rendered.
@@ -72,15 +63,12 @@ const WorkspaceAccount = dynamic(
 const navigation = [
   { label: "Today", icon: Sun, current: true },
   { label: "My Tasks", icon: CircleCheck, current: false },
-  { label: "Rolled Forward", icon: History, current: false },
-  { label: "Calendar", icon: CalendarDays, current: false },
 ];
 
 const mobileNavigation = [
   { label: "Today", icon: Sun, current: true },
   { label: "Tasks", icon: CircleCheck, current: false },
-  { label: "Rolled Forward", icon: History, current: false },
-  { label: "More", icon: Grid2X2, current: false },
+  { label: "Settings", icon: Settings2, current: false },
 ];
 
 type TodaySurfaceProps = {
@@ -164,7 +152,6 @@ export function TodaySurface({
     }, 0);
     return () => window.clearTimeout(timer);
   }, [notificationsEnabled]);
-  const [moreOpen, setMoreOpen] = useState(false);
   const selectedDomain = domains?.find(
     (domain) => domain._id === selectedDomainId,
   );
@@ -175,20 +162,17 @@ export function TodaySurface({
   }
 
   function openCreateDomain() {
-    setMoreOpen(false);
     setEditingDomain(null);
     setDomainSheetOpen(true);
   }
 
   function editDomain(domain: DomainSummary) {
-    setMoreOpen(false);
     setEditingDomain(domain);
     setDomainSheetOpen(true);
   }
 
   function selectDomain(domain: DomainSummary) {
     onSelectDomain(domain);
-    setMoreOpen(false);
   }
 
   const domainNavigation = domains ? (
@@ -198,7 +182,6 @@ export function TodaySurface({
       onSelect={selectDomain}
       onEdit={editDomain}
       onDelete={(domain) => {
-        setMoreOpen(false);
         setDeletingDomain(domain);
       }}
     />
@@ -317,25 +300,13 @@ export function TodaySurface({
           >
             <TempoLogo />
           </Link>
-          <div className="hidden w-full max-w-sm items-center gap-3 rounded-lg bg-muted/60 px-3 lg:flex">
-            <Search
-              size={16}
-              aria-hidden="true"
-              className="shrink-0 text-muted-foreground"
-            />
-            <input
-              type="search"
-              disabled
-              aria-label="Search tasks and domains (coming next)"
-              placeholder="Search tasks and domains"
-              className="h-10 min-w-0 w-full bg-transparent text-xs text-muted-foreground placeholder:text-muted-foreground"
-            />
-          </div>
+          <WorkspaceSearch enabled={notificationsEnabled} onTask={setDetailId} onDomain={selectDomain} />
           <div className="flex shrink-0 items-center gap-2 sm:gap-5">
             <span className="hidden items-center gap-2 text-xs text-muted-foreground sm:inline-flex">
               <CalendarDays size={14} aria-hidden="true" />
               {todayLabel}
             </span>
+            <WorkspaceSearch enabled={notificationsEnabled} onTask={setDetailId} onDomain={selectDomain} mobile />
             {notificationsEnabled && inAppDraft !== false && <NotificationInbox onOpenTask={setDetailId} />}
             <div className="size-8 shrink-0">
               <WorkspaceUserButton />
@@ -424,90 +395,28 @@ export function TodaySurface({
 
       <nav
         aria-label="Mobile workspace navigation"
-        className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-4 border-t border-border bg-background pb-[env(safe-area-inset-bottom)] lg:hidden"
+        className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-3 border-t border-border bg-background pb-[env(safe-area-inset-bottom)] lg:hidden"
       >
-        {mobileNavigation.map(({ label, icon: Icon, current }) =>
-          current || label === "Tasks" ? (
+        {mobileNavigation.map(({ label, icon: Icon, current }) => {
+          const view = current ? "today" : label === "Settings" ? "settings" : "all";
+          const active = taskView === view || (view === "all" && taskView === "domain");
+          return (
             <button
               key={label}
               type="button"
-              onClick={() => onViewChange(current ? "today" : "all")}
-              aria-current={
-                taskView === (current ? "today" : "all") ? "page" : undefined
-              }
-              className={`flex min-h-17 flex-col items-center justify-center gap-1 px-1 text-[10px] font-medium focus-visible:outline-2 focus-visible:outline-offset-[-4px] focus-visible:outline-primary ${taskView === (current ? "today" : "all") ? "text-primary" : "text-muted-foreground"}`}
-            >
-              <Icon size={20} aria-hidden="true" />
-              {label}
-            </button>
-          ) : label === "More" ? (
-            <button
-              key={label}
-              type="button"
-              aria-label="More"
-              aria-haspopup="dialog"
-              onClick={() => setMoreOpen(true)}
-              className="flex min-h-17 flex-col items-center justify-center gap-1 px-1 text-[10px] text-foreground"
-            >
-              <Icon size={20} aria-hidden="true" />
-              {label}
-            </button>
-          ) : (
-            <button
-              key={label}
-              type="button"
-              disabled
-              aria-label={`${label} (coming next)`}
-              className="flex min-h-17 flex-col items-center justify-center gap-1 px-1 text-[10px] text-muted-foreground opacity-60"
-            >
-              <Icon size={20} aria-hidden="true" />
-              {label}
-            </button>
-          ),
-        )}
-      </nav>
-      <Sheet open={moreOpen} onOpenChange={setMoreOpen}>
-        <SheetContent className="!w-full !max-w-sm gap-0">
-          <SheetHeader className="pr-14">
-            <SheetTitle>Domains</SheetTitle>
-            <SheetDescription>
-              Choose a domain to view its tasks.
-            </SheetDescription>
-          </SheetHeader>
-          <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-6">
-            <Button
-              variant="ghost"
-              className="mb-3 w-full justify-start"
               onClick={() => {
-                setMoreOpen(false);
-                onViewChange("settings");
+                if (view === "settings") setSettingsSection("domains");
+                if (taskView !== view) onViewChange(view);
               }}
+              aria-current={active ? "page" : undefined}
+              className={`flex min-h-14 flex-col items-center justify-center gap-1 px-1 text-xs font-medium focus-visible:outline-2 focus-visible:outline-offset-[-4px] focus-visible:outline-primary ${active ? "text-primary" : "text-muted-foreground"}`}
             >
-              <Settings2 />
-              Settings
-            </Button>
-            {domainNavigation}
-            {hasMoreDomains && (
-              <Button
-                variant="ghost"
-                className="min-h-11"
-                disabled={loadingMoreDomains}
-                onClick={onLoadMoreDomains}
-              >
-                {loadingMoreDomains ? "Loading…" : "Load more domains"}
-              </Button>
-            )}
-            <Button
-              variant="secondary"
-              className="mt-4 min-h-11 w-full"
-              onClick={openCreateDomain}
-            >
-              <Plus aria-hidden="true" />
-              Create Domain
-            </Button>
-          </div>
-        </SheetContent>
-      </Sheet>
+              <Icon size={18} aria-hidden="true" />
+              {label}
+            </button>
+          );
+        })}
+      </nav>
       <CreateTaskSheet
         open={taskSheetOpen}
         onOpenChange={setTaskSheetOpen}

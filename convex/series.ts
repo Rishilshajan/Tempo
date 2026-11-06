@@ -92,11 +92,6 @@ export const generate = internalMutation({
   handler: async (ctx, { seriesId }) => {
     const series = await ctx.db.get(seriesId);
     if (!series?.active || !series.template.recurrence) return null;
-    const root = await ctx.db.get(series.rootTaskId);
-    if (!root) {
-      await ctx.db.patch(seriesId, { active: false });
-      return null;
-    }
     const template = series.template,
       rule = template.recurrence!;
     const today = localDateKey(new Date(), template.timezone);

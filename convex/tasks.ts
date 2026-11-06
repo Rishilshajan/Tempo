@@ -6,7 +6,8 @@ import {
 import { ConvexError, v } from "convex/values";
 import type { MutationCtx } from "./_generated/server";
 import type { Id } from "./_generated/dataModel";
-import { mutation, query } from "./_generated/server";
+import { internalMutation, mutation, query } from "./_generated/server";
+import { internal } from "./_generated/api";
 import {
   taskInputFields,
   subtaskInput,
@@ -14,6 +15,7 @@ import {
   taskSchedule,
 } from "./taskFields";
 import { toTaskView } from "./taskViews";
+import { domainView } from "./domainFields";
 import { createNextOccurrence } from "./taskRecurrence";
 import { normalizeSubtasks, recordActivity } from "./taskDetailHelpers";
 import {
@@ -21,6 +23,76 @@ import {
   createTaskSchema,
   localDateKey,
 } from "../src/lib/validation/task";
+
+export const searchWorkspace = query({
+  args: { term: v.string() },
+  returns: v.object({
+    tasks: v.array(v.object({ id: v.id("tasks"), title: v.string() })),
+    domains: v.array(domainView),
+  }),
+  handler: async (ctx, { term }) => {
+    const user = await ctx.auth.getUserIdentity();
+    const search = term.trim().slice(0, 100);
+    if (!user || !search) return { tasks: [], domains: [] };
+    const ownerId = user.tokenIdentifier;
+    const [tasks, domains] = await Promise.all([
+      ctx.db.query("tasks").withSearchIndex("search_title", q =>
+        q.search("title", search).eq("ownerId", ownerId)).take(30),
+      ctx.db.query("domains").withSearchIndex("search_name", q =>
+        q.search("name", search).eq("ownerId", ownerId)).take(10),
+    ]);
+    return {
+      tasks: tasks.filter(task => !task.recurrenceCancelled).slice(0, 15)
+        .map(({ _id, title }) => ({ id: _id, title })),
+      domains: domains.map(({ _id, _creationTime, name, purpose, color, icon }) =>
+        ({ _id, _creationTime, name, ...(purpose ? { purpose } : {}), color, icon })),
+    };
+  },
+});
+
+export const remove = mutation({
+  args: { id: v.id("tasks") },
+  returns: v.null(),
+  handler: async (ctx, { id }) => {
+    const user = await ctx.auth.getUserIdentity();
+    if (!user) throw new ConvexError("Please sign in to delete a task.");
+    const task = await ctx.db.get(id);
+    if (!task) return null;
+    if (task.ownerId !== user.tokenIdentifier)
+      throw new ConvexError("This task is unavailable.");
+    await ctx.db.delete(id);
+    await ctx.scheduler.runAfter(0, internal.tasks.cleanupDeletedTask, { id });
+    return null;
+  },
+});
+
+export const cleanupDeletedTask = internalMutation({
+  args: { id: v.id("tasks") },
+  returns: v.null(),
+  handler: async (ctx, { id }) => {
+    const limit = 50;
+    const [steps, notes, activity, links, focus] = await Promise.all([
+      ctx.db.query("subtasks").withIndex("by_parentTaskId_and_position", (q) => q.eq("parentTaskId", id)).take(limit),
+      ctx.db.query("notes").withIndex("by_taskId", (q) => q.eq("taskId", id)).take(limit),
+      ctx.db.query("activity").withIndex("by_taskId_and_timestamp", (q) => q.eq("taskId", id)).take(limit),
+      ctx.db.query("threadTasks").withIndex("by_taskId", (q) => q.eq("taskId", id)).take(limit),
+      ctx.db.query("dailyFocus").withIndex("by_taskId", (q) => q.eq("taskId", id)).take(limit),
+    ]);
+    for (const row of [...steps, ...notes, ...activity, ...focus])
+      await ctx.db.delete(row._id);
+    for (const link of links) {
+      const thread = await ctx.db.get(link.threadId);
+      await ctx.db.delete(link._id);
+      if (thread) await ctx.db.patch(thread._id, {
+        taskCount: Math.max(0, thread.taskCount - 1),
+        updatedAt: Date.now(),
+      });
+    }
+    if ([steps, notes, activity, links, focus].some((rows) => rows.length === limit))
+      await ctx.scheduler.runAfter(0, internal.tasks.cleanupDeletedTask, { id });
+    return null;
+  },
+});
 
 export const hasAny = query({
   args: {},

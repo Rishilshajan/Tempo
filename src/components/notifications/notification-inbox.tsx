@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useMutation, useQuery } from "convex/react";
 import { Bell, X } from "lucide-react";
 import { toast } from "sonner";
@@ -34,6 +34,7 @@ const samples = [
 export function NotificationInbox({ onOpenTask }: {
   onOpenTask: (id: Id<"tasks">) => void;
 }) {
+  const triggerRef = useRef<HTMLButtonElement>(null);
   const [preview] = useState(() =>
     process.env.NODE_ENV === "development" &&
     typeof window !== "undefined" &&
@@ -70,11 +71,24 @@ export function NotificationInbox({ onOpenTask }: {
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger render={<Button variant="ghost" size="icon" />} aria-label={`Notifications, ${unread} unread`} className="relative">
+      <PopoverTrigger ref={triggerRef} render={<Button variant="ghost" size="icon" />} aria-label={`Notifications, ${unread} unread`} className="relative">
         <Bell aria-hidden="true" />
         {unread > 0 && <span aria-hidden="true" className="absolute -right-1 -top-1 rounded-full bg-primary px-1.5 text-[10px] text-primary-foreground">{unread > 99 ? "99+" : unread}</span>}
       </PopoverTrigger>
-      <PopoverContent align="end" className="w-[min(23rem,calc(100vw-2rem))] p-3">
+      <PopoverContent
+        align="end"
+        alignOffset={({ align, positioner }) => {
+          const trigger = triggerRef.current;
+          if (!trigger || window.matchMedia("(min-width: 1024px)").matches) return 0;
+
+          const bounds = trigger.getBoundingClientRect();
+          const center = document.documentElement.clientWidth / 2;
+          if (align === "end") return bounds.right - positioner.width / 2 - center;
+          if (align === "start") return center - bounds.left - positioner.width / 2;
+          return center - (bounds.left + bounds.right) / 2;
+        }}
+        className="w-[min(23rem,calc(100vw-2rem))] p-3"
+      >
         <div className="flex items-center justify-between gap-2">
           <PopoverTitle>{preview ? "Notifications preview" : "Notifications"}</PopoverTitle>
           <div className="flex items-center gap-1">

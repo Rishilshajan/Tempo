@@ -52,6 +52,8 @@ export default defineSchema({
     }),
   }).index("by_active", ["active"]),
   subtasks: defineTable(subtaskFields)
+    .index("by_scheduledDate", ["scheduledDate"])
+    .index("by_dueDate_and_scheduledDate", ["dueDate", "scheduledDate"])
     .index("by_parentTaskId_and_position", ["parentTaskId", "position"])
     .index("by_parentTaskId_and_requestId", ["parentTaskId", "requestId"]),
   notes: defineTable(noteFields)
@@ -80,7 +82,7 @@ export default defineSchema({
     ownerId: v.string(),
     date: v.string(),
     taskId: v.id("tasks"),
-  }).index("by_ownerId_and_date", ["ownerId", "date"]),
+  }).index("by_ownerId_and_date", ["ownerId", "date"]).index("by_taskId", ["taskId"]),
   tasks: defineTable({
     ...taskFields,
     ownerId: v.string(),
@@ -116,7 +118,8 @@ export default defineSchema({
       "schedule.type",
       "schedule.endAt",
     ])
-    .index("by_ownerId_and_workDate", ["ownerId", "workDate"]),
+    .index("by_ownerId_and_workDate", ["ownerId", "workDate"])
+    .searchIndex("search_title", { searchField: "title", filterFields: ["ownerId", "recurrenceCancelled"] }),
   domains: defineTable({
     ...domainFields,
     position: v.optional(v.number()),
@@ -125,5 +128,6 @@ export default defineSchema({
   })
     .index("by_ownerId", ["ownerId"])
     .index("by_ownerId_and_position", ["ownerId", "position"])
-    .index("by_ownerId_and_requestId", ["ownerId", "requestId"]),
+    .index("by_ownerId_and_requestId", ["ownerId", "requestId"])
+    .searchIndex("search_name", { searchField: "name", filterFields: ["ownerId"] }),
 });
