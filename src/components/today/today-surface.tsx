@@ -292,7 +292,7 @@ export function TodaySurface({
       </aside>
 
       <div className="lg:pl-56">
-        <header className="flex min-h-16 items-center justify-between gap-4 border-b border-border bg-card/60 px-4 sm:px-8">
+        <header className="relative flex min-h-16 items-center justify-between gap-4 border-b border-border bg-card/60 px-4 sm:px-8">
           <Link
             href="/"
             aria-label="Tempo home"

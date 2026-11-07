@@ -27,7 +27,12 @@ import {
 export const searchWorkspace = query({
   args: { term: v.string() },
   returns: v.object({
-    tasks: v.array(v.object({ id: v.id("tasks"), title: v.string() })),
+    tasks: v.array(v.object({
+      id: v.id("tasks"),
+      title: v.string(),
+      date: v.optional(v.string()),
+      domain: v.optional(domainView),
+    })),
     domains: v.array(domainView),
   }),
   handler: async (ctx, { term }) => {
@@ -42,8 +47,25 @@ export const searchWorkspace = query({
         q.search("name", search).eq("ownerId", ownerId)).take(10),
     ]);
     return {
-      tasks: tasks.filter(task => !task.recurrenceCancelled).slice(0, 15)
-        .map(({ _id, title }) => ({ id: _id, title })),
+      tasks: await Promise.all(tasks.filter(task => !task.recurrenceCancelled).slice(0, 15)
+        .map(async (task) => {
+          const domain = task.domainId ? await ctx.db.get(task.domainId) : null;
+          const date = task.schedule.type === "fixed"
+            ? localDateKey(new Date(task.schedule.startAt), task.timezone)
+            : task.schedule.dueDate ?? task.workDate;
+          return {
+            id: task._id,
+            title: task.title,
+            ...(date ? { date } : {}),
+            ...(domain?.ownerId === ownerId ? {
+              domain: {
+                _id: domain._id, _creationTime: domain._creationTime,
+                name: domain.name, color: domain.color, icon: domain.icon,
+                ...(domain.purpose ? { purpose: domain.purpose } : {}),
+              },
+            } : {}),
+          };
+        })),
       domains: domains.map(({ _id, _creationTime, name, purpose, color, icon }) =>
         ({ _id, _creationTime, name, ...(purpose ? { purpose } : {}), color, icon })),
     };

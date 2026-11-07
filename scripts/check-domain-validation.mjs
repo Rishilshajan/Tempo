@@ -1,5 +1,16 @@
 import assert from "node:assert/strict";
-import { createDomainSchema } from "../src/lib/validation/domain.ts";
+import { build } from "esbuild";
+
+const bundled = await build({
+  entryPoints: ["src/lib/validation/domain.ts"],
+  bundle: true,
+  platform: "node",
+  format: "esm",
+  write: false,
+});
+const { createDomainSchema } = await import(
+  `data:text/javascript;base64,${Buffer.from(bundled.outputFiles[0].text).toString("base64")}`
+);
 
 const valid = {
   name: "  Client Ventures  ",

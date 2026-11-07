@@ -67,7 +67,6 @@ export function DayTimeline({
         ((at - day.start) / 3600000 - 1) * 58,
       );
     // Only move the viewport when the selected date changes, never during reading.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [day.date]);
   return (
     <section

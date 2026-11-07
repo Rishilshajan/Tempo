@@ -1,13 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useQuery } from "convex/react";
-import { Search } from "lucide-react";
+import { Search, X } from "lucide-react";
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
 import { DomainLabel, type DomainSummary } from "@/components/domains/domain-appearance";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 
 export function WorkspaceSearch({ enabled, mobile, onTask, onDomain }: {
@@ -16,6 +15,7 @@ export function WorkspaceSearch({ enabled, mobile, onTask, onDomain }: {
   onTask: (id: Id<"tasks">) => void;
   onDomain: (domain: DomainSummary) => void;
 }) {
+  const container = useRef<HTMLDivElement>(null);
   const [open, setOpen] = useState(false);
   const [input, setInput] = useState("");
   const [term, setTerm] = useState("");
@@ -33,23 +33,46 @@ export function WorkspaceSearch({ enabled, mobile, onTask, onDomain }: {
     setTerm("");
   }
 
+  useEffect(() => {
+    if (!open) return;
+    function dismiss(event: PointerEvent) {
+      if (event.target instanceof Node && !container.current?.contains(event.target)) {
+        close();
+      }
+    }
+    document.addEventListener("pointerdown", dismiss);
+    return () => document.removeEventListener("pointerdown", dismiss);
+  }, [open]);
+
+  const searchInput = (
+    <Input type="search" aria-label="Search tasks and domains" maxLength={100}
+      disabled={!enabled} placeholder="Search tasks and domains" value={input}
+      onFocus={() => setOpen(true)}
+      onChange={(event) => { setInput(event.target.value); setOpen(true); }}
+      className="min-w-0" autoFocus={mobile} />
+  );
+
   return (
-    <Dialog open={open} onOpenChange={(next) => next ? setOpen(true) : close()}>
-      <DialogTrigger render={<Button
-        disabled={!enabled}
-        aria-label="Search tasks and domains"
-        variant={mobile ? "ghost" : "secondary"}
-        size={mobile ? "icon" : "default"}
-        className={mobile ? "lg:hidden" : "hidden w-full max-w-sm justify-start text-muted-foreground lg:flex"}
-      />}>
-        <Search aria-hidden="true" />
-        {!mobile && "Search tasks and domains"}
-      </DialogTrigger>
-      <DialogContent className="max-h-[80dvh] overflow-y-auto">
-        <DialogTitle>Search workspace</DialogTitle>
-        <DialogDescription>Find tasks by title or domains by name.</DialogDescription>
-        <Input type="search" autoFocus aria-label="Search tasks and domains" maxLength={100}
-          placeholder="Search tasks and domains" value={input} onChange={(event) => setInput(event.target.value)} />
+    <div ref={container} className={mobile ? "lg:hidden" : "relative hidden w-full max-w-sm lg:block"}
+      onKeyDown={(event) => {
+        if (event.key === "Escape" && open) {
+          event.stopPropagation();
+          close();
+        }
+      }}>
+      {mobile ? (
+        <Button size="icon" variant="ghost" disabled={!enabled} aria-expanded={open}
+          aria-label="Search tasks and domains" onClick={() => open ? close() : setOpen(true)}>
+          <Search aria-hidden="true" />
+        </Button>
+      ) : searchInput}
+      {open && (
+      <div className={`absolute top-full z-40 mt-2 max-h-[55dvh] space-y-2 overflow-y-auto rounded-xl border border-border bg-popover p-3 text-sm shadow-md ${mobile ? "inset-x-4" : "left-0 w-full"}`}>
+        {mobile && <div className="flex items-center gap-2">
+          {searchInput}
+          <Button size="icon-sm" variant="ghost" aria-label="Close search" onClick={close}><X /></Button>
+        </div>}
+        {!trimmed && <p className="text-muted-foreground">Find tasks by title or domains by name.</p>}
         {trimmed && !results && <p role="status" className="text-muted-foreground">Searching…</p>}
         {results && !results.tasks.length && !results.domains.length && (
           <p role="status" className="text-muted-foreground">No matching tasks or domains.</p>
@@ -69,14 +92,27 @@ export function WorkspaceSearch({ enabled, mobile, onTask, onDomain }: {
           <section aria-label="Matching tasks">
             <h3 className="text-xs text-muted-foreground">Tasks</h3>
             {results.tasks.map(task => (
-              <Button key={task.id} variant="ghost" className="h-auto min-h-9 w-full justify-start whitespace-normal text-left [overflow-wrap:anywhere]"
-                onClick={() => { close(); onTask(task.id); }}>
-                {task.title}
-              </Button>
+              <div key={task.id} className="border-b border-border py-1 last:border-0">
+                <Button variant="ghost" className="h-auto min-h-9 w-full justify-between gap-2 whitespace-normal text-left"
+                  onClick={() => { close(); onTask(task.id); }}>
+                  <span className="min-w-0 [overflow-wrap:anywhere]">{task.title}</span>
+                  {task.date && <time dateTime={task.date} className="shrink-0 text-xs text-muted-foreground">
+                    {new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" }).format(new Date(task.date))}
+                  </time>}
+                </Button>
+                {task.domain && (
+                  <Button size="sm" variant="ghost" onClick={() => {
+                    if (task.domain) { close(); onDomain(task.domain); }
+                  }}>
+                    <DomainLabel {...task.domain} />
+                  </Button>
+                )}
+              </div>
             ))}
           </section>
         )}
-      </DialogContent>
-    </Dialog>
+      </div>
+      )}
+    </div>
   );
 }

@@ -94,7 +94,6 @@ Account-backed verification fixtures are managed separately by `scripts/manage-v
 
 Use `/dashboard?demo=1` for the optional Today dashboard sample view, with separate sample tasks for today and tomorrow. The preview reuses the actual shell, timeline, filters, and sheets. Sample tasks/domains and preview edits stay in component memory; no dummy records are sent to Convex or included in real My Tasks/domain lists. **Clear sample data & exit** clears the preview and returns to the real workspace. Leaving the preview releases its state, and an open preview expires after tomorrow. Reloading the sample URL deliberately starts a fresh sample session.
 
-- `npm run lint`
 - `npx tsc --noEmit`
 - `npm run build`
 - `node scripts/check-domain-validation.mjs` (Node 22.18+ with native TypeScript stripping)
