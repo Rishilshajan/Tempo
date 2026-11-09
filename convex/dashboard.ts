@@ -5,7 +5,7 @@ import {
 import { ConvexError, v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { taskView } from "./taskFields";
-import { toTaskView } from "./taskViews";
+import { isPlannedOccurrence, toTaskView } from "./taskViews";
 import { calendarDateSchema } from "../src/lib/validation/task";
 import { belongsToDay, dayWindow } from "../src/lib/today-model";
 
@@ -79,22 +79,23 @@ export const feed = query({
             .lt("completedAt", day.end),
         )
         .paginate(options);
-    // Two-dimensional interval overlap: filter only this bounded index page.
-    // Future fixed blocks are never sent to the browser as today's blocks.
+    // A fixed booking appears on its start date.
     const records =
       args.kind === "fixed"
         ? result.page.filter(
             (task) =>
-              task.schedule.type === "fixed" && task.schedule.startAt < day.end,
+              task.schedule.type === "fixed" &&
+              task.schedule.startAt >= day.start &&
+              task.schedule.startAt < day.end,
           )
         : result.page;
     return {
       ...result,
-      page: await Promise.all(
+      page: (await Promise.all(
         records
           .filter((task) => !task.recurrenceCancelled)
           .map((task) => toTaskView(ctx, task)),
-      ),
+      )).filter(task => !task.recurrencePlanned),
     };
   },
 });
@@ -129,7 +130,8 @@ export const subtaskFeed = query({
       if (step.completedAt !== undefined) return null;
       const parent = await ctx.db.get(step.parentTaskId);
       if (!parent || parent.ownerId !== user.tokenIdentifier ||
-          parent.status !== "open" || parent.recurrenceCancelled) return null;
+          parent.status !== "open" || parent.recurrenceCancelled ||
+          await isPlannedOccurrence(ctx, parent)) return null;
       return { id: step._id, title: step.title, parent: await toTaskView(ctx, parent) };
     }));
     return { ...result, page: page.filter((step) => step !== null) };
@@ -154,6 +156,7 @@ export const focus = query({
     return task &&
       task.ownerId === user.tokenIdentifier &&
       task.status === "open" &&
+      !(await isPlannedOccurrence(ctx, task)) &&
       belongsToDay(task, day)
       ? await toTaskView(ctx, task)
       : null;
@@ -179,7 +182,8 @@ export const setFocus = mutation({
         !task ||
         task.ownerId !== user.tokenIdentifier ||
         task.status !== "open" ||
-        !belongsToDay(task, day)
+        !belongsToDay(task, day) ||
+        await isPlannedOccurrence(ctx, task)
       )
         throw new ConvexError("Choose an open task from this day.");
     }

@@ -83,6 +83,9 @@ const db = {
           return descending ? -difference : difference;
         });
     const query = {
+      async *[Symbol.asyncIterator]() {
+        yield* rows();
+      },
       withIndex(_name, constrain) {
         indexName = _name;
         constrain(clauses);

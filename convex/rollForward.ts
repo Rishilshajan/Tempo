@@ -20,6 +20,7 @@ export const processBatch = internalMutation({
       .paginate({ cursor: args.cursor ?? null, numItems: 100 });
     let rolled = 0;
     for (const task of result.page) {
+      if (task.seriesId) continue;
       let patch;
       try {
         patch = rollForwardPatch(task, now);

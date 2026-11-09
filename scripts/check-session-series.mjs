@@ -116,16 +116,14 @@ const long = {
   ...base,
   schedule: { ...base.schedule, endAt: Date.parse("2030-06-08T12:00Z") },
 };
-assert.equal(validation.createTaskSchema.safeParse(long).success, false);
 assert.equal(
-  validation.createTaskSchema.safeParse({ ...long, multiDay: true }).success,
+  validation.createTaskSchema.safeParse(long).success,
   false,
   "overlap needs explicit consent",
 );
 assert.ok(
   validation.createTaskSchema.safeParse({
     ...long,
-    multiDay: true,
     allowOverlap: true,
   }).success,
 );
@@ -145,10 +143,12 @@ await details.updateTask._handler(ctx, editValues);
 assert.equal(records.get(editId).title, "Just one");
 assert.equal(records.get(rows()[2]._id).title, "One hour");
 const completedFuture = rows()[3];
-await functions.setCompleted._handler(ctx, {
-  id: completedFuture._id,
-  completed: true,
-});
+await assert.rejects(
+  functions.setCompleted._handler(ctx, { id: completedFuture._id, completed: true }),
+  /Complete the active occurrence first/,
+);
+// Preserve historical completions created before the active-occurrence rule.
+await ctx.db.patch(completedFuture._id, { status: "completed", completedAt: Date.now() });
 await details.updateTask._handler(ctx, {
   ...editValues,
   title: "Future revised",

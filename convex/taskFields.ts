@@ -91,6 +91,7 @@ export const taskView = v.object({
   _id: v.id("tasks"),
   _creationTime: v.number(),
   ...taskFields,
+  recurrencePlanned: v.optional(v.boolean()),
   domain: v.union(
     v.null(),
     v.object({ name: v.string(), color: domainColor, icon: domainIcon }),

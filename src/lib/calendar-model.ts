@@ -29,7 +29,11 @@ export function calendarTasks(
 ) {
   const day = dayWindow(date, timezone, now);
   return tasks
-    .filter((task) => belongsToDay(task, day))
+    .filter((task) =>
+      task.schedule.type === "fixed"
+        ? task.schedule.startAt >= day.start && task.schedule.startAt < day.end
+        : belongsToDay(task, day),
+    )
     .sort((a, b) => {
       if (a.status !== b.status) return a.status === "completed" ? 1 : -1;
       const startA =

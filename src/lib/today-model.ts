@@ -51,6 +51,12 @@ export function isCarried(task: DayTask, day: DayWindow) {
 }
 
 export function belongsToDay(task: DayTask, day: DayWindow) {
+  if (
+    task.schedule.type === "fixed" &&
+    task.schedule.startAt < day.start &&
+    localDateKey(new Date(task.schedule.startAt), day.timezone) !==
+      localDateKey(new Date(task.schedule.endAt), day.timezone)
+  ) return false;
   if (task.status === "open" && task.lastRolledOn && task.workDate === day.date)
     return true;
   if (task.status === "open" && task.continuedOn === day.date) return true;
@@ -120,6 +126,7 @@ export function summarizeDay<T extends DayTask>(records: T[], day: DayWindow) {
   const fixed = tasks.filter(
     (task) =>
       task.schedule.type === "fixed" &&
+      task.schedule.startAt >= day.start &&
       task.schedule.startAt < day.end &&
       task.schedule.endAt > day.start,
   );
@@ -157,6 +164,7 @@ export function timelineLayout<T extends DayTask>(tasks: T[], day: DayWindow) {
   const blocks = tasks
     .flatMap((task) =>
       task.schedule.type === "fixed" &&
+      task.schedule.startAt >= day.start &&
       task.schedule.startAt < day.end &&
       task.schedule.endAt > day.start
         ? [

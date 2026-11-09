@@ -127,6 +127,7 @@ export function TaskStatusSelect({
       onBusyChange?.(false);
     }
   }
+  if (task.recurrencePlanned) return <TaskPill tone="neutral">Planned</TaskPill>;
   return (
     <DropdownMenu>
       <DropdownMenuTrigger

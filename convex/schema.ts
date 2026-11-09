@@ -92,6 +92,8 @@ export default defineSchema({
       "seriesId",
       "recurrenceOrdinal",
     ])
+    .index("by_series_status_cancelled_date", ["seriesId", "status", "recurrenceCancelled", "workDate"])
+    .index("by_series_status_completed", ["seriesId", "status", "completedAt"])
     .index("by_seriesId_and_workDate_and_status", [
       "seriesId",
       "workDate",

@@ -88,10 +88,10 @@ const summary = model.summarizeDay(
 );
 assert.equal(
   summary.tasks.length,
-  7,
+  6,
   "overlapping feeds deduplicate parent tasks",
 );
-assert.equal(summary.active.length, 6);
+assert.equal(summary.active.length, 5);
 assert.equal(summary.completed.length, 1);
 assert.deepEqual(
   summary.carried.map((task) => task._id),
@@ -100,7 +100,7 @@ assert.deepEqual(
 assert.equal(summary.active[0]._id, overlap._id, "urgent priority first");
 assert.equal(
   summary.totalMinutes,
-  350,
+  290,
   "fixed bookings count actual day overlap; subtasks are not additional workload",
 );
 assert.equal(
@@ -139,8 +139,8 @@ const firstNight = model.timelineLayout([overnight], overnightStart)[0];
 const nextMorning = model.timelineLayout([overnight], overnightNext)[0];
 assert.equal(firstNight.start, overnight.schedule.startAt);
 assert.equal(firstNight.end, overnightNext.start);
-assert.equal(nextMorning.start, overnightNext.start);
-assert.equal(nextMorning.end, overnight.schedule.endAt);
+assert.equal(nextMorning, undefined);
+assert.equal(model.belongsToDay(overnight, overnightNext), false);
 assert.equal(model.plannedMinutes(overnight, overnightStart), 60);
 assert.equal(model.plannedMinutes(overnight, overnightNext), 60);
 assert.equal(
@@ -314,7 +314,7 @@ for (const kind of ["open", "dated", "fixed", "completed"]) {
     "feeds isolate owners",
   );
   if (kind === "fixed")
-    assert.equal(found.length, 4, "cross-midnight intervals included");
+    assert.equal(found.length, 3, "only bookings starting that day");
   if (kind === "completed")
     assert.deepEqual(
       found.map((task) => task._id),

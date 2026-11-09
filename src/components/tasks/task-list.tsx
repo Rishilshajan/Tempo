@@ -18,6 +18,7 @@ import { PriorityLabel } from "./task-select";
 import { TaskPill, TaskStatusSelect } from "./task-status";
 
 export type TaskRecord = Omit<Doc<"tasks">, "ownerId" | "requestId"> & {
+  recurrencePlanned?: boolean;
   domain: DomainAppearance | null;
 };
 export type SetTaskCompleted = (

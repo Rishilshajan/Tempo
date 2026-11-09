@@ -113,6 +113,12 @@ export function TaskDetailWorkspace({
   ).length;
   const fixed = task.schedule.type === "fixed" ? task.schedule : null;
   const today = localDateKey(new Date(), task.timezone);
+  const subtaskCount = task.subtasks.length;
+  const progress = task.status === "completed"
+    ? 100
+    : task.progress === "in_progress"
+      ? 20 + (subtaskCount ? Math.round((60 * completedSteps) / subtaskCount) : 0)
+      : 0;
   const scheduleText = fixed
     ? new Intl.DateTimeFormat("en-GB", {
         timeZone: task.timezone,
@@ -226,6 +232,17 @@ export function TaskDetailWorkspace({
                   onSetCompleted={onSetCompleted}
                   onSetProgress={onSetProgress}
                 />
+              </DetailRow>
+              <DetailRow icon={<Activity />} label="Progress">
+                <div className="flex max-w-64 items-center gap-2">
+                  <progress
+                    aria-label="Task progress"
+                    value={progress}
+                    max={100}
+                    className="h-2 min-w-0 flex-1 appearance-none overflow-hidden rounded-full bg-muted [&::-moz-progress-bar]:bg-primary [&::-webkit-progress-bar]:bg-muted [&::-webkit-progress-value]:bg-primary"
+                  />
+                  <span className="tabular-nums">{progress}%</span>
+                </div>
               </DetailRow>
               <DetailRow icon={<Flag />} label="Priority">
                 <TaskPill
@@ -429,7 +446,7 @@ export function TaskDetailWorkspace({
           <Button
             className="min-h-11 text-xs"
             onClick={() => void completeTask()}
-            disabled={busy}
+            disabled={busy || task.recurrencePlanned}
           >
             <CheckCheck className="size-4" />
             {busy

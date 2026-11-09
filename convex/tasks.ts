@@ -14,7 +14,7 @@ import {
   taskView,
   taskSchedule,
 } from "./taskFields";
-import { toTaskView } from "./taskViews";
+import { isPlannedOccurrence, toTaskView } from "./taskViews";
 import { domainView } from "./domainFields";
 import { createNextOccurrence } from "./taskRecurrence";
 import { normalizeSubtasks, recordActivity } from "./taskDetailHelpers";
@@ -411,6 +411,8 @@ export async function applyTaskCompleted(
     task.ownerId !== user.tokenIdentifier
   )
     throw new ConvexError("This task is not available.");
+  if (args.completed && await isPlannedOccurrence(ctx, task))
+    throw new ConvexError("Complete the active occurrence first.");
   if (args.subtaskId) {
     const rows = await normalizeSubtasks(ctx, task);
     const step = rows.find(

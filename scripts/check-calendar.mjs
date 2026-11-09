@@ -13,8 +13,12 @@ assert.deepEqual(calendarWeek("2027-01-01"),["2026-12-28","2026-12-29","2026-12-
 assert.equal(calendarWeek("2026-11-01")[0],"2026-10-26");
 const overnight = {...base,schedule:{type:"fixed",startAt:Date.UTC(2026,9,31,23),endAt:Date.UTC(2026,10,1,1)}};
 assert.equal(calendarTasks([overnight],"2026-10-31","UTC",now).length,1);
-assert.equal(calendarTasks([overnight],"2026-11-01","UTC",now).length,1);
+assert.equal(calendarTasks([overnight],"2026-11-01","UTC",now).length,0);
 assert.equal(calendarTasks([overnight],"2026-11-02","UTC",now).length,0);
+const multiDay = {...overnight,schedule:{...overnight.schedule,endAt:Date.UTC(2026,10,2,15)}};
+const nextOccurrence = {...overnight,_id:"next-occurrence",schedule:{type:"fixed",startAt:Date.UTC(2026,10,1,23),endAt:Date.UTC(2026,10,2,1)}};
+assert.deepEqual(calendarTasks([multiDay,nextOccurrence],"2026-11-01","UTC",now),[nextOccurrence]);
+assert.deepEqual(calendarTasks([multiDay,nextOccurrence],"2026-11-02","UTC",now),[]);
 assert.equal(calendarTasks([{...overnight,schedule:{...overnight.schedule,endAt:Date.UTC(2026,10,1)}}],"2026-11-01","UTC",now).length,0);
 assert.equal(calendarTasks([base],"2026-10-31","UTC",now).length,1);
 assert.equal(calendarTasks([{...base,schedule:{type:"flexible",dueDate:"2026-11-03"}}],"2026-10-31","UTC",now).length,0);

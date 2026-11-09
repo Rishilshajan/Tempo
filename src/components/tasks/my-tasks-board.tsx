@@ -190,6 +190,7 @@ export function MyTasksBoard({
   const completedDay =
     filters.date === "custom" && filters.from ? filters.from : undefined;
   const visible = rows.filter((task) => {
+    if (task.recurrencePlanned) return false;
     if (task.status !== "completed") return true;
     if (hideCompleted) return false;
     if (older) return true;
@@ -966,7 +967,7 @@ function CompactBoardRow({
         type="checkbox"
         className="size-4 shrink-0 accent-primary"
         checked={completed}
-        disabled={pending || saving}
+        disabled={pending || saving || task.recurrencePlanned}
         aria-label={`${completed ? "Reopen" : "Complete"} ${task.title}`}
         onChange={() => void toggle()}
       />

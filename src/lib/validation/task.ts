@@ -335,10 +335,6 @@ export function sessionIssues(task: {
   const { startAt, endAt } = task.schedule;
   if (!Number.isFinite(startAt) || !Number.isFinite(endAt))
     return ["Choose valid session dates and times."];
-  if (endAt - startAt > 86400000 && !task.multiDay)
-    return [
-      "Select Multi-day session for a booking longer than one day. Put the last repeat date under Repeat ends.",
-    ];
   if (
     task.recurrence &&
     recurrenceAllows(

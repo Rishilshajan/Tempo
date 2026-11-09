@@ -149,13 +149,6 @@ function TaskForm({
   inFlightRef: React.RefObject<boolean>;
 }) {
   const [editScope, setEditScope] = useState<"this" | "future">("this");
-  const [multiDay, setMultiDay] = useState(
-    editingTask?.multiDay ??
-      !!(
-        editingTask?.schedule.type === "fixed" &&
-        editingTask.schedule.endAt - editingTask.schedule.startAt > 86400000
-      ),
-  );
   const [allowOverlap, setAllowOverlap] = useState(
     editingTask?.allowOverlap ?? false,
   );
@@ -475,7 +468,6 @@ function TaskForm({
         )
       : createTaskSchema;
     const parsed = schema.safeParse({
-      multiDay,
       allowOverlap,
       title,
       description,
@@ -623,7 +615,6 @@ function TaskForm({
                       timezone,
                     ),
                   );
-                  setMultiDay(false);
                   setAllowOverlap(false);
                   setEditScope("future");
                 }}
@@ -776,7 +767,7 @@ function TaskForm({
                         );
                   setStartDate(value);
                   setEndDate(
-                    shiftDate(value, multiDay ? shift : Math.min(1, shift)),
+                    shiftDate(value, shift),
                   );
                 }}
                 minDate={today}
@@ -794,36 +785,11 @@ function TaskForm({
                 }
                 required
               />
-              <div className="col-span-2 flex flex-wrap items-center gap-2 text-xs">
-                <Button
-                  type="button"
-                  size="sm"
-                  variant={multiDay ? "secondary" : "outline"}
-                  aria-pressed={multiDay}
-                  onClick={() => {
-                    setMultiDay(!multiDay);
-                    if (multiDay) setEndDate(startDate);
-                  }}
-                >
-                  Multi-day session
-                </Button>
-                <span className="text-muted-foreground">
-                  End dates describe one session. Set the series limit below.
-                </span>
-              </div>
               <DateField
                 label="End date"
                 type="date"
                 value={endDate}
-                onChange={(value) => {
-                  if (value > shiftDate(startDate, 1) && !multiDay) {
-                    notifyValidation(
-                      "Choose Multi-day session first. Use Repeat ends for the series limit.",
-                    );
-                    return;
-                  }
-                  setEndDate(value);
-                }}
+                onChange={changeValue(setEndDate)}
                 minDate={today > startDate ? today : startDate || undefined}
                 required
               />
@@ -860,7 +826,7 @@ function TaskForm({
                 </Button>
               </div>
             )}
-          {scheduleType === "fixed" && multiDay && repeat !== "none" && (
+          {scheduleType === "fixed" && endDate > startDate && repeat !== "none" && (
             <label className="flex items-center gap-2 text-xs">
               <input
                 type="checkbox"
