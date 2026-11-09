@@ -161,10 +161,9 @@ export function formatMinutes(value: number) {
 }
 
 export function timelineLayout<T extends DayTask>(tasks: T[], day: DayWindow) {
-  const blocks = tasks
+  const blocks = [...new Map(tasks.map(task => [task._id, task])).values()]
     .flatMap((task) =>
       task.schedule.type === "fixed" &&
-      task.schedule.startAt >= day.start &&
       task.schedule.startAt < day.end &&
       task.schedule.endAt > day.start
         ? [

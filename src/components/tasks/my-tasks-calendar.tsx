@@ -280,7 +280,7 @@ export function MyTasksCalendar({
         )}
         {period === "day" && (
           <DayTimeline
-            tasks={selectedTasks}
+            tasks={tasks}
             day={day}
             now={now}
             onOpenTask={onOpen}

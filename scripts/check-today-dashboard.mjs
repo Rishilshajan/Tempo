@@ -139,7 +139,8 @@ const firstNight = model.timelineLayout([overnight], overnightStart)[0];
 const nextMorning = model.timelineLayout([overnight], overnightNext)[0];
 assert.equal(firstNight.start, overnight.schedule.startAt);
 assert.equal(firstNight.end, overnightNext.start);
-assert.equal(nextMorning, undefined);
+assert.equal(nextMorning.start, overnightNext.start);
+assert.equal(nextMorning.end, overnight.schedule.endAt);
 assert.equal(model.belongsToDay(overnight, overnightNext), false);
 assert.equal(model.plannedMinutes(overnight, overnightStart), 60);
 assert.equal(model.plannedMinutes(overnight, overnightNext), 60);
@@ -314,7 +315,7 @@ for (const kind of ["open", "dated", "fixed", "completed"]) {
     "feeds isolate owners",
   );
   if (kind === "fixed")
-    assert.equal(found.length, 3, "only bookings starting that day");
+    assert.equal(found.length, 4, "timeline feed includes continuing bookings");
   if (kind === "completed")
     assert.deepEqual(
       found.map((task) => task._id),

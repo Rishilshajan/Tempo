@@ -79,13 +79,12 @@ export const feed = query({
             .lt("completedAt", day.end),
         )
         .paginate(options);
-    // A fixed booking appears on its start date.
+    // Include overlapping bookings so the timeline can show continuations.
     const records =
       args.kind === "fixed"
         ? result.page.filter(
             (task) =>
               task.schedule.type === "fixed" &&
-              task.schedule.startAt >= day.start &&
               task.schedule.startAt < day.end,
           )
         : result.page;

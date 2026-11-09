@@ -373,6 +373,7 @@ export function MyTasksBoard({
                 tasks.filter(
                   (task) =>
                     task.status === "open" &&
+                    !task.recurrencePlanned &&
                     (!domain.id || task.domainId === domain.id),
                 ).length
               }
@@ -574,7 +575,7 @@ export function MyTasksBoard({
                   {
                     "--board-columns": columns
                       .map((column) =>
-                        collapsed[column.id] ? "64px" : "minmax(240px,1fr)",
+                        collapsed[column.id] ? "180px" : "minmax(240px,1fr)",
                       )
                       .join(" "),
                   } as CSSProperties
@@ -584,7 +585,6 @@ export function MyTasksBoard({
                   <LaneColumn
                     key={column.id}
                     column={column}
-                    stacked={effectiveView !== "kanban"}
                     count={laneRows(column.id).length}
                     onCreate={onCreate}
                     onToggleOlder={
@@ -663,7 +663,6 @@ function LaneColumn({
   onCreate,
   onToggleOlder,
   older,
-  stacked,
   children,
 }: {
   column: (typeof columns)[number];
@@ -674,7 +673,6 @@ function LaneColumn({
   onCreate: () => void;
   onToggleOlder?: () => void;
   older?: boolean;
-  stacked?: boolean;
   children: ReactNode;
 }) {
   const { setNodeRef, isOver } = useDroppable({
@@ -688,7 +686,7 @@ function LaneColumn({
       className={`min-w-0 space-y-2 rounded-lg bg-muted/40 p-2 ${isOver ? (column.id === "carried" ? "ring-2 ring-destructive" : "ring-2 ring-primary") : ""}`}
     >
       <div
-        className={`flex min-h-9 items-center gap-1 ${collapsed && !stacked ? "sm:flex-col" : ""}`}
+        className={`flex min-h-9 items-center gap-1`}
       >
         <button
           type="button"
@@ -696,7 +694,7 @@ function LaneColumn({
           aria-expanded={!collapsed}
           aria-controls={`board-lane-${column.id}`}
           aria-label={`${collapsed ? "Expand" : "Collapse"} ${column.title}`}
-          className={`flex min-h-9 min-w-0 flex-1 items-center gap-1.5 rounded-lg p-1 text-left focus-visible:outline-2 focus-visible:outline-ring ${collapsed && !stacked ? "sm:flex-col" : ""}`}
+          className={`flex min-h-9 min-w-0 flex-1 items-center gap-1.5 rounded-lg p-1 text-left focus-visible:outline-2 focus-visible:outline-ring`}
           onClick={onToggle}
         >
           <span
@@ -705,7 +703,7 @@ function LaneColumn({
             <column.icon className="size-3.5" />
           </span>
           <h2
-            className={`text-xs font-medium ${collapsed && !stacked ? "sm:py-2 sm:[writing-mode:vertical-rl]" : ""}`}
+            className={`text-xs font-medium`}
           >
             {column.title}
           </h2>

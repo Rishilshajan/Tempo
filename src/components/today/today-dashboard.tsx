@@ -715,7 +715,7 @@ export function DayCommandCenter({
         </div>
         <div className="min-w-0">
           <DayTimeline
-            tasks={summary.fixed}
+            tasks={tasks}
             day={day}
             now={now}
             onOpenTask={props.onOpenTask}
