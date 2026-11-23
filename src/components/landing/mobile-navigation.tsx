@@ -1,17 +1,26 @@
+/**
+ * TEMPO-001 — Accessible mobile landing navigation state and menu behavior.
+ * Code map: src/components/code-map.md
+ */
 "use client";
 
 import Link from "next/link";
 import { useRef, useState } from "react";
 import { Menu, X } from "lucide-react";
-import styles from "./landing.module.css";
 
+/**
+ * TEMPO-001-F10 — MobileNavigation
+ * Purpose: Toggles the mobile menu and closes it on navigation, blur, or Escape.
+ * Used by: SiteHeader landing variant.
+ * Trigger: Menu button click, focus change, or Escape.
+ */
 export function MobileNavigation() {
   const [open, setOpen] = useState(false);
   const toggle = useRef<HTMLButtonElement>(null);
 
   return (
     <div
-      className={styles.mobileMenu}
+      className="landing-mobile-menu"
       onBlur={(event) => {
         if (!event.currentTarget.contains(event.relatedTarget)) setOpen(false);
       }}
@@ -30,12 +39,22 @@ export function MobileNavigation() {
         aria-controls="mobile-navigation"
         onClick={() => setOpen(!open)}
       >
-        {open ? <X size={21} aria-hidden="true" /> : <Menu size={21} aria-hidden="true" />}
+        {open ? (
+          <X size={21} aria-hidden="true" />
+        ) : (
+          <Menu size={21} aria-hidden="true" />
+        )}
       </button>
       <nav id="mobile-navigation" aria-label="Mobile navigation" hidden={!open}>
-        <a href="#features" onClick={() => setOpen(false)}>Features</a>
-        <a href="#how-it-works" onClick={() => setOpen(false)}>How it works</a>
-        <Link href="/login" prefetch={false} onClick={() => setOpen(false)}>Log in</Link>
+        <a href="#features" onClick={() => setOpen(false)}>
+          Features
+        </a>
+        <a href="#how-it-works" onClick={() => setOpen(false)}>
+          How it works
+        </a>
+        <Link href="/login" prefetch={false} onClick={() => setOpen(false)}>
+          Log in
+        </Link>
       </nav>
     </div>
   );

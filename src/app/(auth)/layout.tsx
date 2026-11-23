@@ -1,22 +1,28 @@
-import Image from "next/image";
-import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+/**
+ * TEMPO-002 — Shared sign-in/signup shell, public header, and copyright.
+ * Code map: src/components/code-map.md
+ */
 import { inter } from "@/lib/fonts";
-import styles from "@/components/auth/auth-shell.module.css";
+import { SiteHeader } from "@/components/landing/site-header";
 
-export default function AuthLayout({ children }: { children: React.ReactNode }) {
+/**
+ * TEMPO-002-F01 — AuthLayout
+ * Purpose: Wraps authentication routes with shared branding and compact spacing.
+ * Used by: Next.js (auth) route group.
+ * Trigger: Visitor opens /login or /signup, including nested verification steps.
+ */
+export default function AuthLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
-    <div className={`tempo-light ${inter.className} ${styles.shell}`}>
-      <header className={styles.header}>
-        <Link href="/" className={styles.brand} aria-label="Tempo home">
-          <Image src="/Tempo_Logo_original.png" alt="Tempo" width={866} height={288} priority />
-        </Link>
-        <Link href="/" className={styles.back}>
-          <ArrowLeft size={14} aria-hidden="true" /> Back to website
-        </Link>
-      </header>
-      <main className={styles.main}>{children}</main>
-      <footer className={styles.footer}>© {new Date().getFullYear()} Tempo</footer>
+    <div className={`tempo-light landing auth-shell ${inter.className}`}>
+      <SiteHeader variant="auth" />
+      <main className="auth-main">{children}</main>
+      <footer className="auth-footer">
+        © {new Date().getFullYear()} Tempo
+      </footer>
     </div>
   );
 }

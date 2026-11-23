@@ -1,8 +1,18 @@
+/**
+ * TEMPO-002 — Signed-in account controls used within the workspace.
+ * Code map: src/components/code-map.md
+ */
 "use client";
 
 import { UserButton, useUser } from "@clerk/nextjs";
 import { TempoSignOutButton } from "./sign-out-button";
 
+/**
+ * TEMPO-002-F06 — WorkspaceAccount
+ * Purpose: Displays the Clerk account menu, user details, and sign-out action.
+ * Used by: TodaySurface via dynamic import.
+ * Trigger: Workspace account area renders.
+ */
 export function WorkspaceAccount() {
   const { user } = useUser();
   return (
