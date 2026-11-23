@@ -56,7 +56,8 @@ export function belongsToDay(task: DayTask, day: DayWindow) {
     task.schedule.startAt < day.start &&
     localDateKey(new Date(task.schedule.startAt), day.timezone) !==
       localDateKey(new Date(task.schedule.endAt), day.timezone)
-  ) return false;
+  )
+    return false;
   if (task.status === "open" && task.lastRolledOn && task.workDate === day.date)
     return true;
   if (task.status === "open" && task.continuedOn === day.date) return true;
@@ -121,7 +122,16 @@ export function summarizeDay<T extends DayTask>(records: T[], day: DayWindow) {
   const active = tasks
     .filter((task) => task.status === "open")
     .sort(comparePriority);
-  const completed = tasks.filter((task) => task.status === "completed");
+  // Completion-day view is distinct from scheduled-day membership.
+  const completed = [
+    ...new Map(records.map((task) => [task._id, task])).values(),
+  ].filter(
+    (task) =>
+      task.status === "completed" &&
+      task.completedAt !== undefined &&
+      task.completedAt >= day.start &&
+      task.completedAt < day.end,
+  );
   const carried = active.filter((task) => isCarried(task, day));
   const fixed = tasks.filter(
     (task) =>
@@ -161,7 +171,7 @@ export function formatMinutes(value: number) {
 }
 
 export function timelineLayout<T extends DayTask>(tasks: T[], day: DayWindow) {
-  const blocks = [...new Map(tasks.map(task => [task._id, task])).values()]
+  const blocks = [...new Map(tasks.map((task) => [task._id, task])).values()]
     .flatMap((task) =>
       task.schedule.type === "fixed" &&
       task.schedule.startAt < day.end &&

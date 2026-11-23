@@ -1,0 +1,146 @@
+/* Global dashboard styles. Imported by globals.css; cascade order is preserved. */
+/* TEMPO-003 — Independent columns; desktop work and schedule scroll inside the viewport. */
+
+.dashboard-summary { display: block; font-size: 13px; line-height: 1.5; color: var(--muted-foreground); }
+
+.dashboard-badges, .dashboard-mobile-tabs { display: none; }
+
+.dashboard-task-row > div:first-of-type { flex-basis: 0; }
+
+.dashboard-timeline-scroll { scroll-behavior: auto; }
+
+.dashboard-work-column, .dashboard-columns { display: contents; }
+
+@media (min-width: 1024px) {
+  html:has(.dashboard-shell), body:has(.dashboard-shell) { overflow: hidden; }
+  .dashboard-shell { position: fixed; inset: 0; height: 100dvh; min-height: 0; overflow: hidden; }
+  .dashboard-shell > div { height: 100%; min-height: 0; display: flex; flex-direction: column; }
+  .dashboard-header { flex-shrink: 0; gap: 16px; min-height: 68px; }
+  .dashboard-header > a { flex-shrink: 0; }
+  .dashboard-header > nav { min-width: 0; }
+  .dashboard-header > nav button { font-size: 13px; }
+  .dashboard-header > .relative { flex: 1; max-width: 420px; min-width: 80px; }
+  .dashboard-shell #today-content { flex: 1; min-height: 0; max-width: 1800px; margin-inline: auto; padding-block: 12px; overflow: auto; }
+  .dashboard-shell #today-content[data-workspace-view="today"] { overflow: hidden; }
+  #today-content[data-workspace-view="today"] > div { height: 100%; min-height: 0; }
+  .dashboard-command { height: 100%; min-height: 0; display: flex; flex-direction: column; gap: 12px; }
+  .dashboard-command > * { margin-block: 0; }
+  .dashboard-day-heading { flex-shrink: 0; padding-bottom: 12px; }
+  .dashboard-day-heading > div { gap: 8px; }
+  .dashboard-columns { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 3fr); gap: 20px; align-items: stretch; }
+  .dashboard-work-column { display: flex; flex-direction: column; gap: 12px; min-height: 0; overflow: hidden; }
+  .dashboard-focus { flex-shrink: 0; padding: 16px; background: var(--secondary); }
+  .dashboard-task-panel { display: flex; flex-direction: column; flex: 1 1 0; min-width: 0; min-height: 0; overflow: hidden; }
+  .dashboard-task-panel > div:first-child { gap: 8px; align-items: start; }
+  .dashboard-subtasks { flex-shrink: 0; max-height: 120px; overflow-y: auto; }
+  .dashboard-schedule { min-height: 0; }
+  .dashboard-schedule > section { display: flex; flex-direction: column; height: 100%; min-height: 0; }
+  .dashboard-schedule > section > div:not(.dashboard-timeline-scroll), .dashboard-schedule details { flex-shrink: 0; }
+  .dashboard-schedule .dashboard-timeline-scroll { flex: 1; min-height: 0; max-height: none; overflow-y: auto; overscroll-behavior-y: contain; }
+}
+
+@media (max-width: 1023px) {
+  .dashboard-columns > *, .dashboard-work-column > * { margin-top: 16px; }
+  .dashboard-mobile-tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: 4px; background: var(--muted); border: 1px solid var(--border); border-radius: 10px; }
+  .dashboard-mobile-tabs button { min-height: 40px; }
+  .dashboard-command[data-mobile-tab="tasks"] .dashboard-schedule,
+  .dashboard-command[data-mobile-tab="schedule"] .dashboard-task-panel,
+  .dashboard-command[data-mobile-tab="schedule"] .dashboard-subtasks { display: none; }
+  .dashboard-day-heading { padding-bottom: 12px; }
+  .dashboard-task-panel { padding: 14px; }
+  .dashboard-focus { background: var(--secondary); }
+}
+
+/* TEMPO-003: desktop greeting and fixed task controls sit outside scrolling content. */
+
+.dashboard-task-scroll:focus-visible { outline: 2px solid var(--primary); outline-offset: -2px; border-radius: 8px; }
+
+@media (min-width: 1024px) {
+  .dashboard-command { gap: 12px; }
+  .dashboard-day-heading { padding-bottom: 10px; }
+  .dashboard-greeting-row { display: grid; grid-template-columns: minmax(220px, 1fr) auto auto; align-items: center; }
+  .dashboard-greeting { grid-column: 1; text-align: left; }
+  .dashboard-greeting h1 { font-size: 24px; line-height: 1.2; }
+  .dashboard-greeting p { margin-top: 4px; }
+  .dashboard-date-controls { grid-column: 3; justify-self: end; }
+  .dashboard-summary { margin-top: 8px; text-align: center; }
+  .dashboard-task-panel > div:first-child, .dashboard-task-panel > div[aria-label="Priority task filters"] { flex-shrink: 0; }
+  .dashboard-task-scroll { flex: 1 1 0; min-height: 0; overflow-y: auto; overscroll-behavior-y: contain; scrollbar-gutter: stable; padding: 2px 4px 8px 0; }
+}
+
+/* TEMPO-003: compact informational pills, not interactive task filters. */
+
+.dashboard-stat-pills { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+
+.dashboard-stat-pill { display: inline-flex; align-items: center; gap: 5px; padding: 7px 11px; border-radius: 999px; background: var(--secondary); color: var(--foreground); font-size: 12px; line-height: 1.4; white-space: nowrap; }
+
+.dashboard-stat-pill strong { font-weight: 650; }
+
+.dashboard-stat-completed { background: var(--primary); color: var(--primary-foreground); }
+
+@media (min-width: 1024px) {
+  .dashboard-stat-pills { grid-column: 2; justify-content: center; }
+  .dashboard-greeting-row { column-gap: 20px; }
+}
+
+@media (min-width: 1024px) and (max-width: 1279px) {
+  .dashboard-greeting-row { grid-template-columns: minmax(0, 1fr) auto; row-gap: 8px; }
+  .dashboard-date-controls { grid-column: 2; grid-row: 1; }
+  .dashboard-stat-pills { grid-column: 1 / -1; justify-content: flex-start; }
+}
+
+/* TEMPO-003: consistent compact task actions and distinct informational summary colors. */
+
+.dashboard-stat-scheduled { background: #e2eef7; color: #245570; }
+
+.dashboard-stat-remaining { background: #fff0c9; color: #765319; }
+
+.dashboard-stat-planned { background: #e9d5ff; color: #6b21a8; }
+
+.dashboard-task-row { background: #fafbf8; }
+
+.dashboard-task-row[data-task-state="in_progress"] { background: #fffaf0; border-color: #e7d7ad; }
+
+.dashboard-task-row[data-task-state="completed"] { background: var(--muted); }
+
+.dashboard-row-actions button { width: 36px; height: 36px; min-height: 36px; padding: 0; border-radius: 8px; }
+
+@media (min-width: 1024px) { .dashboard-header > .relative { max-width: 300px; } }
+
+@media (max-width: 600px) { .dashboard-row-actions { margin-left: auto; } }
+
+/* TEMPO-003: mobile task titles use the full card width; actions have their own row. */
+
+.dashboard-task-meta { display: flex; flex-wrap: wrap; gap: 0 6px; }
+
+@media (min-width: 1024px) { .dashboard-task-meta > span + span::before { content: "·"; margin-right: 6px; } }
+
+@media (max-width: 1023px) {
+  .dashboard-task-row { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 10px; padding: 12px; }
+  .dashboard-task-copy { grid-column: 1 / -1; grid-row: 1; width: 100%; }
+  .dashboard-task-copy > button { font-size: 14px; line-height: 1.5; }
+  .dashboard-task-row > .dashboard-row-complete { grid-column: 1; grid-row: 2; }
+  .dashboard-row-actions { grid-column: 2; grid-row: 2; justify-content: flex-end; margin-left: 0; }
+  .dashboard-task-meta { gap: 5px; margin-top: 8px; }
+  .dashboard-task-meta > span { padding: 3px 8px; border-radius: 999px; background: var(--secondary); font-size: 10px; line-height: 1.5; }
+  .dashboard-task-meta > .dashboard-meta-overdue { background: #fae7e2; color: #924330; }
+  .dashboard-task-meta > .dashboard-meta-progress { background: #fff0c9; color: #765319; }
+  .dashboard-focus-actions > div:first-child { flex-basis: 100%; width: 100%; }
+  .dashboard-focus-actions > button { margin-top: 2px; }
+  .dashboard-shell #today-content { padding-inline: 12px; }
+}
+
+/* TEMPO-003: compact mobile summary and task metadata, each in two rows. */
+
+.dashboard-focus-toggle::-webkit-details-marker { display: none; }
+
+.dashboard-focus-toggle { display: grid; grid-template-columns: minmax(0, 1fr) auto; min-height: 28px; }
+
+.dashboard-focus-toggle:focus-visible { outline: 2px solid var(--primary); outline-offset: 4px; border-radius: 4px; }
+
+@media (max-width: 1023px) {
+  .dashboard-stat-pills { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+  .dashboard-stat-pill { justify-content: center; }
+  .dashboard-task-meta { display: flex; flex-wrap: wrap; gap: 5px; }
+  .dashboard-task-meta > span { flex: 0 1 auto; min-width: 0; max-width: 100%; white-space: normal; overflow-wrap: anywhere; }
+}

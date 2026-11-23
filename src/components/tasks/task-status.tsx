@@ -1,4 +1,5 @@
 "use client";
+import { ActionTooltip } from "@/components/ui/tooltip";
 
 import { useState, type ReactNode } from "react";
 import { ChevronDown, Circle, CircleCheck, CircleDot } from "lucide-react";
@@ -84,12 +85,14 @@ export function TaskStatusSelect({
   onSetCompleted,
   onSetProgress,
   onBusyChange,
+  compact = false,
 }: {
   task: TaskRecord;
   disabled?: boolean;
   onSetCompleted: SetTaskCompleted;
   onSetProgress: SetTaskProgress;
   onBusyChange?: (busy: boolean) => void;
+  compact?: boolean;
 }) {
   const [saving, setSaving] = useState(false);
   const value =
@@ -127,25 +130,38 @@ export function TaskStatusSelect({
       onBusyChange?.(false);
     }
   }
-  if (task.recurrencePlanned) return <TaskPill tone="neutral">Planned</TaskPill>;
+  if (task.recurrencePlanned)
+    return <TaskPill tone="neutral">Planned</TaskPill>;
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger
-        render={
-          <Button
-            variant="ghost"
-            disabled={saving || disabled}
-            aria-label={`Status for ${task.title}`}
-            className="min-h-9 gap-1.5 rounded-full border border-border bg-transparent px-2.5 text-[11px] text-foreground"
-          />
+      <ActionTooltip
+        content={
+          "Status: " +
+          selected.label +
+          ". Choose Not started, In progress, or Completed."
         }
       >
-        <span className="inline-flex items-center gap-1.5">
-          <Icon className={`size-3 ${statusInk[value]}`} aria-hidden="true" />
-          {selected.label}
-        </span>
-        <ChevronDown className="size-3" aria-hidden="true" />
-      </DropdownMenuTrigger>
+        <DropdownMenuTrigger
+          render={
+            <Button
+              variant="ghost"
+              disabled={saving || disabled}
+              aria-label={`Status for ${task.title}: ${selected.label}`}
+              className={
+                compact
+                  ? "size-9 min-h-9 rounded-lg border border-border p-0"
+                  : "min-h-9 gap-1.5 rounded-full border border-border bg-transparent px-2.5 text-[11px] text-foreground"
+              }
+            />
+          }
+        >
+          <span className="inline-flex items-center gap-1.5">
+            <Icon className={`size-3 ${statusInk[value]}`} aria-hidden="true" />
+            {!compact && selected.label}
+          </span>
+          {!compact && <ChevronDown className="size-3" aria-hidden="true" />}
+        </DropdownMenuTrigger>
+      </ActionTooltip>
       <DropdownMenuContent align="end" className="w-40">
         <DropdownMenuRadioGroup value={value} onValueChange={change}>
           {statuses.map((item) => {

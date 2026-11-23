@@ -1,5 +1,10 @@
+/**
+ * TEMPO-003 — Existing live workspace data and task/domain mutation boundary.
+ * Code map: src/components/code-map.md; dashboard contract: src/components/today/README.md.
+ */
 "use client";
 
+import { localDateKey } from "@/lib/validation/task";
 import {
   useConvexAuth,
   useMutation,
@@ -9,10 +14,15 @@ import {
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { api } from "../../../convex/_generated/api";
-import { TodaySurface } from "./today-surface";
-import { localDateKey } from "@/lib/validation/task";
 import type { Id } from "../../../convex/_generated/dataModel";
+import { TodaySurface } from "./today-surface";
 
+/**
+ * TEMPO-003-F02 — TodayWorkspace
+ * Purpose: Guards workspace configuration and mounts the existing live connection.
+ * Used by: DashboardPage.
+ * Trigger: Authenticated dashboard renders.
+ */
 export function TodayWorkspace({
   todayLabel,
   initialView = "today",
@@ -37,6 +47,12 @@ export function TodayWorkspace({
   );
 }
 
+/**
+ * TEMPO-003-F03 — ConnectedToday
+ * Purpose: Owns workspace navigation, domain subscriptions, task mutations, and notification initialization.
+ * Used by: TodayWorkspace.
+ * Trigger: Live workspace mounts or its selected view changes.
+ */
 function ConnectedToday({
   todayLabel,
   initialView,
@@ -93,11 +109,17 @@ function ConnectedToday({
     };
   }, []);
   const { isAuthenticated } = useConvexAuth();
-  const ensureNotificationPreferences = useMutation(api.notifications.ensurePreferences);
+  const ensureNotificationPreferences = useMutation(
+    api.notifications.ensurePreferences,
+  );
   useEffect(() => {
     if (!isAuthenticated) return;
-    void ensureNotificationPreferences({ timezone: Intl.DateTimeFormat().resolvedOptions().timeZone }).catch(() => {
-      toast.error("Could not initialize reminders. Open notification settings to try again.");
+    void ensureNotificationPreferences({
+      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+    }).catch(() => {
+      toast.error(
+        "Could not initialize reminders. Open notification settings to try again.",
+      );
     });
   }, [isAuthenticated, ensureNotificationPreferences]);
   const { results, status, loadMore } = usePaginatedQuery(

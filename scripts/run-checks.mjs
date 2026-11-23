@@ -4,6 +4,7 @@ import { spawnSync } from "node:child_process";
 // scripts against a live deployment from CI.
 const checks = [
   "check-typescript-any",
+  "check-ui-structure",
   "check-deployment-target",
   "check-clerk-config", "check-domain-validation", "check-domain-settings",
   "check-task-validation", "check-task-handlers", "check-task-details",

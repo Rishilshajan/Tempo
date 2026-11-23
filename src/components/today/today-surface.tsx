@@ -1,198 +1,46 @@
+/**
+ * TEMPO-003 - TodaySurface: composes reused presentation and a single state hook.
+ * Code map: src/components/code-map.md.
+ */
 "use client";
+import { TempoLogo } from "@/components/brand/tempo-logo";
+import { CreateDomainSheet } from "@/components/domains/create-domain-sheet";
+import { DeleteDomainDialog } from "@/components/domains/delete-domain-dialog";
+import { DomainSettings } from "@/components/domains/domain-settings";
 import { NotificationInbox } from "@/components/notifications/notification-inbox";
 import { NotificationSettings } from "@/components/notifications/notification-settings";
-import { DomainSettings } from "@/components/domains/domain-settings";
-import { MyTasksBoard } from "@/components/tasks/my-tasks-board";
-
-import { TempoLogo } from "@/components/brand/tempo-logo";
-import Link from "next/link";
-import dynamic from "next/dynamic";
-import { useEffect, useState, type ReactNode } from "react";
-import {
-  CalendarDays,
-  CircleCheck,
-  Plus,
-  Settings2,
-  Sun,
-} from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { FirstTimeEmptyState } from "./first-time-empty-state";
-import {
-  CreateDomainSheet,
-  type CreateDomainValues,
-} from "@/components/domains/create-domain-sheet";
-import type { DomainSummary } from "@/components/domains/domain-appearance";
-import { DomainNavigation } from "@/components/domains/domain-navigation";
-import { DeleteDomainDialog } from "@/components/domains/delete-domain-dialog";
 import { CreateTaskSheet } from "@/components/tasks/create-task-sheet";
+import { MyTasksBoard } from "@/components/tasks/my-tasks-board";
 import { TaskDetailSheet } from "@/components/tasks/task-detail-sheet";
-import { TodayDashboard, type TaskPrefill } from "./today-dashboard";
-import type { Id } from "../../../convex/_generated/dataModel";
+import { Button } from "@/components/ui/button";
 import {
-  type TaskRecord,
-  type SetTaskCompleted,
-  type SetTaskProgress,
-} from "@/components/tasks/task-list";
-import type { CreateTaskValues } from "@/lib/validation/task";
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { CalendarDays, ChevronDown, Plus, Settings2 } from "lucide-react";
+import Link from "next/link";
+import { FirstTimeEmptyState } from "./first-time-empty-state";
+import { TodayDashboard } from "./today-dashboard";
+import {
+  WorkspaceAccount,
+  WorkspaceUserButton,
+  mobileNavigation,
+  navigation,
+} from "./today-shell-config";
+import { useTodaySurface } from "./use-today-surface";
 import { WorkspaceSearch } from "./workspace-search";
-
-// Clerk can already be loaded in the browser while SSR has no widget markup.
-// Mount only this SDK widget on the client; keep the workspace server-rendered.
-const WorkspaceUserButton = dynamic(
-  () => import("@clerk/nextjs").then((module) => module.UserButton),
-  {
-    ssr: false,
-    loading: () => (
-      <span aria-hidden="true" className="block size-8 rounded-full bg-muted" />
-    ),
-  },
-);
-const WorkspaceAccount = dynamic(
-  () =>
-    import("@/components/auth/workspace-account").then(
-      (module) => module.WorkspaceAccount,
-    ),
-  {
-    ssr: false,
-    loading: () => (
-      <div aria-hidden="true" className="h-14 rounded-xl bg-card" />
-    ),
-  },
-);
-
-const navigation = [
-  { label: "Today", icon: Sun, current: true },
-  { label: "My Tasks", icon: CircleCheck, current: false },
-];
-
-const mobileNavigation = [
-  { label: "Today", icon: Sun, current: true },
-  { label: "Tasks", icon: CircleCheck, current: false },
-  { label: "Settings", icon: Settings2, current: false },
-];
-
-type TodaySurfaceProps = {
-  todayContent?: ReactNode;
-  notificationsEnabled?: boolean;
-  todayDate?: string;
-  todayLabel: string;
-  taskView: "today" | "all" | "domain" | "settings";
-  selectedDomainId?: string;
-  onViewChange: (view: "today" | "all" | "settings") => void;
-  onSelectDomain: (domain: DomainSummary) => void;
-  tasks: TaskRecord[] | undefined;
-  hasAnyTasks: boolean | undefined;
-  hasMoreTasks?: boolean;
-  loadingMoreTasks?: boolean;
-  onLoadMoreTasks?: () => void;
-  onCreateTask: (values: CreateTaskValues) => Promise<unknown>;
-  onSetTaskCompleted: SetTaskCompleted;
-  onSetTaskProgress: SetTaskProgress;
-  domains: DomainSummary[] | undefined;
-  canCreateDomain: boolean;
-  onCreateDomain: (values: CreateDomainValues) => Promise<unknown>;
-  onUpdateDomain: (
-    domain: DomainSummary,
-    values: CreateDomainValues,
-  ) => Promise<unknown>;
-  onReorderDomains?: (ids: Id<"domains">[]) => Promise<void>;
-  onDeleteDomain: (domain: DomainSummary) => Promise<unknown>;
-  hasMoreDomains?: boolean;
-  onLoadMoreDomains?: () => void;
-  loadingMoreDomains?: boolean;
-};
-
-export function TodaySurface({
-  todayContent,
-  notificationsEnabled = false,
-  todayDate,
-  todayLabel,
-  taskView,
-  selectedDomainId,
-  onViewChange,
-  onSelectDomain,
-  tasks,
-  hasAnyTasks,
-  hasMoreTasks,
-  onCreateTask,
-  onSetTaskCompleted,
-  onSetTaskProgress,
-  domains,
-  canCreateDomain,
-  onCreateDomain,
-  onUpdateDomain,
-  onDeleteDomain,
-  onReorderDomains,
-  hasMoreDomains,
-  onLoadMoreDomains,
-  loadingMoreDomains,
-}: TodaySurfaceProps) {
-  const [inAppDraft, setInAppDraft] = useState<boolean>();
-  const [settingsSection, setSettingsSection] = useState<"domains" | "notifications">("domains");
-  const [domainSheetOpen, setDomainSheetOpen] = useState(false);
-  const [editingDomain, setEditingDomain] = useState<DomainSummary | null>(
-    null,
-  );
-  const [deletingDomain, setDeletingDomain] = useState<DomainSummary | null>(
-    null,
-  );
-  const [taskSheetOpen, setTaskSheetOpen] = useState(false);
-  const [taskPrefill, setTaskPrefill] = useState<TaskPrefill | null>(null);
-  const [dashboardDate, setDashboardDate] = useState<string>();
-  const [detailId, setDetailId] = useState<Id<"tasks"> | null>(null);
-  useEffect(() => {
-    if (!notificationsEnabled) return;
-    const url = new URL(window.location.href);
-    const taskId = url.searchParams.get("notificationTask");
-    if (!taskId) return;
-    const timer = window.setTimeout(() => {
-      url.searchParams.delete("notificationTask");
-      window.history.replaceState(window.history.state, "", url);
-      if (/^[a-z0-9]{32}$/.test(taskId)) setDetailId(taskId as Id<"tasks">);
-    }, 0);
-    return () => window.clearTimeout(timer);
-  }, [notificationsEnabled]);
-  const selectedDomain = domains?.find(
-    (domain) => domain._id === selectedDomainId,
-  );
-  function openCreateTask() {
-    const date = todayDate ?? dashboardDate;
-    setTaskPrefill(taskView === "today" && date ? { date } : null);
-    setTaskSheetOpen(true);
-  }
-
-  function openCreateDomain() {
-    setEditingDomain(null);
-    setDomainSheetOpen(true);
-  }
-
-  function editDomain(domain: DomainSummary) {
-    setEditingDomain(domain);
-    setDomainSheetOpen(true);
-  }
-
-  function selectDomain(domain: DomainSummary) {
-    onSelectDomain(domain);
-  }
-
-  const domainNavigation = domains ? (
-    <DomainNavigation
-      domains={domains}
-      selectedId={selectedDomain?._id}
-      onSelect={selectDomain}
-      onEdit={editDomain}
-      onDelete={(domain) => {
-        setDeletingDomain(domain);
-      }}
-    />
-  ) : (
-    <p role="status" className="px-3 text-xs text-muted-foreground">
-      Connecting workspace…
-    </p>
-  );
-
+/**
+ * TEMPO-003-F04 - TodaySurface
+ * Purpose: Composes the existing workspace header, views, and editor overlays.
+ * Used by: See src/components/code-map.md for direct callers.
+ * Trigger: The owning view renders or its associated interaction runs.
+ */
+export function TodaySurface(input: Parameters<typeof useTodaySurface>[0]) {
+  const model = useTodaySurface(input);
+  const { todayContent, notificationsEnabled, todayLabel, taskView, selectedDomainId, onViewChange, onSelectDomain, tasks, hasAnyTasks, hasMoreTasks, onCreateTask, onSetTaskCompleted, onSetTaskProgress, domains, canCreateDomain, onCreateDomain, onUpdateDomain, onDeleteDomain, onReorderDomains, hasMoreDomains, onLoadMoreDomains, loadingMoreDomains, domainsOpen, setDomainsOpen, inAppDraft, setInAppDraft, settingsSection, setSettingsSection, domainSheetOpen, setDomainSheetOpen, editingDomain, deletingDomain, setDeletingDomain, taskSheetOpen, setTaskSheetOpen, taskPrefill, setTaskPrefill, setDashboardDate, detailId, setDetailId, selectedDomain, openCreateTask, openCreateDomain, editDomain, selectDomain, domainNavigation } = model;
   return (
-    <div className="min-h-svh bg-background text-foreground">
+    <div className="dashboard-shell min-h-svh bg-background text-foreground">
       <a
         href="#today-content"
         className="sr-only z-50 rounded-md bg-card p-3 text-primary focus:not-sr-only focus:fixed focus:left-4 focus:top-4"
@@ -200,114 +48,142 @@ export function TodaySurface({
         Skip to content
       </a>
 
-      <aside
-        aria-label="Workspace sidebar"
-        className="fixed inset-y-0 left-0 hidden w-56 flex-col border-r border-sidebar-border bg-sidebar px-3 py-4 lg:flex"
-      >
-        <Link
-          href="/"
-          aria-label="Tempo home"
-          className="mb-5 ml-3 inline-flex w-fit rounded-md focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary"
-        >
-          <TempoLogo />
-        </Link>
-        <Button
-          className="mb-5 min-h-10 w-full gap-2 text-xs"
-          onClick={openCreateTask}
-        >
-          <Plus aria-hidden="true" />
-          Create Task
-        </Button>
-        <p className="mb-2 px-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-          General
-        </p>
-        <nav aria-label="Workspace navigation" className="space-y-1">
-          {navigation.map(({ label, icon: Icon, current }) =>
-            current || label === "My Tasks" ? (
-              <button
-                key={label}
-                type="button"
-                onClick={() => onViewChange(current ? "today" : "all")}
-                aria-current={
-                  taskView === (current ? "today" : "all") ? "page" : undefined
-                }
-                className={`flex min-h-9 w-full items-center gap-2 rounded-lg px-3 text-xs font-medium focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${taskView === (current ? "today" : "all") ? "bg-sidebar-accent text-primary" : "text-sidebar-foreground hover:bg-sidebar-accent"}`}
-              >
-                <Icon size={16} aria-hidden="true" />
-                {label}
-              </button>
-            ) : (
-              <button
-                key={label}
-                type="button"
-                disabled
-                aria-label={`${label} (coming next)`}
-                className="flex min-h-9 w-full items-center gap-2 rounded-lg px-3 text-left text-xs text-muted-foreground opacity-60"
-              >
-                <Icon size={16} aria-hidden="true" />
-                {label}
-              </button>
-            ),
-          )}
-        </nav>
-        <div className="mt-6 flex items-center justify-between pl-3">
-          <h2 className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-            Domains
-          </h2>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="size-8 text-primary"
-            aria-label="Create domain"
-            onClick={openCreateDomain}
-          >
-            <Plus size={16} aria-hidden="true" />
-          </Button>
-        </div>
-        <div className="min-h-0 flex-1 overflow-y-auto pb-4">
-          {domainNavigation}
-          {hasMoreDomains && (
-            <Button
-              variant="ghost"
-              className="mt-2 min-h-11 text-xs"
-              disabled={loadingMoreDomains}
-              onClick={onLoadMoreDomains}
-            >
-              {loadingMoreDomains ? "Loading…" : "Load more domains"}
-            </Button>
-          )}
-        </div>
-        <div className="mt-auto space-y-2 border-t border-sidebar-border pt-3">
-          <button
-            type="button"
-            onClick={() => onViewChange("settings")}
-            aria-current={taskView === "settings" ? "page" : undefined}
-            className={`flex min-h-9 w-full items-center gap-2 rounded-lg px-3 text-xs hover:bg-sidebar-accent ${taskView === "settings" ? "bg-sidebar-accent text-primary" : "text-sidebar-foreground"}`}
-          >
-            <Settings2 size={16} aria-hidden="true" />
-            Settings
-          </button>
-          <WorkspaceAccount />
-        </div>
-      </aside>
-
-      <div className="lg:pl-56">
-        <header className="relative flex min-h-16 items-center justify-between gap-4 border-b border-border bg-card/60 px-4 sm:px-8">
+      <div>
+        <header className="dashboard-header relative flex min-h-16 items-center justify-between gap-4 border-b border-border bg-card/60 px-4 sm:px-8">
           <Link
             href="/"
             aria-label="Tempo home"
-            className="rounded-md focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary lg:hidden"
+            className="rounded-md focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary"
           >
             <TempoLogo />
           </Link>
-          <WorkspaceSearch enabled={notificationsEnabled} onTask={setDetailId} onDomain={selectDomain} />
-          <div className="flex shrink-0 items-center gap-2 sm:gap-5">
-            <span className="hidden items-center gap-2 text-xs text-muted-foreground sm:inline-flex">
+          <nav
+            aria-label="Workspace navigation"
+            className="hidden shrink-0 items-center gap-1 lg:flex"
+          >
+            {navigation.map(({ label, current }) => {
+              const active = current
+                ? taskView === "today"
+                : taskView === "all" || taskView === "domain";
+              return (
+                <Button
+                  key={label}
+                  variant="ghost"
+                  className={
+                    active
+                      ? "min-h-10 bg-secondary text-primary"
+                      : "min-h-10 text-muted-foreground"
+                  }
+                  aria-current={active ? "page" : undefined}
+                  onClick={() => onViewChange(current ? "today" : "all")}
+                >
+                  {label}
+                </Button>
+              );
+            })}
+            <Popover open={domainsOpen} onOpenChange={setDomainsOpen}>
+              <PopoverTrigger
+                render={
+                  <Button
+                    variant="ghost"
+                    className="min-h-10 gap-1 text-muted-foreground"
+                  />
+                }
+              >
+                {selectedDomain?.name ?? "Domains"}
+                <ChevronDown size={14} aria-hidden="true" />
+              </PopoverTrigger>
+              <PopoverContent
+                align="start"
+                className="max-h-[70dvh] overflow-y-auto"
+              >
+                <Button
+                  variant="ghost"
+                  className="min-h-10 w-full justify-start"
+                  onClick={() => {
+                    setDomainsOpen(false);
+                    onViewChange("all");
+                  }}
+                >
+                  All domains
+                </Button>
+                {domainNavigation}
+                {hasMoreDomains && (
+                  <Button
+                    variant="ghost"
+                    className="min-h-10"
+                    disabled={loadingMoreDomains}
+                    onClick={onLoadMoreDomains}
+                  >
+                    {loadingMoreDomains ? "Loading…" : "Load more domains"}
+                  </Button>
+                )}
+                <Button
+                  variant="outline"
+                  className="min-h-10 w-full gap-2"
+                  onClick={() => {
+                    setDomainsOpen(false);
+                    openCreateDomain();
+                  }}
+                >
+                  <Plus size={14} aria-hidden="true" />
+                  Create domain
+                </Button>
+              </PopoverContent>
+            </Popover>
+          </nav>
+          <WorkspaceSearch
+            enabled={notificationsEnabled}
+            onTask={setDetailId}
+            onDomain={selectDomain}
+          />
+          <div className="flex shrink-0 items-center gap-2 sm:gap-5 lg:gap-3">
+            <Button
+              className="hidden min-h-10 gap-2 lg:inline-flex"
+              onClick={openCreateTask}
+            >
+              <Plus size={16} aria-hidden="true" />
+              Create task
+            </Button>
+            <div className="hidden lg:block">
+              <Popover>
+                <PopoverTrigger
+                  render={
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="size-10"
+                      aria-label="Workspace settings"
+                    />
+                  }
+                >
+                  <Settings2 size={18} aria-hidden="true" />
+                </PopoverTrigger>
+                <PopoverContent align="end">
+                  <Button
+                    variant="ghost"
+                    className="min-h-10 w-full justify-start"
+                    onClick={() => onViewChange("settings")}
+                  >
+                    Settings
+                  </Button>
+                  <WorkspaceAccount />
+                </PopoverContent>
+              </Popover>
+            </div>
+            <span className="hidden items-center gap-2 text-xs text-muted-foreground sm:inline-flex lg:hidden">
               <CalendarDays size={14} aria-hidden="true" />
               {todayLabel}
             </span>
-            <WorkspaceSearch enabled={notificationsEnabled} onTask={setDetailId} onDomain={selectDomain} mobile />
-            {notificationsEnabled && inAppDraft !== false && <NotificationInbox onOpenTask={setDetailId} />}
+            <WorkspaceSearch
+              enabled={notificationsEnabled}
+              onTask={setDetailId}
+              onDomain={selectDomain}
+              mobile
+            />
+            {notificationsEnabled && inAppDraft !== false && (
+              <NotificationInbox onOpenTask={setDetailId} />
+            )}
             <div className="size-8 shrink-0">
               <WorkspaceUserButton />
             </div>
@@ -316,25 +192,51 @@ export function TodaySurface({
 
         <main
           id="today-content"
+          data-workspace-view={taskView}
           className="w-full min-w-0 px-4 pb-28 pt-6 sm:px-8 lg:pb-10"
         >
           {taskView === "settings" ? (
             <div className="space-y-4">
               {notificationsEnabled && (
-                <nav aria-label="Settings sections" className="flex flex-wrap gap-2">
-                  <Button size="sm" variant={settingsSection === "domains" ? "default" : "outline"} aria-pressed={settingsSection === "domains"} onClick={() => setSettingsSection("domains")}>Domains</Button>
-                  <Button size="sm" variant={settingsSection === "notifications" ? "default" : "outline"} aria-pressed={settingsSection === "notifications"} onClick={() => setSettingsSection("notifications")}>Notifications &amp; Reminders</Button>
+                <nav
+                  aria-label="Settings sections"
+                  className="flex flex-wrap gap-2"
+                >
+                  <Button
+                    size="sm"
+                    variant={
+                      settingsSection === "domains" ? "default" : "outline"
+                    }
+                    aria-pressed={settingsSection === "domains"}
+                    onClick={() => setSettingsSection("domains")}
+                  >
+                    Domains
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant={
+                      settingsSection === "notifications"
+                        ? "default"
+                        : "outline"
+                    }
+                    aria-pressed={settingsSection === "notifications"}
+                    onClick={() => setSettingsSection("notifications")}
+                  >
+                    Notifications &amp; Reminders
+                  </Button>
                 </nav>
               )}
-              {settingsSection === "notifications" && notificationsEnabled ? <NotificationSettings onInAppDraftChange={setInAppDraft} /> : (
-            <DomainSettings
-              domains={domains}
-              loading={!!hasMoreDomains}
-              onReorder={onReorderDomains}
-              onCreate={openCreateDomain}
-              onEdit={editDomain}
-              onDelete={setDeletingDomain}
-            />
+              {settingsSection === "notifications" && notificationsEnabled ? (
+                <NotificationSettings onInAppDraftChange={setInAppDraft} />
+              ) : (
+                <DomainSettings
+                  domains={domains}
+                  loading={!!hasMoreDomains}
+                  onReorder={onReorderDomains}
+                  onCreate={openCreateDomain}
+                  onEdit={editDomain}
+                  onDelete={setDeletingDomain}
+                />
               )}
             </div>
           ) : domains === undefined ||
@@ -398,8 +300,13 @@ export function TodaySurface({
         className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-3 border-t border-border bg-background pb-[env(safe-area-inset-bottom)] lg:hidden"
       >
         {mobileNavigation.map(({ label, icon: Icon, current }) => {
-          const view = current ? "today" : label === "Settings" ? "settings" : "all";
-          const active = taskView === view || (view === "all" && taskView === "domain");
+          const view = current
+            ? "today"
+            : label === "Settings"
+              ? "settings"
+              : "all";
+          const active =
+            taskView === view || (view === "all" && taskView === "domain");
           return (
             <button
               key={label}

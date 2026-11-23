@@ -2,7 +2,7 @@
  * TEMPO-001 — Shared public header, logo, and signup action; also used by TEMPO-002.
  * Code map: src/components/code-map.md
  */
-import Image from "next/image";
+import { TempoLogo } from "@/components/brand/tempo-logo";
 import Link from "next/link";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
@@ -18,14 +18,7 @@ import { MobileNavigation } from "./mobile-navigation";
 export function Wordmark() {
   return (
     <Link href="/" aria-label="Tempo home" className="landing-wordmark">
-      <Image
-        src="/Tempo_Logo_original.png"
-        alt="Tempo"
-        width={866}
-        height={288}
-        className="landing-brand-image"
-        priority
-      />
+      <TempoLogo className="h-auto w-full" />
     </Link>
   );
 }

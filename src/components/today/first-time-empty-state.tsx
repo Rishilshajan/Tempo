@@ -1,7 +1,11 @@
+/**
+ * TEMPO-003 — Existing onboarding actions for an empty workspace.
+ * Code map: src/components/code-map.md; dashboard contract: src/components/today/README.md.
+ */
 "use client";
 
-import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Plus } from "lucide-react";
 
 type FirstTimeEmptyStateProps = {
   /** Authoritative totals across the user's data, not just today's tasks. */
@@ -11,6 +15,12 @@ type FirstTimeEmptyStateProps = {
   onCreateDomain: () => void;
 };
 
+/**
+ * TEMPO-003-F14 — FirstTimeEmptyState
+ * Purpose: Offers initial domain and task setup actions.
+ * Used by: TodaySurface.
+ * Trigger: Workspace has no tasks.
+ */
 export function FirstTimeEmptyState({
   taskCount,
   domainCount,

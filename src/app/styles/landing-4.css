@@ -1,0 +1,247 @@
+/* Global landing styles. Imported by globals.css; cascade order is preserved. */
+.landing-mini-board .landing-board-focus {
+  background: var(--soft-lime);
+}
+
+.landing-done-task .landing-task-check {
+  border-radius: 50%;
+  background: var(--primary);
+  color: var(--primary-foreground);
+  padding: 1px;
+}
+
+.landing-done-task + .landing-done-task {
+  margin-top: 7px;
+}
+
+.landing-activity-sample {
+  position: relative;
+  font-size: 8px;
+  color: var(--preview-muted);
+  padding: 13px 0 0 14px;
+  line-height: 1.6;
+}
+
+.landing-activity-sample > span {
+  position: absolute;
+  left: 2px;
+  top: 17px;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--brand);
+}
+
+.landing-activity-sample small {
+  display: block;
+  font-size: 7px;
+}
+
+.landing-footer {
+  border-top: 1px solid var(--border);
+}
+
+.landing-footer-inner {
+  display: flex;
+  align-items: center;
+  gap: 25px;
+  padding-block: 30px;
+}
+
+.landing-footer .landing-wordmark {
+  font-size: 17px;
+  letter-spacing: -0.7px;
+}
+
+.landing-footer .landing-wordmark {
+  width: 104px;
+  height: 34px;
+}
+
+.landing-footer p {
+  font-size: 10px;
+  color: var(--preview-muted);
+  margin-top: 7px;
+}
+
+.landing-footer nav {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 22px;
+  margin-left: auto;
+  font-size: 11px;
+  color: var(--preview-muted);
+}
+
+.landing-footer nav a {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 44px;
+}
+
+.landing-copyright {
+  font-size: 10px;
+  color: var(--preview-muted);
+  white-space: nowrap;
+}
+
+@media (min-width: 1600px) {
+  .landing-hero h1 {
+    font-size: 122px;
+  }
+}
+
+@media (max-width: 1100px) {
+  .landing-container {
+    width: calc(100% - 72px);
+  }
+  .landing-hero {
+    gap: 30px;
+    padding-block: 28px 40px;
+  }
+  .landing-hero h1 {
+    font-size: clamp(57px, 7.4vw, 82px);
+  }
+  .landing-hero-description {
+    font-size: 14px;
+  }
+  .landing-benefit-grid {
+    gap: 14px;
+  }
+  .landing-benefit-card {
+    padding: 23px 16px 16px;
+  }
+  .landing-benefit-card h3 {
+    font-size: 16px;
+  }
+  .landing-benefit-card > p {
+    font-size: 12px;
+  }
+  .landing-benefit-illustration,
+  .landing-domain-illustration {
+    padding: 9px;
+  }
+  .landing-footer-inner {
+    flex-wrap: wrap;
+    gap: 14px 25px;
+  }
+}
+
+@media (max-width: 800px) {
+  .landing-container {
+    width: calc(100% - 48px);
+  }
+  .landing-header-inner {
+    height: 78px;
+    gap: 18px;
+  }
+  .landing-desktop-nav {
+    gap: 20px;
+    font-size: 12px;
+  }
+  .landing-header-actions {
+    gap: 16px;
+  }
+  .landing-header-actions .landing-cta {
+    padding: 11px 16px;
+    font-size: 12px;
+    gap: 10px;
+  }
+  .landing-hero {
+    grid-template-columns: 1fr;
+    gap: 24px;
+    padding-block: 28px 36px;
+  }
+  .landing-hero-copy {
+    padding-block: 0;
+  }
+  .landing-hero h1 {
+    font-size: clamp(64px, 11.5vw, 90px);
+  }
+  .landing-hero-description {
+    font-size: 16px;
+  }
+  .landing-hero-actions {
+    flex-direction: row;
+    align-items: center;
+    gap: 25px;
+  }
+  .landing-product-figure {
+    max-width: 560px;
+    justify-self: center;
+  }
+  .landing-section {
+    padding-block: 32px;
+  }
+  .landing-section-heading {
+    font-size: 30px;
+  }
+  .landing-benefit-grid {
+    grid-template-columns: 1fr;
+    gap: 18px;
+  }
+  .landing-benefit-card {
+    padding: 26px;
+  }
+  .landing-benefit-card h3 {
+    font-size: 20px;
+  }
+  .landing-benefit-card > p {
+    font-size: 14px;
+    max-width: 500px;
+  }
+  .landing-benefit-illustration,
+  .landing-domain-illustration {
+    min-height: auto;
+    padding: 15px;
+  }
+  .landing-domain-illustration {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .landing-domain-illustration > div {
+    flex-wrap: wrap;
+  }
+  .landing-domain-count {
+    display: none;
+  }
+  .landing-benefit-illustration .landing-compact-task .landing-task-title {
+    font-size: 11px;
+  }
+  .landing-benefit-illustration .landing-compact-task .landing-task-meta {
+    font-size: 9px;
+  }
+  .landing-mini-label {
+    font-size: 8px;
+  }
+  .landing-mini-focus,
+  .landing-carry-note {
+    margin-block: 8px;
+  }
+  .landing-steps-grid {
+    gap: 16px;
+  }
+  .landing-step-card {
+    padding: 20px;
+  }
+  .landing-step-illustration {
+    padding: 12px;
+  }
+  .landing-step-card h3 {
+    font-size: 17px;
+  }
+  .landing-view-tabs {
+    gap: 10px;
+    font-size: 8px;
+  }
+  .landing-color-swatches > span {
+    font-size: 7px;
+  }
+  .landing-footer nav {
+    gap: 15px;
+  }
+  .landing-copyright {
+    width: 100%;
+  }
+}

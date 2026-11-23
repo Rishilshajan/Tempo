@@ -38,7 +38,7 @@ export function TaskSelect({
           {options.find((option) => option.value === value)?.label}
         </span>
       </SelectTrigger>
-      <SelectContent align="end">
+      <SelectContent align="end" className="min-w-[var(--anchor-width)] max-w-[calc(100vw-24px)]">
         <SelectGroup>
           {options.map((option) => (
             <SelectItem

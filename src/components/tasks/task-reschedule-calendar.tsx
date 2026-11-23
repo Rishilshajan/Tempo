@@ -1,4 +1,5 @@
 "use client";
+import { ActionTooltip } from "@/components/ui/tooltip";
 import { useState } from "react";
 import { CalendarDays } from "lucide-react";
 import { toast } from "sonner";
@@ -18,11 +19,13 @@ export function TaskRescheduleCalendar({
   task,
   disabled,
   compact = false,
+  iconOnly = false,
   onReschedule,
 }: {
   task: TaskRecord;
   disabled?: boolean;
   compact?: boolean;
+  iconOnly?: boolean;
   onReschedule: (schedule: TaskRecord["schedule"]) => Promise<unknown>;
 }) {
   const [open, setOpen] = useState(false);
@@ -94,22 +97,27 @@ export function TaskRescheduleCalendar({
         if (!saving) setOpen(value);
       }}
     >
-      <PopoverTrigger
-        render={
-          <Button
-            variant="outline"
-            className={
-              compact
-                ? "h-8 min-h-8 gap-1 rounded-full px-2 text-[10px]"
-                : "min-h-11 px-3 text-xs"
-            }
-            disabled={disabled || saving}
-          >
-            <CalendarDays className="size-3.5" />
-            {saving ? "Saving…" : "Reschedule"}
-          </Button>
-        }
-      />
+      <ActionTooltip content="Reschedule - choose a new date">
+        <PopoverTrigger
+          render={
+            <Button
+              variant="outline"
+              className={
+                iconOnly
+                  ? "size-9 min-h-9 rounded-lg p-0"
+                  : compact
+                    ? "h-8 min-h-8 gap-1 rounded-full px-2 text-[10px]"
+                    : "min-h-11 px-3 text-xs"
+              }
+              aria-label={`Reschedule ${task.title}`}
+              disabled={disabled || saving}
+            >
+              <CalendarDays className="size-3.5" />
+              {!iconOnly && (saving ? "Saving…" : "Reschedule")}
+            </Button>
+          }
+        />
+      </ActionTooltip>
       <PopoverContent
         align="end"
         className="w-auto max-w-[calc(100vw-2rem)] p-0"

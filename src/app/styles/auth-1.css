@@ -1,0 +1,294 @@
+/* Global auth styles. Imported by globals.css; cascade order is preserved. */
+/* TEMPO-002 — Authentication. Used by app/(auth) and components/auth.
+ * Shared header/logo styles are defined in TEMPO-001 above.
+ * Clerk keeps ownership of validation, verification, and session behavior.
+ */
+
+.auth-shell {
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+}
+
+.auth-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  font-size: 13px;
+  color: var(--preview-muted);
+}
+
+.auth-back:hover,
+.auth-account-link a:hover {
+  color: var(--primary);
+}
+
+.auth-main {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  flex: 1;
+  padding: 32px 24px;
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 440px;
+  min-width: 0;
+  padding: 28px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--card);
+  box-shadow: 0 12px 32px -18px rgb(34 49 43 / 24%);
+}
+
+.auth-card h1,
+.auth-card .auth-provider-title {
+  font-size: 26px;
+  line-height: 1.2;
+  font-weight: 600;
+  letter-spacing: -0.04em;
+  text-align: center;
+}
+
+.auth-intro,
+.auth-card .auth-provider-subtitle {
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--muted-foreground);
+  text-align: center;
+}
+
+.auth-intro {
+  margin-top: 10px;
+}
+
+.auth-card .auth-provider-header {
+  gap: 8px;
+  margin-bottom: 0;
+}
+
+.auth-card .auth-provider-main {
+  gap: 20px;
+}
+
+.auth-card .auth-provider-form {
+  gap: 16px;
+}
+
+.auth-card .auth-provider-field {
+  gap: 8px;
+}
+
+.auth-card .auth-provider-label-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  margin-bottom: 8px;
+}
+
+.auth-card .auth-provider-field-action {
+  font-size: 12px;
+  line-height: 1.5;
+  font-weight: 500;
+}
+
+/* Separate the selected email from the password instructions. */
+
+.auth-card .auth-provider-identity {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  max-width: 100%;
+  padding: 10px 12px;
+  margin-top: 8px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--background);
+}
+
+.auth-card .auth-provider-identity-text {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+/* TEMPO-002: one border and one focus ring, with space around field labels. */
+
+.auth-card .auth-provider-input:not([type="checkbox"]):not([type="radio"]) {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  min-height: 44px;
+  appearance: none;
+  background: var(--card);
+  border: 1px solid #b8c7bf;
+  border-radius: 8px;
+  box-shadow: none;
+  outline: none;
+}
+
+.auth-card .auth-provider-input:focus {
+  border-color: var(--primary);
+  outline: 2px solid color-mix(in srgb, var(--primary) 24%, transparent);
+  outline-offset: 1px;
+  box-shadow: none;
+}
+
+.auth-card .auth-provider-input[aria-invalid="true"] {
+  border-color: var(--destructive);
+  outline-color: var(--destructive);
+}
+
+.auth-card .auth-provider-button {
+  box-sizing: border-box;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  /* Dimensions come from the shared Button auth size in components/ui/button.tsx. */
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 20px;
+  border-radius: 8px;
+  background: var(--primary);
+  color: var(--primary-foreground);
+  box-shadow: none;
+}
+
+/* Preserve Clerk hidden controls; do not turn empty recovery controls into buttons. */
+
+.auth-card .auth-provider-button[hidden],
+.auth-card .auth-provider-button:empty {
+  display: none !important;
+}
+
+/* TEMPO-002: keep the primary action text-only. */
+
+.auth-card .auth-provider-button > svg {
+  display: none;
+}
+
+.auth-card .auth-provider-button:hover {
+  background: color-mix(in srgb, var(--primary), black 12%);
+}
+
+.auth-form {
+  margin-top: 20px;
+}
+
+.auth-account-link {
+  margin-top: 8px;
+  font-size: 12px;
+  text-align: center;
+  line-height: 1.8;
+  color: var(--muted-foreground);
+}
+
+.auth-account-link a {
+  display: block;
+  width: fit-content;
+  margin: 0 auto;
+  padding: 2px 8px;
+  color: var(--primary);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.auth-unavailable {
+  padding: 16px;
+  background: var(--background);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.auth-unavailable strong {
+  display: block;
+  font-size: 14px;
+  margin-bottom: 7px;
+}
+
+.auth-unavailable p,
+.auth-loading {
+  color: var(--muted-foreground);
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.auth-loading {
+  padding-block: 20px;
+}
+
+.auth-footer {
+  padding: 0 20px 20px;
+  text-align: center;
+  font-size: 11px;
+  color: var(--muted-foreground);
+}
+
+@media (max-width: 600px) {
+  .auth-main {
+    padding: 20px 16px;
+  }
+  .auth-card {
+    padding: 22px 20px;
+    border-radius: 12px;
+  }
+  .auth-card h1,
+  .auth-card .auth-provider-title {
+    font-size: 24px;
+  }
+  .auth-back {
+    font-size: 12px;
+    gap: 5px;
+  }
+  .auth-account-link {
+    margin-top: 8px;
+  }
+}
+
+/* TEMPO-002: recovery Back action shares the UI Button auth dimensions. */
+
+.auth-card .auth-provider-back {
+  box-sizing: border-box;
+  width: 100% !important;
+  min-width: 100%;
+  height: 48px !important;
+  min-height: 48px !important;
+  max-height: 48px !important;
+  padding-block: 0 !important;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #eeeeec;
+  color: var(--foreground);
+  border: 1px solid #dededb;
+  border-radius: 8px;
+  text-decoration: none;
+  box-shadow: none;
+}
+
+.auth-card .auth-provider-back:hover {
+  background: #e2e2df;
+}
+
+/* TEMPO-002: center content-sized cards on desktop; tall forms remain scrollable. */
+
+@media (min-width: 601px) {
+  .auth-main {
+    align-items: center;
+  }
+}
+
+/* TEMPO-002: center the recovery Back control within its Clerk row. */
+
+.auth-card .cl-backRow {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}

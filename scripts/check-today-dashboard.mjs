@@ -373,9 +373,9 @@ try {
   );
   records.get(overlap._id).status = "completed";
   assert.equal(
-    await dashboard.focus._handler(alice, { ...focusArgs, today: day.date }),
-    null,
-    "completed tasks stop being focus anchors",
+    (await dashboard.focus._handler(alice, { ...focusArgs, today: day.date }))._id,
+    overlap._id,
+    "saved focus remains visible after completion",
   );
   await dashboard.setFocus._handler(alice, { ...focusArgs, taskId: null });
   assert.equal(
@@ -453,3 +453,11 @@ try {
 console.log(
   "Today model and handlers passed: timezones, DST, overlap, workload, priority, pagination, ownership, focus, and rescheduling.",
 );
+
+// Completion-day membership must not be inferred from a task's original booking/due date.
+const finishedTomorrow = row("completed-other-day", { status: "completed", completedAt: day.end + 1000 });
+assert.equal(model.summarizeDay([finishedTomorrow], day).completed.length, 0);
+const finishedToday = row("completed-today", { status: "completed", workDate: "2026-10-20", completedAt: day.start + 1000 });
+assert.equal(model.summarizeDay([finishedToday, finishedToday], day).completed.length, 1);
+assert.equal(model.summarizeDay([{ ...finishedToday, status: "open", completedAt: undefined }], day).completed.length, 0);
+console.log("PASS: completion-day isolation, deduplication, and reopened-task exclusion.");

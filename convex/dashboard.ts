@@ -154,7 +154,7 @@ export const focus = query({
     const task = selection ? await ctx.db.get(selection.taskId) : null;
     return task &&
       task.ownerId === user.tokenIdentifier &&
-      task.status === "open" &&
+      // Keep the saved focus visible after completion; new selections still require open tasks.
       !(await isPlannedOccurrence(ctx, task)) &&
       belongsToDay(task, day)
       ? await toTaskView(ctx, task)

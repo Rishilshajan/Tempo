@@ -1,6 +1,5 @@
 "use client";
-import { useState, type ReactNode } from "react";
-import { toast } from "sonner";
+import { errorMessage } from "@/components/today/today-dashboard";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -10,7 +9,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { errorMessage } from "@/components/today/today-dashboard";
+import { useState, type ReactNode } from "react";
+import { toast } from "sonner";
 
 export function detailError(error: unknown) {
   toast.error(
@@ -97,5 +97,33 @@ export function ConfirmDelete({
         </DialogFooter>
       </DialogContent>
     </Dialog>
+  );
+}
+
+/**
+ * TEMPO-003-F40 - DetailRow
+ * Purpose: Provides the existing DetailRow behavior for its owning view.
+ * Used by: See src/components/code-map.md for direct callers.
+ * Trigger: The owning view renders or its associated interaction runs.
+ */
+export function DetailRow({
+  icon,
+  label,
+  children,
+}: {
+  icon: ReactNode;
+  label: string;
+  children: ReactNode;
+}) {
+  return (
+    <div className="grid min-w-0 grid-cols-[100px_minmax(0,1fr)] items-center gap-x-3 sm:grid-cols-[120px_minmax(0,1fr)]">
+      <dt className="flex items-center gap-2 text-muted-foreground [&_svg]:size-3.5 [&_svg]:shrink-0">
+        {icon}
+        {label}
+      </dt>
+      <dd className="min-w-0 break-words leading-5 [overflow-wrap:anywhere]">
+        {children}
+      </dd>
+    </div>
   );
 }

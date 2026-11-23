@@ -1,0 +1,49 @@
+/* Global auth styles. Imported by globals.css; cascade order is preserved. */
+.auth-card .auth-provider-back {
+  margin-inline: auto;
+}
+
+/* TEMPO-002: compact reset fields without reserving space for hidden success hints. */
+
+.auth-card .auth-provider-form:has(.cl-formField__newPassword) {
+  gap: 16px;
+}
+
+.auth-card .auth-provider-form:has(.cl-formField__newPassword) .cl-formFieldRow {
+  margin-block: 0;
+  padding-block: 0;
+  min-height: 0;
+}
+
+.auth-card :is(.cl-formField__newPassword, .cl-formField__confirmPassword) {
+  gap: 6px;
+  margin-block: 0;
+  padding-block: 0;
+  min-height: 0;
+}
+
+.auth-card :is(.cl-formField__newPassword, .cl-formField__confirmPassword) > div:has(> .cl-formFieldSuccessText):not(:has(input, .cl-formFieldErrorText, .cl-formFieldWarningText, .cl-formFieldInfoText)) {
+  display: none;
+}
+
+.auth-card .auth-provider-form:has(.cl-formField__newPassword) > div:has(> .cl-formFieldRow) {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* TEMPO-002: shared indeterminate auth handoff and dashboard loading state. */
+
+.auth-progress { padding-block: 24px; text-align: center; }
+
+.auth-progress p { font-size: 14px; color: var(--muted-foreground); }
+
+.auth-progress-track { height: 4px; margin-top: 20px; border-radius: 999px; background: var(--secondary); overflow: hidden; }
+
+.auth-progress-track span { display: block; width: 40%; height: 100%; border-radius: inherit; background: var(--primary); animation: auth-progress-travel 1.4s ease-in-out infinite; }
+
+.auth-workspace-loading { min-height: 100svh; display: grid; place-items: center; padding: 24px; background: var(--background); }
+
+@keyframes auth-progress-travel { from { transform: translateX(-100%); } to { transform: translateX(350%); } }
+
+@media (prefers-reduced-motion: reduce) { .auth-progress-track span { animation: none; width: 100%; opacity: 0.6; } }

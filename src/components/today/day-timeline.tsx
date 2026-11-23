@@ -1,16 +1,27 @@
+/**
+ * TEMPO-003 - Existing timezone-aware timeline and scheduled-task interactions.
+ * Code map: src/components/code-map.md; dashboard contract: src/components/today/README.md.
+ */
 "use client";
 
-import { useEffect, useRef } from "react";
-import { Clock3, Plus } from "lucide-react";
-import { timeZoneLabel } from "@/lib/timezone-label";
-import type { TaskRecord } from "@/components/tasks/task-list";
 import { domainColors } from "@/components/domains/domain-appearance";
+import type { TaskRecord } from "@/components/tasks/task-list";
+import { Button } from "@/components/ui/button";
+import { timeZoneLabel } from "@/lib/timezone-label";
 import {
   formatMinutes,
   timelineLayout,
   type DayWindow,
 } from "@/lib/today-model";
+import { Clock3, Plus } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 
+/**
+ * TEMPO-003-F12 - DayTimeline
+ * Purpose: Displays fixed bookings with overlap lanes and empty-slot creation.
+ * Used by: DayCommandCenter.
+ * Trigger: Selected day or scheduled tasks change.
+ */
 export function DayTimeline({
   tasks,
   day,
@@ -24,10 +35,12 @@ export function DayTimeline({
   onOpenTask: (task: TaskRecord) => void;
   onAdd: (startAt: number) => void;
 }) {
+  const [fullDay, setFullDay] = useState(day.date !== day.today);
+  const hourHeight = fullDay ? 24 : 58;
   const scroll = useRef<HTMLDivElement>(null);
   const span = day.end - day.start;
   const hours = span / 3600000;
-  const height = hours * 58;
+  const height = hours * hourHeight;
   const ticks = [
     ...Array.from(
       { length: Math.ceil(hours) },
@@ -64,7 +77,7 @@ export function DayTimeline({
     if (scroll.current)
       scroll.current.scrollTop = Math.max(
         0,
-        ((at - day.start) / 3600000 - 1) * 58,
+        ((at - day.start) / 3600000 - 1) * hourHeight,
       );
     // Only move the viewport when the selected date changes, never during reading.
   }, [day.date]);
@@ -79,18 +92,54 @@ export function DayTimeline({
           className="flex items-center gap-2 text-sm font-medium"
         >
           <Clock3 className="size-4 text-primary" aria-hidden="true" />
-          Timeline
+          Day schedule
         </h2>
         <span className="text-xs text-muted-foreground">
           {blocks.length} fixed {blocks.length === 1 ? "block" : "blocks"} ·{" "}
           {hours}h
         </span>
       </div>
+      <div className="mb-3 flex flex-wrap items-center gap-2">
+        <Button
+          size="sm"
+          variant={!fullDay && today ? "default" : "outline"}
+          aria-pressed={!fullDay && today}
+          disabled={!today}
+          onClick={() => {
+            setFullDay(false);
+            requestAnimationFrame(() => {
+              if (scroll.current)
+                scroll.current.scrollTop = Math.max(
+                  0,
+                  ((now - day.start) / 3600000 - 1) * 58,
+                );
+            });
+          }}
+        >
+          Now
+        </Button>
+        <Button
+          size="sm"
+          variant={fullDay ? "default" : "outline"}
+          aria-pressed={fullDay}
+          onClick={() => {
+            setFullDay(true);
+            if (scroll.current) scroll.current.scrollTop = 0;
+          }}
+        >
+          Full day
+        </Button>
+        {!blocks.length && (
+          <span className="text-xs text-muted-foreground">
+            No scheduled commitments
+          </span>
+        )}
+      </div>
       <div
         ref={scroll}
         tabIndex={0}
         aria-label="Full-day timeline, scroll to explore all hours"
-        className="relative max-h-[460px] overflow-y-auto overscroll-y-auto rounded-lg border border-border/60 focus-visible:outline-2 focus-visible:outline-ring"
+        className="dashboard-timeline-scroll relative max-h-[460px] overflow-y-auto overscroll-y-auto rounded-lg border border-border/60 focus-visible:outline-2 focus-visible:outline-ring"
       >
         <div className="relative my-2 ml-12 mr-1" style={{ height }}>
           {ticks.map((at, index) => {
@@ -99,7 +148,7 @@ export function DayTimeline({
               <div
                 key={at}
                 className="absolute left-0 right-0 border-t border-border/60"
-                style={{ top: ((at - day.start) / 3600000) * 58 }}
+                style={{ top: ((at - day.start) / 3600000) * hourHeight }}
               >
                 <span className="absolute -left-12 -top-2 w-10 text-right font-mono text-[10px] text-muted-foreground">
                   {last ? "24:00" : time(at)}
@@ -107,12 +156,15 @@ export function DayTimeline({
                 {!last && (
                   <button
                     type="button"
+                    disabled={at < now}
                     onClick={() => onAdd(at)}
                     aria-label={`Create task at ${timestamp(at)}`}
                     style={{
-                      height: (Math.min(3600000, day.end - at) / 3600000) * 58,
+                      height:
+                        (Math.min(3600000, day.end - at) / 3600000) *
+                        hourHeight,
                     }}
-                    className="group absolute inset-x-0 top-0 flex items-start justify-end rounded-sm p-1 text-primary hover:bg-primary/5 focus-visible:bg-primary/5 focus-visible:outline-2 focus-visible:outline-ring"
+                    className="disabled:pointer-events-none disabled:opacity-30 group absolute inset-x-0 top-0 flex items-start justify-end rounded-sm p-1 text-primary hover:bg-primary/5 focus-visible:bg-primary/5 focus-visible:outline-2 focus-visible:outline-ring"
                   >
                     <Plus
                       className="size-3 opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100"
@@ -191,16 +243,13 @@ export function DayTimeline({
           )}
         </div>
       </div>
-      <p className="mt-3 text-xs leading-5 text-muted-foreground">
-        <span title={day.timezone}>
-          Device timezone:{" "}
-          {timeZoneLabel(day.timezone, today ? now : day.start)}.
-        </span>{" "}
-        Select a block for details or an empty hour to add a task.
-        {hours !== 24
-          ? ` This date has ${hours} hours because the clocks change.`
-          : ""}
-      </p>
+      <details className="mt-3 text-xs leading-5 text-muted-foreground">
+        <summary className="cursor-pointer">Schedule details</summary>
+        <p>
+          Device timezone: {timeZoneLabel(day.timezone, day.start)}. Select a
+          booking to view or reschedule it, or an empty hour to create a task.
+        </p>
+      </details>
     </section>
   );
 }
