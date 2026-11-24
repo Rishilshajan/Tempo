@@ -1,3 +1,8 @@
+/**
+ * TEMPO-004 - Four lane definitions and the board prop contract.
+ * Used by: MyTasksBoard; useMyTasksBoard; LaneColumn. Shared consumers remain supported.
+ * Code map: src/components/code-map.md.
+ */
 import { type DomainSummary } from "@/components/domains/domain-appearance";
 import { type Lane } from "@/lib/kanban-model";
 import { CircleCheck, History, ListChecks, Zap } from "lucide-react";

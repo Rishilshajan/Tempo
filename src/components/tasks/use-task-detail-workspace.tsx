@@ -3,62 +3,25 @@
  * Code map: src/components/code-map.md.
  */
 "use client";
-import { DomainLabel } from "@/components/domains/domain-appearance";
-import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
-  SheetClose,
-  SheetDescription,
-  SheetTitle,
-} from "@/components/ui/sheet";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useOverlayBack } from "@/hooks/use-overlay-back";
-import { taskTimestamp } from "@/lib/task-datetime";
-import { formatMinutes } from "@/lib/today-model";
 import { localDateKey } from "@/lib/validation/task";
 import { useMutation } from "convex/react";
 import {
   Activity,
-  ArrowLeft,
-  CalendarDays,
-  CheckCheck,
-  CircleDot,
-  Clock3,
-  Flag,
   GitBranch,
-  Layers,
   ListChecks,
-  MoreHorizontal,
   NotebookPen,
-  Pencil,
-  Repeat2,
-  Trash2,
-  X,
 } from "lucide-react";
 import { useId, useRef, useState } from "react";
 import { toast } from "sonner";
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
-import { DescriptionPreview } from "./description-preview";
-import { DetailActivity } from "./detail-activity";
-import { DetailNotes } from "./detail-notes";
-import { ConfirmDelete, detailError, DetailRow } from "./detail-shared";
-import { DetailSubtasks } from "./detail-subtasks";
-import { DetailThreads } from "./detail-threads";
-import { EditTaskSheet } from "./edit-task-sheet";
+import { detailError } from "./detail-shared";
 import type {
   SetTaskCompleted,
   SetTaskProgress,
   TaskRecord,
 } from "./task-list";
-import { TaskRescheduleCalendar } from "./task-reschedule-calendar";
-import { PriorityLabel } from "./task-select";
-import { TaskPill, TaskStatusSelect } from "./task-status";
 
 /**
  * TEMPO-003-F42 - useTaskDetailWorkspace
@@ -158,6 +121,6 @@ export function useTaskDetailWorkspace({
       setBusy(false);
     }
   }
-  
+
   return { task, onSetCompleted, onSetProgress, onOpenTask, onBack, onDeleted, tab, setTab, mobileSectionOpen, setMobileSectionOpen, mobileSectionId, mobileBack, sections, dialog, setDialog, busy, setBusy, remove, reschedule, completedSteps, fixed, today, subtaskCount, progress, scheduleText, completeTask };
 }

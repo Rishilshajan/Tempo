@@ -6,15 +6,14 @@
 
 import { domainColors } from "@/components/domains/domain-appearance";
 import type { TaskRecord } from "@/components/tasks/task-list";
-import { Button } from "@/components/ui/button";
 import { timeZoneLabel } from "@/lib/timezone-label";
 import {
-  formatMinutes,
-  timelineLayout,
-  type DayWindow,
+formatMinutes,
+timelineLayout,
+type DayWindow,
 } from "@/lib/today-model";
-import { Clock3, Plus } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { Clock3,Plus } from "lucide-react";
+import { useEffect,useRef } from "react";
 
 /**
  * TEMPO-003-F12 - DayTimeline
@@ -35,8 +34,7 @@ export function DayTimeline({
   onOpenTask: (task: TaskRecord) => void;
   onAdd: (startAt: number) => void;
 }) {
-  const [fullDay, setFullDay] = useState(day.date !== day.today);
-  const hourHeight = fullDay ? 24 : 58;
+  const hourHeight = 58;
   const scroll = useRef<HTMLDivElement>(null);
   const span = day.end - day.start;
   const hours = span / 3600000;
@@ -100,35 +98,6 @@ export function DayTimeline({
         </span>
       </div>
       <div className="mb-3 flex flex-wrap items-center gap-2">
-        <Button
-          size="sm"
-          variant={!fullDay && today ? "default" : "outline"}
-          aria-pressed={!fullDay && today}
-          disabled={!today}
-          onClick={() => {
-            setFullDay(false);
-            requestAnimationFrame(() => {
-              if (scroll.current)
-                scroll.current.scrollTop = Math.max(
-                  0,
-                  ((now - day.start) / 3600000 - 1) * 58,
-                );
-            });
-          }}
-        >
-          Now
-        </Button>
-        <Button
-          size="sm"
-          variant={fullDay ? "default" : "outline"}
-          aria-pressed={fullDay}
-          onClick={() => {
-            setFullDay(true);
-            if (scroll.current) scroll.current.scrollTop = 0;
-          }}
-        >
-          Full day
-        </Button>
         {!blocks.length && (
           <span className="text-xs text-muted-foreground">
             No scheduled commitments

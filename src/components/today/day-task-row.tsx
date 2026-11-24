@@ -4,16 +4,18 @@
  */
 "use client";
 import type {
-  SetTaskCompleted,
-  SetTaskProgress,
-  TaskRecord,
+SetTaskCompleted,
+SetTaskProgress,
+TaskRecord,
 } from "@/components/tasks/task-list";
+import { TaskMetadataPills } from "@/components/tasks/task-metadata-pills";
 import { TaskRescheduleCalendar } from "@/components/tasks/task-reschedule-calendar";
-import { TaskStatusSelect } from "@/components/tasks/task-status";
+import { PriorityLabel } from "@/components/tasks/task-select";
+import { TaskPill, TaskStatusSelect } from "@/components/tasks/task-status";
 import { Button } from "@/components/ui/button";
 import { ActionTooltip } from "@/components/ui/tooltip";
-import { formatMinutes, isCarried, type DayWindow } from "@/lib/today-model";
-import { CalendarPlus, Check, RotateCcw, Star } from "lucide-react";
+import { isCarried,type DayWindow } from "@/lib/today-model";
+import { Target } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { errorMessage } from "./day-errors";
@@ -28,7 +30,6 @@ export function DayTaskRow({
   day,
   now,
   pending,
-  onComplete,
   onOpen,
   onSetCompleted,
   onSetProgress,
@@ -80,22 +81,6 @@ export function DayTaskRow({
           onOpen();
       }}
     >
-      <ActionTooltip content={completed ? "Reopen task" : "Mark completed"}>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="dashboard-row-complete size-9 rounded-lg border border-border"
-          aria-label={(completed ? "Reopen " : "Complete ") + task.title}
-          disabled={pending || actionSaving}
-          onClick={onComplete}
-        >
-          {completed ? (
-            <RotateCcw size={16} aria-hidden="true" />
-          ) : (
-            <Check size={16} aria-hidden="true" />
-          )}
-        </Button>
-      </ActionTooltip>
       <div className="dashboard-task-copy min-w-0 flex-1 basis-40">
         <button
           type="button"
@@ -107,61 +92,14 @@ export function DayTaskRow({
         >
           {task.title}
         </button>
-        <div className="dashboard-task-meta mt-1 text-[11px] leading-5 text-muted-foreground">
-          {[
-            task.domain?.name ?? "Uncategorized",
-            (schedule.type === "fixed"
-              ? new Intl.DateTimeFormat(undefined, {
-                  timeZone: day.timezone,
-                  hour: "numeric",
-                  minute: "2-digit",
-                }).format(schedule.startAt) +
-                "-" +
-                new Intl.DateTimeFormat(undefined, {
-                  timeZone: day.timezone,
-                  hour: "numeric",
-                  minute: "2-digit",
-                }).format(schedule.endAt)
-              : task.estimatedMinutes
-                ? formatMinutes(task.estimatedMinutes)
-                : "Flexible") +
-              (overdue
-                ? " · Overdue"
-                : schedule.type === "flexible" && schedule.dueDate === day.date
-                  ? " · Due today"
-                  : ""),
-            completed
-              ? "Completed"
-              : task.progress === "in_progress"
-                ? "In progress"
-                : "Not started",
-            task.subtasks.length
-              ? task.subtasks.filter((step) => step.completedAt !== undefined)
-                  .length +
-                "/" +
-                task.subtasks.length +
-                " subtasks"
-              : "No subtasks",
-          ].map((item, index) => (
-            <span
-              key={index}
-              className={
-                index === 1 && overdue
-                  ? "dashboard-meta-overdue"
-                  : index === 2 && task.progress === "in_progress" && !completed
-                    ? "dashboard-meta-progress"
-                    : ""
-              }
-            >
-              {item}
-            </span>
-          ))}
+        <div className="task-metadata-strip mt-2 flex flex-wrap items-center gap-1.5 text-[10px]">
+          <TaskMetadataPills task={task} carried={carried && !completed} overdue={overdue} onOpen={onOpen} />
+          <TaskPill tone={task.priority === "urgent" ? "overdue" : task.priority === "high" ? "progress" : "neutral"}><PriorityLabel value={task.priority} /></TaskPill>
         </div>
       </div>
       <div className="dashboard-row-actions flex flex-wrap items-center gap-1">
         <TaskStatusSelect
           task={task}
-          compact
           disabled={pending || actionSaving}
           onBusyChange={setActionSaving}
           onSetCompleted={onSetCompleted}
@@ -171,7 +109,7 @@ export function DayTaskRow({
           <ActionTooltip content={"Plan today - keep the original deadline"}>
             <Button
               variant="ghost"
-              size="icon"
+              size="sm"
               className="size-9 rounded-lg border border-border"
               aria-label={"Plan today: " + task.title}
               disabled={pending || actionSaving}
@@ -189,7 +127,7 @@ export function DayTaskRow({
                 }
               }}
             >
-              <CalendarPlus size={16} aria-hidden="true" />
+              Plan today
             </Button>
           </ActionTooltip>
         )}
@@ -209,25 +147,18 @@ export function DayTaskRow({
           >
             <Button
               variant="ghost"
-              size="icon"
+              size="sm"
               className="size-9 rounded-lg border border-border"
               aria-label={
                 (focused ? "Clear main focus: " : "Make main focus: ") +
                 task.title
               }
               aria-pressed={!!focused}
+              data-icon-action
               disabled={pending || actionSaving || focusSaving}
               onClick={onFocus}
             >
-              <Star
-                size={16}
-                className={
-                  focused
-                    ? "fill-primary text-primary"
-                    : "text-muted-foreground"
-                }
-                aria-hidden="true"
-              />
+              <Target size={16} className={focused ? "text-primary" : "text-muted-foreground"} aria-hidden="true" />
             </Button>
           </ActionTooltip>
         )}

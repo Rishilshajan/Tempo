@@ -17,11 +17,8 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useOverlayBack } from "@/hooks/use-overlay-back";
 import { taskTimestamp } from "@/lib/task-datetime";
 import { formatMinutes } from "@/lib/today-model";
-import { localDateKey } from "@/lib/validation/task";
-import { useMutation } from "convex/react";
 import {
   Activity,
   ArrowLeft,
@@ -30,32 +27,21 @@ import {
   CircleDot,
   Clock3,
   Flag,
-  GitBranch,
   Layers,
-  ListChecks,
   MoreHorizontal,
-  NotebookPen,
   Pencil,
   Repeat2,
   Trash2,
   X,
 } from "lucide-react";
-import { useId, useRef, useState } from "react";
 import { toast } from "sonner";
-import { api } from "../../../convex/_generated/api";
-import type { Id } from "../../../convex/_generated/dataModel";
 import { DescriptionPreview } from "./description-preview";
 import { DetailActivity } from "./detail-activity";
 import { DetailNotes } from "./detail-notes";
-import { ConfirmDelete, detailError, DetailRow } from "./detail-shared";
+import { ConfirmDelete, DetailRow } from "./detail-shared";
 import { DetailSubtasks } from "./detail-subtasks";
 import { DetailThreads } from "./detail-threads";
 import { EditTaskSheet } from "./edit-task-sheet";
-import type {
-  SetTaskCompleted,
-  SetTaskProgress,
-  TaskRecord,
-} from "./task-list";
 import { TaskRescheduleCalendar } from "./task-reschedule-calendar";
 import { PriorityLabel } from "./task-select";
 import { TaskPill, TaskStatusSelect } from "./task-status";
@@ -69,7 +55,7 @@ import { useTaskDetailWorkspace } from "./use-task-detail-workspace";
  */
 export function TaskDetailWorkspace(input: Parameters<typeof useTaskDetailWorkspace>[0]) {
  const model=useTaskDetailWorkspace(input);
- const { task, onSetCompleted, onSetProgress, onOpenTask, onBack, onDeleted, tab, setTab, mobileSectionOpen, setMobileSectionOpen, mobileSectionId, mobileBack, sections, dialog, setDialog, busy, setBusy, remove, reschedule, completedSteps, fixed, today, subtaskCount, progress, scheduleText, completeTask }=model;
+ const { task, onSetCompleted, onSetProgress, onOpenTask, onBack, onDeleted, tab, setTab, mobileSectionOpen, setMobileSectionOpen, mobileSectionId, mobileBack, sections, dialog, setDialog, busy, setBusy, remove, reschedule, completedSteps, today, progress, scheduleText, completeTask }=model;
  return (
     <>
       <div

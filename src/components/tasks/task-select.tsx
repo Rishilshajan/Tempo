@@ -1,3 +1,8 @@
+/**
+ * TEMPO-004 - Shared select input, priority options and priority label.
+ * Used by: MyTasksBoard; DayTaskPanel; task forms. Shared consumers remain supported.
+ * Code map: src/components/code-map.md.
+ */
 "use client";
 
 import type { ReactNode } from "react";
@@ -9,6 +14,12 @@ import {
   SelectTrigger,
 } from "@/components/ui/select";
 
+/**
+ * TEMPO-004-F26 - TaskSelect
+ * Purpose: Renders the shared accessible select control and options.
+ * Used by: MyTasksBoard; DayTaskPanel; task forms.
+ * Trigger: The caller renders, recomputes or handles its associated interaction.
+ */
 export function TaskSelect({
   label,
   value,
@@ -63,17 +74,18 @@ export const priorities = [
   { value: "urgent", label: "Urgent", color: "var(--urgent)" },
 ] as const;
 
+/**
+ * TEMPO-004-F27 - PriorityLabel
+ * Purpose: Resolves the stored priority to its text label.
+ * Used by: BoardCard; CompactBoardRow; DayTaskRow; TaskDetailWorkspace; task forms.
+ * Trigger: A priority label renders.
+ */
 export function PriorityLabel({ value }: { value: string }) {
   const priority =
     priorities.find((option) => option.value === value) ?? priorities[1];
   return (
     <>
-      <span
-        className="size-2 shrink-0 rounded-full"
-        style={{ backgroundColor: priority.color }}
-        aria-hidden="true"
-      />
-      <span>{priority.label}</span>
+<span>{priority.label}</span>
     </>
   );
 }

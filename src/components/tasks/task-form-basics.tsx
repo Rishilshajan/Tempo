@@ -23,7 +23,7 @@ export function TaskFormBasics({
 }: {
   model: ReturnType<typeof useTaskFormState>;
 }) {
-  const { domains, hasMoreDomains, loadingMoreDomains, onLoadMoreDomains, editingTask, editScope, setEditScope, setAllowOverlap, title, setTitle, description, setDescription, domainId, setDomainId, priority, setPriority, timezone, startDate, setEndDate, startTime, endTime, setRepeatEnd, setRepeatEndDate, error, errors, setErrors } = model;
+  const { domains, hasMoreDomains, loadingMoreDomains, onLoadMoreDomains, editingTask, editScope, setEditScope, setAllowOverlap, title, setTitle, description, setDescription, domainId, setDomainId, priority, setPriority, timezone, startDate, setEndDate, startTime, endTime, setRepeatEnd, setRepeatEndDate, errors, setErrors } = model;
   return (
     <>
       {editingTask?.recurrence && (

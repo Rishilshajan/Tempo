@@ -1,20 +1,31 @@
+/**
+ * TEMPO-004 - Shared validated reschedule popover.
+ * Used by: BoardCard; CompactBoardRow; DayTaskRow. Shared consumers remain supported.
+ * Code map: src/components/code-map.md.
+ */
 "use client";
-import { ActionTooltip } from "@/components/ui/tooltip";
-import { useState } from "react";
 import { CalendarDays } from "lucide-react";
-import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
+Popover,
+PopoverContent,
+PopoverTrigger,
 } from "@/components/ui/popover";
-import { createTaskSchema, localDateKey } from "@/lib/validation/task";
-import { shiftDate, zonedTimestamp } from "@/lib/validation/recurrence";
-import type { TaskRecord } from "./task-list";
+import { ActionTooltip } from "@/components/ui/tooltip";
+import { shiftDate,zonedTimestamp } from "@/lib/validation/recurrence";
+import { createTaskSchema,localDateKey } from "@/lib/validation/task";
+import { useState } from "react";
+import { toast } from "sonner";
 import { detailError } from "./detail-shared";
+import type { TaskRecord } from "./task-list";
 
+/**
+ * TEMPO-004-F28 - TaskRescheduleCalendar
+ * Purpose: Composes date selection and validates a new schedule before persistence.
+ * Used by: BoardCard; CompactBoardRow; DayTaskRow.
+ * Trigger: The caller renders, recomputes or handles its associated interaction.
+ */
 export function TaskRescheduleCalendar({
   task,
   disabled,
@@ -35,8 +46,20 @@ export function TaskRescheduleCalendar({
       ? localDateKey(new Date(task.schedule.startAt), task.timezone)
       : task.schedule.dueDate;
   const today = localDateKey(new Date(), task.timezone);
-  const asDate = (day: string) => new Date(`${day}T00:00:00`);
-  async function select(date: Date | undefined) {
+  /**
+ * TEMPO-004-F29 - asDate
+ * Purpose: Converts a stored date string for calendar controls.
+ * Used by: TaskRescheduleCalendar.
+ * Trigger: The owning function renders or invokes this named helper.
+ */
+const asDate = (day: string) => new Date(`${day}T00:00:00`);
+  /**
+ * TEMPO-004-F30 - select
+ * Purpose: Validates and saves a selected date while preserving fixed-task local times.
+ * Used by: TaskRescheduleCalendar.
+ * Trigger: The reschedule calendar selects a date.
+ */
+async function select(date: Date | undefined) {
     if (!date || saving) return;
     const day = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
     try {
@@ -55,7 +78,13 @@ export function TaskRescheduleCalendar({
             Date.parse(`${current}T00:00:00Z`)) /
             86400000,
         );
-        const clock = (at: number) =>
+        /**
+ * TEMPO-004-F31 - clock
+ * Purpose: Formats a fixed timestamp in the task timezone for rescheduling.
+ * Used by: select.
+ * Trigger: The owning function renders or invokes this named helper.
+ */
+const clock = (at: number) =>
           new Intl.DateTimeFormat("en-GB", {
             timeZone: task.timezone,
             hour: "2-digit",
@@ -112,8 +141,8 @@ export function TaskRescheduleCalendar({
               aria-label={`Reschedule ${task.title}`}
               disabled={disabled || saving}
             >
-              <CalendarDays className="size-3.5" />
-              {!iconOnly && (saving ? "Saving…" : "Reschedule")}
+
+              {iconOnly ? <CalendarDays className="size-3.5" /> : (saving ? "Saving…" : "Reschedule")}
             </Button>
           }
         />

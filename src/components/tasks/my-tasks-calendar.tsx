@@ -1,3 +1,8 @@
+/**
+ * TEMPO-004 - Month/week/day calendar and selected-day agenda.
+ * Used by: MyTasksBoard. Shared consumers remain supported.
+ * Code map: src/components/code-map.md.
+ */
 "use client";
 
 import {
@@ -7,7 +12,7 @@ import {
   type ComponentProps,
   type ReactNode,
 } from "react";
-import { ChevronLeft, ChevronRight, CalendarDays, Plus } from "lucide-react";
+import { ChevronLeft, ChevronRight, CalendarDays } from "lucide-react";
 import { toast } from "sonner";
 import { Calendar, CalendarDayButton } from "@/components/ui/calendar";
 import { Button } from "@/components/ui/button";
@@ -25,10 +30,28 @@ import { shiftDate } from "@/lib/validation/recurrence";
 import type { TaskRecord } from "./task-list";
 
 type Period = "month" | "week" | "day";
+/**
+ * TEMPO-004-F14 - asDate
+ * Purpose: Converts a stored date string for calendar controls.
+ * Used by: MyTasksCalendar; label.
+ * Trigger: A date is selected, displayed or formatted.
+ */
 const asDate = (value: string) => new Date(`${value}T12:00:00`);
+/**
+ * TEMPO-004-F15 - label
+ * Purpose: Formats a stored date for calendar labels.
+ * Used by: MyTasksCalendar; CalendarTaskDay.
+ * Trigger: A calendar heading, cell or date range renders.
+ */
 const label = (value: string, options: Intl.DateTimeFormatOptions) =>
   new Intl.DateTimeFormat("en-GB", options).format(asDate(value));
 
+/**
+ * TEMPO-004-F16 - MyTasksCalendar
+ * Purpose: Composes date navigation, calendar periods and selected-day agenda.
+ * Used by: MyTasksBoard.
+ * Trigger: The caller renders, recomputes or handles its associated interaction.
+ */
 export function MyTasksCalendar({
   tasks,
   now,
@@ -63,7 +86,13 @@ export function MyTasksCalendar({
     (total, task) => total + plannedMinutes(task, day),
     0,
   );
-  function choose(next: string, scroll = true) {
+  /**
+ * TEMPO-004-F17 - choose
+ * Purpose: Selects a date, resets agenda scroll and optionally reveals it on mobile.
+ * Used by: MyTasksCalendar.
+ * Trigger: A date cell or Today action is selected.
+ */
+function choose(next: string, scroll = true) {
     setDate(next);
     setMonth(asDate(next));
     agendaScroll.current?.scrollTo({ top: 0 });
@@ -78,7 +107,13 @@ export function MyTasksCalendar({
         }),
       );
   }
-  function move(direction: number) {
+  /**
+ * TEMPO-004-F18 - move
+ * Purpose: Moves the displayed month or selected day for the current period.
+ * Used by: MyTasksCalendar.
+ * Trigger: Previous/next period is clicked.
+ */
+function move(direction: number) {
     if (period !== "day") {
       const next = new Date(
         month.getFullYear(),
@@ -91,7 +126,13 @@ export function MyTasksCalendar({
   }
   const DayCell = useMemo(
     () =>
-      function CalendarTaskDay(
+      /**
+ * TEMPO-004-F19 - CalendarTaskDay
+ * Purpose: Renders a date cell with task previews and overflow count.
+ * Used by: Calendar via its DayButton override.
+ * Trigger: A month date cell renders.
+ */
+function CalendarTaskDay(
         props: ComponentProps<typeof CalendarDayButton>,
       ) {
         const key = localDateKey(props.day.date);
@@ -99,10 +140,10 @@ export function MyTasksCalendar({
         return (
           <CalendarDayButton
             {...props}
-            className="aspect-auto! min-h-14 items-start! justify-start! overflow-hidden p-1.5 sm:min-h-[clamp(3rem,calc((100svh-14rem)/6),6rem)]"
+            className="task-calendar-cell aspect-auto! min-h-14 items-start! justify-start! overflow-hidden rounded-none! p-2 sm:min-h-24"
             aria-label={`${label(key, { day: "numeric", month: "long", year: "numeric" })}, ${rows.length} ${rows.length === 1 ? "task" : "tasks"}`}
           >
-            <span className="text-xs font-medium">
+            <span className="task-calendar-date inline-flex size-6 items-center justify-center rounded-full text-xs font-semibold">
               {props.day.date.getDate()}
             </span>
             {!isMobile && (
@@ -121,24 +162,8 @@ export function MyTasksCalendar({
               </span>
             )}
             {!!rows.length && (
-              <span className="mt-auto flex max-w-full items-center gap-1 opacity-100!">
-                {rows.slice(0, 3).map((task) => (
-                  <span
-                    key={task._id}
-                    className="size-1.5 rounded-full"
-                    style={{
-                      background:
-                        domainColors.find(
-                          (color) => color.id === task.domain?.color,
-                        )?.value ?? "var(--primary)",
-                    }}
-                  />
-                ))}
-                {rows.length > (isMobile ? 3 : 2) && (
-                  <span className="text-[9px]">
-                    +{rows.length - (isMobile ? 3 : 2)}
-                  </span>
-                )}
+              <span className="mt-auto text-[9px] text-muted-foreground opacity-100!">
+                {isMobile ? rows.length : rows.length > 2 ? (rows.length - 2) + " more" : rows.length + (rows.length === 1 ? " task" : " tasks")}
               </span>
             )}
           </CalendarDayButton>
@@ -147,9 +172,9 @@ export function MyTasksCalendar({
     [tasks, timezone, now, isMobile],
   );
   return (
-    <div className="relative grid min-w-0 items-start gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(300px,0.48fr)]">
+    <div className="my-tasks-calendar relative grid min-w-0 items-start gap-4 xl:grid-cols-[minmax(0,1.6fr)_minmax(340px,1fr)]">
       <section
-        className="min-w-0 space-y-3 rounded-xl border border-border bg-card p-3 sm:p-4 xl:sticky xl:top-4"
+        className="min-w-0 space-y-3 rounded-xl border border-border bg-card p-3 sm:p-4"
         aria-label="Task calendar"
       >
         <div className="flex flex-wrap items-center justify-between gap-2">
@@ -197,7 +222,7 @@ export function MyTasksCalendar({
                 type="button"
                 aria-pressed={period === value}
                 onClick={() => setPeriod(value)}
-                className={`min-h-8 rounded-md px-3 text-xs capitalize ${period === value ? "bg-card text-primary shadow-sm" : "text-muted-foreground"}`}
+                className={`min-h-8 rounded-md px-3 text-xs capitalize ${period === value ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground"}`}
               >
                 {value}
               </button>
@@ -298,7 +323,7 @@ export function MyTasksCalendar({
       <section
         ref={agenda}
         tabIndex={-1}
-        className="min-w-0 overflow-hidden scroll-mb-24 scroll-mt-4 rounded-xl border border-border bg-card focus-visible:outline-2 focus-visible:outline-ring xl:sticky xl:top-4"
+        className="min-w-0 overflow-hidden scroll-mb-24 scroll-mt-4 rounded-xl border border-border bg-card focus-visible:outline-2 focus-visible:outline-ring"
         aria-label="Selected day tasks"
       >
         <div className="flex flex-wrap items-start justify-between gap-2 border-b border-border bg-card p-3 sm:p-4">
@@ -318,20 +343,21 @@ export function MyTasksCalendar({
             </p>
           </div>
           <Button
-            variant="ghost"
-            size="icon-sm"
+            variant="default"
+            size="sm"
+            className="lg:hidden"
             aria-label="Create task on selected date"
             disabled={date < today}
             onClick={() => onCreate(date)}
           >
-            <Plus className="size-4" />
+            Create task
           </Button>
         </div>
         <div
           ref={agendaScroll}
           tabIndex={0}
           aria-label="Scroll selected day tasks"
-          className="max-h-[60svh] overflow-y-auto overscroll-y-auto p-3 focus-visible:outline-2 focus-visible:outline-ring sm:p-4 xl:max-h-[calc(100svh-9rem)]"
+          className="calendar-agenda-scroll max-h-[60svh] overflow-y-auto overscroll-y-auto p-3 focus-visible:outline-2 focus-visible:outline-ring sm:p-4 xl:max-h-[65svh]"
         >
           {selectedTasks.length ? (
             <div className="space-y-4">
@@ -380,15 +406,7 @@ export function MyTasksCalendar({
               <p className="mt-1 text-xs text-muted-foreground">
                 Choose another date{date >= today ? " or add a task." : "."}
               </p>
-              {date >= today && (
-                <Button
-                  variant="secondary"
-                  className="mt-3 min-h-8 text-xs"
-                  onClick={() => onCreate(date)}
-                >
-                  Create Task
-                </Button>
-              )}
+
             </div>
           )}
         </div>

@@ -5,14 +5,14 @@
 "use client";
 
 import {
-  DomainLabel,
-  type DomainSummary,
+DomainLabel,
+type DomainSummary,
 } from "@/components/domains/domain-appearance";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useQuery } from "convex/react";
 import { Search, X } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect,useRef,useState } from "react";
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
 
@@ -81,15 +81,16 @@ export function WorkspaceSearch({
         setOpen(true);
       }}
       className="min-w-0"
-      autoFocus={mobile}
+      autoFocus={open}
     />
   );
 
   return (
     <div
       ref={container}
+      data-search-open={open}
       className={
-        mobile ? "lg:hidden" : "relative hidden w-full max-w-sm lg:block"
+        mobile ? "workspace-search lg:hidden" : "workspace-search relative hidden lg:block"
       }
       onKeyDown={(event) => {
         if (event.key === "Escape" && open) {
@@ -98,7 +99,7 @@ export function WorkspaceSearch({
         }
       }}
     >
-      {mobile ? (
+      {!open ? (
         <Button
           size="icon"
           variant="ghost"
@@ -110,30 +111,17 @@ export function WorkspaceSearch({
           <Search aria-hidden="true" />
         </Button>
       ) : (
-        searchInput
+        <div className={`workspace-search-field flex items-center gap-2 ${mobile ? "absolute inset-x-0 top-full z-50 border-b border-border bg-card px-4 py-3" : "w-64 xl:w-80"}`}>
+          {searchInput}
+          <Button size="icon" variant="ghost" aria-label="Close search" onClick={close}>
+            <X aria-hidden="true" />
+          </Button>
+        </div>
       )}
-      {open && (
+      {open && trimmed && (
         <div
-          className={`absolute top-full z-40 mt-2 max-h-[55dvh] space-y-2 overflow-y-auto rounded-xl border border-border bg-popover p-3 text-sm shadow-md ${mobile ? "inset-x-4" : "left-0 w-full"}`}
+          className={`absolute z-40 mt-2 max-h-[55dvh] space-y-2 overflow-y-auto rounded-xl border border-border bg-popover p-3 text-sm shadow-md ${mobile ? "inset-x-4 top-[calc(100%+4.5rem)]" : "top-full right-0 w-80"}`}
         >
-          {mobile && (
-            <div className="flex items-center gap-2">
-              {searchInput}
-              <Button
-                size="icon-sm"
-                variant="ghost"
-                aria-label="Close search"
-                onClick={close}
-              >
-                <X />
-              </Button>
-            </div>
-          )}
-          {!trimmed && (
-            <p className="text-muted-foreground">
-              Find tasks by title or domains by name.
-            </p>
-          )}
           {trimmed && !results && (
             <p role="status" className="text-muted-foreground">
               Searching…

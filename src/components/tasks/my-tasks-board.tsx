@@ -1,12 +1,9 @@
 /**
- * TEMPO-003 - MyTasksBoard: composes reused presentation and a single state hook.
+ * TEMPO-004 - My Tasks composition and filter/view controls.
+ * Used by: TodaySurface. Shared consumers remain supported.
  * Code map: src/components/code-map.md.
  */
 "use client";
-import {
-  DomainLabel,
-  domainColors,
-} from "@/components/domains/domain-appearance";
 import { Button } from "@/components/ui/button";
 import { DatePicker } from "@/components/ui/date-picker";
 import { taskLane } from "@/lib/kanban-model";
@@ -22,18 +19,19 @@ import { columns } from "./board-config";
 import { MyTasksCalendar } from "./my-tasks-calendar";
 import { TaskSelect, priorities } from "./task-select";
 import { useMyTasksBoard } from "./use-my-tasks-board";
+
 /**
- * TEMPO-003-F32 - MyTasksBoard
- * Purpose: Provides the existing MyTasksBoard behavior for its owning view.
- * Used by: See src/components/code-map.md for direct callers.
- * Trigger: The owning view renders or its associated interaction runs.
+ * TEMPO-004-F01 - MyTasksBoard
+ * Purpose: Composes domain filters, views, filter options and shared editors through callbacks.
+ * Used by: TodaySurface.
+ * Trigger: The caller renders, recomputes or handles its associated interaction.
  */
 export function MyTasksBoard(input: Parameters<typeof useMyTasksBoard>[0]) {
   const model = useMyTasksBoard(input);
-  const { onCreateForDate, tasks, domains, incomplete, onCreate, onOpen, onSetCompleted, onSetProgress, view, setView, isMobile, effectiveView, mobileCollapsed, setMobileCollapsed, collapsed, setCollapsed, setFilters, filters, currentDomain, older, setOlder, filtersOpen, setFiltersOpen, dragging, setDragging, saving, reschedule, now, sensors, update, clock, rows, visible, laneRows, saveMove, drop, selectedDrag, activeFilters } = model;
+  const { onCreateForDate, tasks, domains, incomplete, onCreate, onOpen, onSetCompleted, onSetProgress, setView, isMobile, effectiveView, mobileCollapsed, setMobileCollapsed, collapsed, setCollapsed, setFilters, filters, older, setOlder, filtersOpen, setFiltersOpen, dragging, setDragging, saving, reschedule, sensors, update, clock, rows, visible, laneRows, saveMove, drop, selectedDrag, activeFilters } = model;
   return (
     <section
-      className="min-w-0 space-y-4"
+      className="my-tasks-workspace min-w-0 space-y-4"
       aria-labelledby="my-tasks-heading"
       aria-busy={saving}
     >
@@ -43,15 +41,11 @@ export function MyTasksBoard(input: Parameters<typeof useMyTasksBoard>[0]) {
           className="text-[22px] font-semibold tracking-tight sm:text-2xl"
         >
           My Tasks
-          {currentDomain && (
-            <span className="ml-2 inline-flex align-middle rounded-full bg-secondary px-2 py-1 text-xs font-normal">
-              <DomainLabel {...currentDomain} />
-            </span>
-          )}
+
         </h1>
         <div
           aria-label="Task view"
-          className={`grid w-full rounded-lg bg-muted p-1 sm:flex sm:w-auto ${isMobile ? "grid-cols-2" : "grid-cols-3"}`}
+          className={`grid w-full shrink-0 rounded-lg bg-muted p-1 sm:flex sm:w-auto ${isMobile ? "grid-cols-[1fr_1fr_auto]" : "grid-cols-3"}`}
         >
           {(isMobile
             ? ["list", "calendar"]
@@ -67,10 +61,23 @@ export function MyTasksBoard(input: Parameters<typeof useMyTasksBoard>[0]) {
               {item}
             </button>
           ))}
+          <Button
+            size="icon-sm"
+            variant={filtersOpen ? "default" : "ghost"}
+            className="lg:hidden"
+            aria-label="Filters"
+            aria-expanded={filtersOpen}
+            aria-controls="board-filters"
+            onClick={() => setFiltersOpen(!filtersOpen)}
+          >
+            <ListFilter className="size-4" aria-hidden="true" />
+          </Button>
         </div>
+
       </div>
+      <div className="flex min-w-0 items-center gap-3">
       <div
-        className="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        className="flex min-w-0 flex-1 gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         aria-label="Filter by domain"
       >
         {[
@@ -88,17 +95,6 @@ export function MyTasksBoard(input: Parameters<typeof useMyTasksBoard>[0]) {
             onClick={() => update("domain", domain.id)}
             className={`flex min-h-8 shrink-0 items-center gap-1.5 rounded-full border px-3 text-xs ${filters.domain === domain.id ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card"}`}
           >
-            {domain.id && (
-              <span
-                className="size-2 rounded-full"
-                style={{
-                  background: domain.color
-                    ? domainColors.find((item) => item.id === domain.color)
-                        ?.value
-                    : undefined,
-                }}
-              />
-            )}
             {domain.name}
             <span className="opacity-70">
               {
@@ -113,40 +109,20 @@ export function MyTasksBoard(input: Parameters<typeof useMyTasksBoard>[0]) {
           </button>
         ))}
       </div>
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <Button
-          variant="outline"
-          className="min-h-8 gap-2 text-xs"
-          aria-expanded={filtersOpen}
-          aria-controls="board-filters"
-          onClick={() => setFiltersOpen(!filtersOpen)}
-        >
-          <ListFilter className="size-3.5" />
-          Filters
-          {activeFilters.length ? ` · ${activeFilters.length}` : ""}
-        </Button>
-        <div
-          className="flex min-w-0 flex-1 flex-wrap gap-1.5"
-          aria-label="Active filters"
-        >
-          {activeFilters.map((filter) => (
-            <button
-              key={filter.key}
-              type="button"
-              onClick={() => update(filter.key, filter.reset)}
-              aria-label={`Remove ${filter.label} filter`}
-              className="inline-flex min-h-8 items-center gap-2 rounded-full bg-secondary px-3 text-xs capitalize text-secondary-foreground"
-            >
-              {filter.label}
-              <span aria-hidden="true">×</span>
-            </button>
-          ))}
-        </div>
-        {incomplete && (
-          <span role="status" className="text-xs text-muted-foreground">
-            Loading tasks…
-          </span>
-        )}
+          <Button
+            size="sm"
+            className="hidden shrink-0 gap-2 lg:inline-flex"
+            variant={filtersOpen ? "default" : "ghost"}
+            aria-label={activeFilters.length ? "Filters, " + activeFilters.length + " active" : "Filters"}
+            title="Filters"
+            aria-expanded={filtersOpen}
+            aria-controls="board-filters"
+            onClick={() => setFiltersOpen(!filtersOpen)}
+          >
+            <ListFilter className="size-4" aria-hidden="true" />
+            Filters
+          </Button>
+
       </div>
       <div
         id="board-filters"
@@ -156,14 +132,14 @@ export function MyTasksBoard(input: Parameters<typeof useMyTasksBoard>[0]) {
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
           <div className="min-w-0 space-y-1.5">
             <p className="text-xs font-medium text-muted-foreground">
-              Schedule
+              Work date
             </p>
             <TaskSelect
               label="Filter tasks by date"
               value={filters.date}
               onChange={(value) => update("date", value)}
               options={[
-                { value: "all", label: "Date: All" },
+                { value: "all", label: "Any work date" },
                 { value: "today", label: "Today" },
                 { value: "tomorrow", label: "Tomorrow" },
                 { value: "week", label: "This week" },
@@ -183,14 +159,14 @@ export function MyTasksBoard(input: Parameters<typeof useMyTasksBoard>[0]) {
               value={filters.priority}
               onChange={(value) => update("priority", value)}
               options={[
-                { value: "all", label: "Priority: All" },
+                { value: "all", label: "Any priority" },
                 ...priorities,
               ]}
             />
           </div>
           <div className="min-w-0 space-y-1.5">
             <p className="text-xs font-medium text-muted-foreground">
-              Due date
+              Deadline
             </p>
             <DatePicker
               ariaLabel="Filter by due date"
@@ -269,6 +245,30 @@ export function MyTasksBoard(input: Parameters<typeof useMyTasksBoard>[0]) {
           Reset filters
         </Button>
       </div>
+      {(activeFilters.length > 0 || incomplete) && <div className="flex flex-wrap items-center justify-between gap-2">
+        <div
+          className="flex min-w-0 flex-1 flex-wrap gap-1.5"
+          aria-label="Active filters"
+        >
+          {activeFilters.map((filter) => (
+            <button
+              key={filter.key}
+              type="button"
+              onClick={() => update(filter.key, filter.reset)}
+              aria-label={`Remove ${filter.label} filter`}
+              className="inline-flex min-h-8 items-center gap-2 rounded-full bg-secondary px-3 text-xs capitalize text-secondary-foreground"
+            >
+              {filter.label}
+              <span aria-hidden="true">×</span>
+            </button>
+          ))}
+        </div>
+        {incomplete && (
+          <span role="status" className="text-xs text-muted-foreground">
+            Loading tasks…
+          </span>
+        )}
+      </div>}
       {effectiveView === "calendar" ? (
         <MyTasksCalendar
           tasks={rows}
@@ -306,8 +306,8 @@ export function MyTasksBoard(input: Parameters<typeof useMyTasksBoard>[0]) {
                 style={
                   {
                     "--board-columns": columns
-                      .map((column) =>
-                        collapsed[column.id] ? "180px" : "minmax(240px,1fr)",
+                      .map(() =>
+                        "minmax(280px, 1fr)",
                       )
                       .join(" "),
                   } as CSSProperties

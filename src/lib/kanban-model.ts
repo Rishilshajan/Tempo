@@ -1,15 +1,32 @@
+/**
+ * TEMPO-004 - Pure lane classification, task-date and combined-filter rules.
+ * Used by: useMyTasksBoard; MyTasksBoard; MyTasksCalendar. Shared consumers remain supported.
+ * Code map: src/components/code-map.md.
+ */
 import { localDateKey } from "./validation/task";
 import { dayWindow, isCarried, belongsToDay } from "./today-model";
 import { shiftDate } from "./validation/recurrence";
 import type { TaskRecord } from "@/components/tasks/task-list";
 
 export type Lane = "planned" | "progress" | "carried" | "completed";
+/**
+ * TEMPO-004-F32 - taskLane
+ * Purpose: Classifies current task state into a workflow lane.
+ * Used by: useMyTasksBoard; MyTasksBoard; MyTasksCalendar.
+ * Trigger: The caller renders, recomputes or handles its associated interaction.
+ */
 export function taskLane(task: TaskRecord, now = Date.now()): Lane {
   if (task.status === "completed") return "completed";
   const today = localDateKey(new Date(now), task.timezone);
   if (isCarried(task, dayWindow(today, task.timezone, now))) return "carried";
   return task.progress === "in_progress" ? "progress" : "planned";
 }
+/**
+ * TEMPO-004-F33 - taskDate
+ * Purpose: Resolves the relevant date for filtering and sorting.
+ * Used by: filterTasks.
+ * Trigger: Date filtering or scheduled-time sorting runs.
+ */
 export function taskDate(task: TaskRecord) {
   return task.schedule.type === "fixed"
     ? localDateKey(new Date(task.schedule.startAt), task.timezone)
@@ -24,6 +41,12 @@ export type BoardFilters = {
   sort: string;
   dueDate?: string;
 };
+/**
+ * TEMPO-004-F34 - filterTasks
+ * Purpose: Applies combined domain/date/priority/deadline filters and sorting.
+ * Used by: useMyTasksBoard.
+ * Trigger: Board input, clock or filters change.
+ */
 export function filterTasks(
   tasks: TaskRecord[],
   filter: BoardFilters,

@@ -1,34 +1,30 @@
 /**
- * TEMPO-003 - Existing board lane/card and responsive helpers; reused without new queries.
+ * TEMPO-004 - Shared Kanban lanes, cards, list and calendar-agenda rows.
+ * Used by: MyTasksBoard; MyTasksCalendar. Shared consumers remain supported.
  * Code map: src/components/code-map.md.
  */
 "use client";
 import { Button } from "@/components/ui/button";
 import { type Lane } from "@/lib/kanban-model";
 import { taskTimestamp } from "@/lib/task-datetime";
-import { formatMinutes } from "@/lib/today-model";
 import { useDroppable } from "@dnd-kit/core";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import {
   ChevronDown,
   ChevronRight,
-  Clock3,
-  GitBranch,
   GripVertical,
   History,
-  ListChecks,
   Plus,
 } from "lucide-react";
-import { useState, type ReactNode } from "react";
-import { toast } from "sonner";
+import { type ReactNode } from "react";
 import { columns } from "./board-config";
 import {
   type SetTaskCompleted,
   type SetTaskProgress,
   type TaskRecord,
 } from "./task-list";
-import { TaskDomainPill, TaskMetadataPills } from "./task-metadata-pills";
+import { TaskMetadataPills } from "./task-metadata-pills";
 import { TaskRescheduleCalendar } from "./task-reschedule-calendar";
 import { PriorityLabel } from "./task-select";
 import { TaskPill, TaskStatusSelect } from "./task-status";
@@ -43,11 +39,12 @@ type BoardCardProps = {
   onReschedule: (schedule: TaskRecord["schedule"]) => Promise<unknown>;
   compact?: boolean;
 };
+
 /**
- * TEMPO-003-F34 - LaneColumn
- * Purpose: Provides the existing LaneColumn behavior for its owning view.
- * Used by: See src/components/code-map.md for direct callers.
- * Trigger: The owning view renders or its associated interaction runs.
+ * TEMPO-004-F08 - LaneColumn
+ * Purpose: Renders a collapsible drop target with lane count and empty state.
+ * Used by: MyTasksBoard.
+ * Trigger: Each visible Kanban/List lane renders.
  */
 export function LaneColumn({
   column,
@@ -139,11 +136,12 @@ export function LaneColumn({
     </section>
   );
 }
+
 /**
- * TEMPO-003-F35 - BoardCard
- * Purpose: Provides the existing BoardCard behavior for its owning view.
- * Used by: See src/components/code-map.md for direct callers.
- * Trigger: The owning view renders or its associated interaction runs.
+ * TEMPO-004-F09 - BoardCard
+ * Purpose: Renders a draggable Kanban card or delegates to the compact row.
+ * Used by: MyTasksBoard; DragOverlay.
+ * Trigger: A lane task or drag preview renders.
  */
 export function BoardCard({
   task,
@@ -164,9 +162,6 @@ export function BoardCard({
     transition,
     isDragging,
   } = useSortable({ id: task._id, disabled: saving });
-  const complete = task.subtasks.filter(
-    (step) => step.completedAt !== undefined,
-  ).length;
   if (compact)
     return (
       <CompactBoardRow
@@ -199,19 +194,8 @@ export function BoardCard({
       }}
       className={`min-w-0 cursor-pointer space-y-2 rounded-lg border border-border bg-card p-2.5 shadow-sm hover:border-primary/40 motion-reduce:transition-none ${isDragging ? "opacity-35" : ""}`}
     >
-      <div className="flex items-center gap-1 text-[10px]">
-        <TaskDomainPill task={task} />
-        <TaskPill
-          tone={
-            task.priority === "urgent"
-              ? "overdue"
-              : task.priority === "high"
-                ? "progress"
-                : "neutral"
-          }
-        >
-          <PriorityLabel value={task.priority} />
-        </TaskPill>
+      <div className="flex items-start gap-2">
+        <button type="button" className={`min-w-0 flex-1 break-words text-left text-xs font-medium leading-5 hover:text-primary ${task.status === "completed" ? "text-muted-foreground line-through" : ""}`} onClick={() => onOpen(task)}>{task.title}</button>
         <button
           {...attributes}
           {...listeners}
@@ -222,56 +206,9 @@ export function BoardCard({
           <GripVertical className="size-4" />
         </button>
       </div>
-      <button
-        type="button"
-        className={`w-full break-words text-left text-xs font-medium leading-5 hover:text-primary ${task.status === "completed" ? "text-muted-foreground line-through" : ""}`}
-        onClick={() => onOpen(task)}
-      >
-        {task.title}
-      </button>
-      <TaskPill tone={task.schedule.type === "fixed" ? "fixed" : "flexible"}>
-        {task.schedule.type === "fixed"
-          ? new Intl.DateTimeFormat("en-GB", {
-              timeZone: task.timezone,
-              month: "short",
-              day: "numeric",
-              hour: "2-digit",
-              minute: "2-digit",
-              hourCycle: "h23",
-            }).formatRange(task.schedule.startAt, task.schedule.endAt)
-          : task.schedule.dueDate
-            ? `Due ${shortBoardDate(task.schedule.dueDate)}`
-            : "Anytime"}
-      </TaskPill>
-      <div className="flex flex-wrap gap-2 text-[10px] text-muted-foreground">
-        {lane === "carried" && (
-          <TaskPill tone="carried">
-            Carried{task.rollForwardCount ? ` ×${task.rollForwardCount}` : ""} ·{" "}
-            {shortBoardDate(task.originalWorkDate ?? task.workDate)}
-          </TaskPill>
-        )}
-        {task.estimatedMinutes !== undefined && (
-          <TaskPill>
-            <Clock3 className="size-3" />
-            {formatMinutes(task.estimatedMinutes)}
-          </TaskPill>
-        )}
-        {task.subtasks.length > 0 && (
-          <TaskPill tone="completed">
-            <ListChecks className="size-3" />
-            {complete}/{task.subtasks.length} steps
-          </TaskPill>
-        )}
-        {!!task.threadCount && (
-          <button
-            type="button"
-            className="inline-flex min-h-6 items-center gap-1 rounded-full bg-violet-100 px-2 text-[10px] text-violet-900"
-            onClick={() => onOpen(task)}
-          >
-            <GitBranch className="size-3" />
-            Thread
-          </button>
-        )}
+      <div className="task-metadata-strip flex flex-wrap items-center gap-1.5 text-[10px]">
+        <TaskMetadataPills task={task} carried={lane === "carried"} onOpen={() => onOpen(task)} />
+        <TaskPill tone={task.priority === "urgent" ? "overdue" : task.priority === "high" ? "progress" : "neutral"}><PriorityLabel value={task.priority} /></TaskPill>
       </div>
       {task.status === "completed" && task.completedAt && (
         <time
@@ -282,38 +219,25 @@ export function BoardCard({
         </time>
       )}
       <div className="flex flex-wrap items-center justify-end gap-1 pt-1">
-        {lane === "carried" && (
-          <div className="mr-auto flex flex-wrap gap-1">
-            <Button
-              variant="secondary"
-              className="h-8 min-h-8 rounded-full px-2 text-[10px]"
-              disabled={saving}
-              onClick={onContinue}
-            >
-              Continue Today
-            </Button>
-            <TaskRescheduleCalendar
-              compact
-              task={task}
-              disabled={saving}
-              onReschedule={onReschedule}
-            />
-          </div>
-        )}
+
         <TaskStatusSelect
           task={task}
           onSetCompleted={onSetCompleted}
           onSetProgress={onSetProgress}
         />
+        {lane === "carried" && (
+          <TaskRescheduleCalendar iconOnly task={task} disabled={saving} onReschedule={onReschedule} />
+        )}
       </div>
     </article>
   );
 }
+
 /**
- * TEMPO-003-F36 - CompactBoardRow
- * Purpose: Provides the existing CompactBoardRow behavior for its owning view.
- * Used by: See src/components/code-map.md for direct callers.
- * Trigger: The owning view renders or its associated interaction runs.
+ * TEMPO-004-F10 - CompactBoardRow
+ * Purpose: Renders the shared List and Calendar-agenda task row.
+ * Used by: BoardCard; MyTasksBoard calendar renderTask.
+ * Trigger: A List row or selected-day calendar card renders.
  */
 export function CompactBoardRow({
   task,
@@ -322,22 +246,9 @@ export function CompactBoardRow({
   onOpen,
   onSetCompleted,
   onSetProgress,
-  onContinue,
   onReschedule,
 }: Omit<BoardCardProps, "compact">) {
-  const [pending, setPending] = useState(false);
   const completed = task.status === "completed";
-  async function toggle() {
-    if (pending || saving) return;
-    setPending(true);
-    try {
-      await onSetCompleted(task._id, !completed);
-    } catch {
-      toast.error("Couldn't update this task. Please try again.");
-    } finally {
-      setPending(false);
-    }
-  }
   return (
     <article
       className="flex min-w-0 cursor-pointer flex-wrap items-center gap-2 rounded-lg border border-border bg-card px-3 py-2.5 hover:border-primary/40"
@@ -351,14 +262,6 @@ export function CompactBoardRow({
           onOpen(task);
       }}
     >
-      <input
-        type="checkbox"
-        className="size-4 shrink-0 accent-primary"
-        checked={completed}
-        disabled={pending || saving || task.recurrencePlanned}
-        aria-label={`${completed ? "Reopen" : "Complete"} ${task.title}`}
-        onChange={() => void toggle()}
-      />
       <div className="min-w-0 flex-1 basis-40">
         <button
           type="button"
@@ -367,15 +270,12 @@ export function CompactBoardRow({
         >
           {task.title}
         </button>
-        <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[10px] text-muted-foreground">
+        <div className="task-metadata-strip mt-2 flex flex-wrap items-center gap-1.5 text-[10px]">
           <TaskMetadataPills
             task={task}
             carried={lane === "carried"}
             onOpen={() => onOpen(task)}
           />
-        </div>
-      </div>
-      <div className="flex w-full flex-wrap items-center justify-end gap-2 pl-6 sm:w-auto sm:pl-0">
         <TaskPill
           tone={
             task.priority === "urgent"
@@ -387,38 +287,30 @@ export function CompactBoardRow({
         >
           <PriorityLabel value={task.priority} />
         </TaskPill>
-        {lane === "carried" && (
-          <>
-            <Button
-              variant="secondary"
-              className="h-8 min-h-8 rounded-full px-2 text-[10px]"
-              disabled={saving}
-              onClick={onContinue}
-            >
-              Continue Today
-            </Button>
-            <TaskRescheduleCalendar
-              compact
-              task={task}
-              disabled={saving}
-              onReschedule={onReschedule}
-            />
-          </>
-        )}
+        </div>
+      </div>
+      <div className="flex w-full flex-wrap items-center justify-end gap-1 sm:w-auto">
+
+
         <TaskStatusSelect
+          disabled={saving}
           task={task}
           onSetCompleted={onSetCompleted}
           onSetProgress={onSetProgress}
         />
+        {lane === "carried" && (
+          <TaskRescheduleCalendar iconOnly task={task} disabled={saving} onReschedule={onReschedule} />
+        )}
       </div>
     </article>
   );
 }
+
 /**
- * TEMPO-003-F37 - shortBoardDate
- * Purpose: Provides the existing shortBoardDate behavior for its owning view.
- * Used by: See src/components/code-map.md for direct callers.
- * Trigger: The owning view renders or its associated interaction runs.
+ * TEMPO-004-F11 - shortBoardDate
+ * Purpose: Formats a stored calendar date for a badge or filter label.
+ * Used by: useMyTasksBoard active-filter labels.
+ * Trigger: A custom or range filter label is computed.
  */
 export function shortBoardDate(value: string) {
   return new Intl.DateTimeFormat("en-GB", {
@@ -426,20 +318,22 @@ export function shortBoardDate(value: string) {
     month: "short",
   }).format(new Date(`${value}T12:00:00`));
 }
+
 /**
- * TEMPO-003-F38 - mobileBoardSnapshot
- * Purpose: Provides the existing mobileBoardSnapshot behavior for its owning view.
- * Used by: See src/components/code-map.md for direct callers.
- * Trigger: The owning view renders or its associated interaction runs.
+ * TEMPO-004-F12 - mobileBoardSnapshot
+ * Purpose: Reads the mobile breakpoint for useSyncExternalStore.
+ * Used by: useMyTasksBoard/useSyncExternalStore.
+ * Trigger: React reads the responsive snapshot.
  */
 export function mobileBoardSnapshot() {
   return window.matchMedia("(max-width: 639px)").matches;
 }
+
 /**
- * TEMPO-003-F39 - subscribeMobileBoard
- * Purpose: Provides the existing subscribeMobileBoard behavior for its owning view.
- * Used by: See src/components/code-map.md for direct callers.
- * Trigger: The owning view renders or its associated interaction runs.
+ * TEMPO-004-F13 - subscribeMobileBoard
+ * Purpose: Subscribes to responsive breakpoint changes and returns cleanup.
+ * Used by: useMyTasksBoard/useSyncExternalStore.
+ * Trigger: Subscription setup and breakpoint changes; returns cleanup.
  */
 export function subscribeMobileBoard(listener: () => void) {
   const media = window.matchMedia("(max-width: 639px)");

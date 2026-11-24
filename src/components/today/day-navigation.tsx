@@ -6,7 +6,7 @@
 import { Button } from "@/components/ui/button";
 import { DatePicker } from "@/components/ui/date-picker";
 import { shiftDate } from "@/lib/validation/recurrence";
-import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { TaskPrefill } from "./today-types";
 
 /**
@@ -17,9 +17,7 @@ import type { TaskPrefill } from "./today-types";
  */
 export function DayNavigation({
   date,
-  today,
   onDateChange,
-  onCreateTask,
 }: {
   date: string;
   today: string;
@@ -66,14 +64,7 @@ export function DayNavigation({
           </Button>
         </div>
       </div>
-      <Button
-        className="dashboard-mobile-create fixed bottom-20 right-4 z-20 size-12 rounded-full shadow-md lg:hidden"
-        disabled={!date || date < today}
-        onClick={() => onCreateTask({ date })}
-      >
-        <Plus aria-hidden="true" />
-        <span className="sr-only">Create task</span>
-      </Button>
+
     </div>
   );
 }

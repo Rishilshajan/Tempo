@@ -6,7 +6,7 @@
 import { TaskSelect } from "@/components/tasks/task-select";
 import { taskTones } from "@/components/tasks/task-status";
 import { Button } from "@/components/ui/button";
-import { CheckCheck, Plus } from "lucide-react";
+import { CheckCheck } from "lucide-react";
 import { DayTaskRow } from "./day-task-row";
 import type { useDayViewModel } from "./use-day-view-model";
 /**
@@ -20,7 +20,7 @@ export function DayTaskPanel({
 }: {
   model: ReturnType<typeof useDayViewModel>;
 }) {
-  const { tasks, day, now, focus, focusSaving, onFocus, loadingMore, props, setDomainFilter, summary, group, setGroup, prioritiesHeading, pending, today, options, effectiveDomainFilter, listedTasks, hasTaskFilters, noMatches, filtered, activeFocus, complete } = model;
+  const { day, now, focusSaving, onFocus, loadingMore, props, setDomainFilter, summary, group, setGroup, prioritiesHeading, pending, today, options, effectiveDomainFilter, listedTasks, hasTaskFilters, noMatches, filtered, activeFocus, complete } = model;
   return (
     <section
       id="day-priorities"
@@ -48,6 +48,7 @@ export function DayTaskPanel({
             )
           </span>
         </h2>
+        <Button size="sm" className="min-h-9 lg:hidden" disabled={day.date < day.today} onClick={() => props.onCreateTask({ date: day.date })}>Create task</Button>
         {hasTaskFilters && (
           <div className="w-full min-w-0 sm:w-44">
             <TaskSelect
@@ -79,7 +80,7 @@ export function DayTaskPanel({
             { id: "flexible", label: "Flexible", tone: "flexible" },
             {
               id: "carried",
-              label: `Carried (${summary.carried.length})`,
+              label: `Needs review (${summary.carried.length})`,
               tone: "carried",
             },
           ].map((item) => (
@@ -102,7 +103,7 @@ export function DayTaskPanel({
         tabIndex={0}
       >
         {!filtered.length ? (
-          <div className="flex min-h-48 flex-col items-center justify-center px-3 py-7 text-center">
+          <div className="dashboard-task-empty flex min-h-48 flex-col items-center justify-center px-3 py-7 text-center">
             <span className="mb-3 flex size-10 items-center justify-center rounded-full bg-secondary text-primary">
               <CheckCheck className="size-5" aria-hidden="true" />
             </span>
@@ -125,10 +126,10 @@ export function DayTaskPanel({
             {!noMatches && (
               <Button
                 variant="secondary"
-                className="mt-4 min-h-10 gap-2 text-xs"
+                className="mt-4 hidden min-h-10 gap-2 text-xs lg:inline-flex"
                 onClick={() => props.onCreateTask({ date: day.date })}
               >
-                <Plus aria-hidden="true" />
+
                 Create Task
               </Button>
             )}
@@ -159,50 +160,6 @@ export function DayTaskPanel({
               />
             ))}
           </ul>
-        )}
-        {group === "all" && (
-          <details className="mt-4 border-t border-border pt-2">
-            <summary className="min-h-10 cursor-pointer py-2 text-sm font-medium">
-              Needs review ({summary.carried.length})
-            </summary>
-            <p className="mb-2 text-xs text-muted-foreground">
-              Older unfinished work. Planning it today preserves its original
-              deadline; reschedule bookings explicitly.
-            </p>
-            <ul className="space-y-2">
-              {summary.carried
-                .filter(
-                  (task) =>
-                    effectiveDomainFilter === "all" ||
-                    (effectiveDomainFilter === "uncategorized"
-                      ? !task.domain
-                      : task.domainId === effectiveDomainFilter),
-                )
-                .map((task) => (
-                  <DayTaskRow
-                    key={task._id}
-                    task={task}
-                    day={day}
-                    now={now}
-                    pending={pending.has(task._id)}
-                    onComplete={() => complete(task)}
-                    onOpen={() => props.onOpenTask(task)}
-                    onSetCompleted={props.onSetCompleted}
-                    onSetProgress={props.onSetProgress}
-                    onPlanToday={
-                      props.onPlanTask
-                        ? () => props.onPlanTask!(task)
-                        : undefined
-                    }
-                    onReschedule={
-                      props.onRescheduleTask
-                        ? (schedule) => props.onRescheduleTask!(task, schedule)
-                        : undefined
-                    }
-                  />
-                ))}
-            </ul>
-          </details>
         )}
         {!!summary.completed.length && group === "all" && (
           <details className="mt-5 border-t border-border pt-3">

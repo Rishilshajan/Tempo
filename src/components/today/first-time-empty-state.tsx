@@ -5,7 +5,6 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
 
 type FirstTimeEmptyStateProps = {
   /** Authoritative totals across the user's data, not just today's tasks. */
@@ -50,7 +49,7 @@ export function FirstTimeEmptyState({
           className="min-h-11 min-w-40 gap-2 px-5"
           onClick={onCreateTask}
         >
-          <Plus size={16} aria-hidden="true" />
+
           Create Task
         </Button>
         <Button
@@ -59,7 +58,7 @@ export function FirstTimeEmptyState({
           className="min-h-11 min-w-40 gap-2 px-5"
           onClick={onCreateDomain}
         >
-          <Plus size={16} aria-hidden="true" />
+
           Create Domain
         </Button>
       </div>

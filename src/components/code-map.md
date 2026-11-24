@@ -4,7 +4,7 @@ Current implementation map for landing, authentication and the Today dashboard. 
 
 ## Conventions
 
-- TEMPO-001: landing/public branding. TEMPO-002: authentication. TEMPO-003: Today and its reused task interfaces.
+- TEMPO-001: landing/public branding. TEMPO-002: authentication. TEMPO-003: Today and its reused task interfaces. TEMPO-004: My Tasks and shared board/calendar helpers.
 - File headers describe ownership; function comments use stable IDs plus purpose, caller reference and trigger. Inline callbacks inherit the owning function description.
 - TEMPO-003-F10 is retired (removed allocation interaction). Do not reuse it.
 - Frontend source files in src/ must be strictly below 500 lines, including comments. Backend/generated files, dependencies and build output are outside this UI contract.
@@ -84,11 +84,8 @@ Current implementation map for landing, authentication and the Today dashboard. 
 | src/components/today/use-day-view-model.tsx | useDayViewModel (TEMPO-003-F18) |
 | src/components/today/use-today-surface.tsx | useTodaySurface (TEMPO-003-F22) |
 | src/components/today/workspace-search.tsx | WorkspaceSearch (TEMPO-003-F13) |
-| src/components/tasks/board-cards.tsx | LaneColumn (TEMPO-003-F34); BoardCard (TEMPO-003-F35); CompactBoardRow (TEMPO-003-F36); shortBoardDate (TEMPO-003-F37); mobileBoardSnapshot (TEMPO-003-F38); subscribeMobileBoard (TEMPO-003-F39) |
-| src/components/tasks/board-config.ts | Shared types/configuration or compatibility entry |
 | src/components/tasks/create-task-sheet.tsx | CreateTaskSheet (TEMPO-003-F31) |
 | src/components/tasks/detail-shared.tsx | detailError; detailTime; DetailEmpty; ConfirmDelete; DetailRow (TEMPO-003-F40) |
-| src/components/tasks/my-tasks-board.tsx | MyTasksBoard (TEMPO-003-F32) |
 | src/components/tasks/submit-task-form.ts | submitTaskForm (TEMPO-003-F25) |
 | src/components/tasks/task-detail-workspace.tsx | TaskDetailWorkspace (TEMPO-003-F41) |
 | src/components/tasks/task-form-basics.tsx | TaskFormBasics (TEMPO-003-F26) |
@@ -98,9 +95,97 @@ Current implementation map for landing, authentication and the Today dashboard. 
 | src/components/tasks/task-form-subtasks.tsx | TaskFormSubtasks (TEMPO-003-F28) |
 | src/components/tasks/task-form-types.ts | Shared types/configuration or compatibility entry |
 | src/components/tasks/task-form.tsx | TaskForm (TEMPO-003-F23) |
-| src/components/tasks/use-my-tasks-board.tsx | useMyTasksBoard (TEMPO-003-F33) |
 | src/components/tasks/use-task-detail-workspace.tsx | useTaskDetailWorkspace (TEMPO-003-F42) |
 | src/components/tasks/use-task-form-state.tsx | useTaskFormState (TEMPO-003-F24) |
+
+## TEMPO-004 - My Tasks
+
+Updated 2026-11-24. This map describes the current implementation.
+
+### Entry and ownership
+
+DashboardPage -> TodayWorkspace/ConnectedToday -> TodaySurface -> MyTasksBoard -> useMyTasksBoard. TodaySurface selects My Tasks through the existing view/domain URL state. ConnectedToday owns the task/domain feeds and completion/progress callbacks. useMyTasksBoard owns local view/filter/collapse/drag state and the existing move/reschedule mutations. Presentation modules receive this data; no duplicate subscriptions were introduced.
+
+Desktop exposes Kanban, List and Calendar. Mobile exposes List and Calendar; Kanban falls back to List. Month, Week and Day are calendar periods. The current Week implementation displays the weeks in the displayed month.
+
+View controls sit beside My Tasks. Desktop Filters sits on the domain row; mobile uses an icon beside Calendar. Filter options expand after the domain row. Domain chips are horizontally scrollable. Active-filter chips clear individual values.
+
+### Modules and exports
+
+| File | Responsibility / callers |
+| --- | --- |
+| src/components/tasks/my-tasks-board.tsx | My Tasks composition and filter/view controls. Used by TodaySurface. |
+| src/components/tasks/use-my-tasks-board.tsx | My Tasks state, clock, filters and drag mutations. Used by MyTasksBoard. |
+| src/components/tasks/board-cards.tsx | Shared Kanban lanes, cards, list and calendar-agenda rows. Used by MyTasksBoard; MyTasksCalendar. |
+| src/components/tasks/board-config.ts | Four lane definitions and the board prop contract. Used by MyTasksBoard; useMyTasksBoard; LaneColumn. |
+| src/components/tasks/my-tasks-calendar.tsx | Month/week/day calendar and selected-day agenda. Used by MyTasksBoard. |
+| src/components/tasks/task-metadata-pills.tsx | Shared domain, schedule, effort, subtask and thread badges. Used by BoardCard; CompactBoardRow; DayTaskRow. |
+| src/components/tasks/task-status.tsx | Shared status controls and badge tone definitions. Used by BoardCard; CompactBoardRow; DayTaskRow; TaskList. |
+| src/components/tasks/task-select.tsx | Shared select input, priority options and priority label. Used by MyTasksBoard; DayTaskPanel; task forms. |
+| src/components/tasks/task-reschedule-calendar.tsx | Shared validated reschedule popover. Used by BoardCard; CompactBoardRow; DayTaskRow. |
+| src/lib/kanban-model.ts | Pure lane classification, task-date and combined-filter rules. Used by useMyTasksBoard; MyTasksBoard; MyTasksCalendar. |
+| src/lib/calendar-model.ts | Pure date-grid and selected-day task calculations. Used by MyTasksCalendar. |
+
+### Functions and named callbacks
+
+Every named function/helper below has the same source ID. Anonymous JSX, effect, memo and array callbacks inherit the owning function; they are not independently exported APIs. Types/imports have no runtime trigger.
+
+| Reference | Function / file | Purpose | Used by | Trigger |
+| --- | --- | --- | --- | --- |
+| TEMPO-004-F01 | MyTasksBoard - src/components/tasks/my-tasks-board.tsx | Composes domain filters, views, filter options and shared editors through callbacks. | TodaySurface | The caller renders, recomputes or handles its associated interaction. |
+| TEMPO-004-F02 | useMyTasksBoard - src/components/tasks/use-my-tasks-board.tsx | Owns one board state model, clock, sensors and existing move/reschedule mutations. | MyTasksBoard | The caller renders, recomputes or handles its associated interaction. |
+| TEMPO-004-F03 | update - src/components/tasks/use-my-tasks-board.tsx | Updates local filter or clock state in its owning hook. | useMyTasksBoard clock effect | Mount and every 60 seconds; cleared on unmount.
+| TEMPO-004-F04 | update - src/components/tasks/use-my-tasks-board.tsx | Updates local filter or clock state in its owning hook. | MyTasksBoard domain/date/priority/deadline/sort controls | A filter control or active-filter chip changes.
+| TEMPO-004-F05 | laneRows - src/components/tasks/use-my-tasks-board.tsx | Selects visible tasks for one workflow lane. | MyTasksBoard; drop | A lane renders or a drag operation computes neighbors.
+| TEMPO-004-F06 | saveMove - src/components/tasks/use-my-tasks-board.tsx | Persists a guarded lane move and neighbor ordering. | drop; existing board move callbacks | A supported lane move is requested.
+| TEMPO-004-F07 | drop - src/components/tasks/use-my-tasks-board.tsx | Resolves a drag target, guards invalid moves and delegates persistence. | useMyTasksBoard | DndContext emits onDragEnd. |
+| TEMPO-004-F08 | LaneColumn - src/components/tasks/board-cards.tsx | Renders a collapsible drop target with lane count and empty state. | MyTasksBoard | Each visible Kanban/List lane renders.
+| TEMPO-004-F09 | BoardCard - src/components/tasks/board-cards.tsx | Renders a draggable Kanban card or delegates to the compact row. | MyTasksBoard; DragOverlay | A lane task or drag preview renders.
+| TEMPO-004-F10 | CompactBoardRow - src/components/tasks/board-cards.tsx | Renders the shared List and Calendar-agenda task row. | BoardCard; MyTasksBoard calendar renderTask | A List row or selected-day calendar card renders.
+| TEMPO-004-F11 | shortBoardDate - src/components/tasks/board-cards.tsx | Formats a stored calendar date for a badge or filter label. | useMyTasksBoard active-filter labels | A custom or range filter label is computed.
+| TEMPO-004-F12 | mobileBoardSnapshot - src/components/tasks/board-cards.tsx | Reads the mobile breakpoint for useSyncExternalStore. | useMyTasksBoard/useSyncExternalStore | React reads the responsive snapshot.
+| TEMPO-004-F13 | subscribeMobileBoard - src/components/tasks/board-cards.tsx | Subscribes to responsive breakpoint changes and returns cleanup. | useMyTasksBoard/useSyncExternalStore | Subscription setup and breakpoint changes; returns cleanup.
+| TEMPO-004-F14 | asDate - src/components/tasks/my-tasks-calendar.tsx | Converts a stored date string for calendar controls. | MyTasksCalendar; label | A date is selected, displayed or formatted.
+| TEMPO-004-F15 | label - src/components/tasks/my-tasks-calendar.tsx | Formats a stored date for calendar labels. | MyTasksCalendar; CalendarTaskDay | A calendar heading, cell or date range renders.
+| TEMPO-004-F16 | MyTasksCalendar - src/components/tasks/my-tasks-calendar.tsx | Composes date navigation, calendar periods and selected-day agenda. | MyTasksBoard | The caller renders, recomputes or handles its associated interaction. |
+| TEMPO-004-F17 | choose - src/components/tasks/my-tasks-calendar.tsx | Selects a date, resets agenda scroll and optionally reveals it on mobile. | MyTasksCalendar | A date cell or Today action is selected. |
+| TEMPO-004-F18 | move - src/components/tasks/my-tasks-calendar.tsx | Moves the displayed month or selected day for the current period. | MyTasksCalendar | Previous/next period is clicked. |
+| TEMPO-004-F19 | CalendarTaskDay - src/components/tasks/my-tasks-calendar.tsx | Renders a date cell with task previews and overflow count. | Calendar via its DayButton override | A month date cell renders.
+| TEMPO-004-F20 | TaskDomainPill - src/components/tasks/task-metadata-pills.tsx | Renders the domain name and appearance using existing shared branding. | TaskMetadataPills | The metadata group renders its domain badge.
+| TEMPO-004-F21 | TaskMetadataPills - src/components/tasks/task-metadata-pills.tsx | Composes optional metadata badges in a consistent wrapping order. | BoardCard; CompactBoardRow; DayTaskRow | The caller renders, recomputes or handles its associated interaction. |
+| TEMPO-004-F22 | shortBoardDate - src/components/tasks/task-metadata-pills.tsx | Formats a stored calendar date for a badge or filter label. | TaskMetadataPills | Flexible due-date or carried-date metadata renders.
+| TEMPO-004-F23 | TaskPill - src/components/tasks/task-status.tsx | Applies the shared badge component and semantic tone. | BoardCard; CompactBoardRow; DayTaskRow; TaskList | The caller renders, recomputes or handles its associated interaction. |
+| TEMPO-004-F24 | TaskStatusSelect - src/components/tasks/task-status.tsx | Provides the single Not started/In progress/Completed dropdown. | BoardCard; CompactBoardRow; DayTaskRow; TaskList | The caller renders, recomputes or handles its associated interaction. |
+| TEMPO-004-F25 | change - src/components/tasks/task-status.tsx | Persists the selected task status with busy, error and recurrence handling. | TaskStatusSelect | The status dropdown selects a different value. |
+| TEMPO-004-F26 | TaskSelect - src/components/tasks/task-select.tsx | Renders the shared accessible select control and options. | MyTasksBoard; DayTaskPanel; task forms | The caller renders, recomputes or handles its associated interaction. |
+| TEMPO-004-F27 | PriorityLabel - src/components/tasks/task-select.tsx | Resolves the stored priority to its text label. | BoardCard; CompactBoardRow; DayTaskRow; TaskDetailWorkspace; task forms | A priority label renders.
+| TEMPO-004-F28 | TaskRescheduleCalendar - src/components/tasks/task-reschedule-calendar.tsx | Composes date selection and validates a new schedule before persistence. | BoardCard; CompactBoardRow; DayTaskRow | The caller renders, recomputes or handles its associated interaction. |
+| TEMPO-004-F29 | asDate - src/components/tasks/task-reschedule-calendar.tsx | Converts a stored date string for calendar controls. | TaskRescheduleCalendar | The owning function renders or invokes this named helper. |
+| TEMPO-004-F30 | select - src/components/tasks/task-reschedule-calendar.tsx | Validates and saves a selected date while preserving fixed-task local times. | TaskRescheduleCalendar | The reschedule calendar selects a date. |
+| TEMPO-004-F31 | clock - src/components/tasks/task-reschedule-calendar.tsx | Formats a fixed timestamp in the task timezone for rescheduling. | select | The owning function renders or invokes this named helper. |
+| TEMPO-004-F32 | taskLane - src/lib/kanban-model.ts | Classifies current task state into a workflow lane. | useMyTasksBoard; MyTasksBoard; MyTasksCalendar | The caller renders, recomputes or handles its associated interaction. |
+| TEMPO-004-F33 | taskDate - src/lib/kanban-model.ts | Resolves the relevant date for filtering and sorting. | filterTasks | Date filtering or scheduled-time sorting runs.
+| TEMPO-004-F34 | filterTasks - src/lib/kanban-model.ts | Applies combined domain/date/priority/deadline filters and sorting. | useMyTasksBoard | Board input, clock or filters change.
+| TEMPO-004-F35 | calendarWeek - src/lib/calendar-model.ts | Returns the seven date strings for a Monday-based week. | calendarMonthWeeks | The displayed month grid is constructed.
+| TEMPO-004-F36 | calendarMonthWeeks - src/lib/calendar-model.ts | Builds the weeks intersecting the displayed month. | MyTasksCalendar | The displayed month changes or the calendar recomputes.
+| TEMPO-004-F37 | calendarTasks - src/lib/calendar-model.ts | Selects and orders tasks belonging to a date in the active timezone. | MyTasksCalendar; CalendarTaskDay | The selected date, calendar period or task data changes.
+
+### Contracts, shared UI and behavior
+
+- board-config.ts exports columns (planned/progress/carried/completed) and Props. Props connects existing parent-owned data/actions; columns supplies lane labels, empty messages, icons and tones.
+- kanban-model.ts exports Lane and BoardFilters; these contracts drive rendering and pure combined filtering.
+- task-status.tsx exports taskTones and allocationTones; task-select.tsx exports priorities. These are shared configuration, evaluated at module load and consumed during render.
+- Existing Button, Badge, Select, DatePicker, Calendar, Popover, DropdownMenu and ActionTooltip remain the shared primitives. No replacement component library or fetching layer was added.
+- TaskMetadataPills is shared with Today (TEMPO-003). TaskStatusSelect and TaskRescheduleCalendar preserve existing validation, permissions and mutation paths. Calendar agenda reuses CompactBoardRow; List does not have a separate completion checkbox.
+- Dragging to Rolled Forward is rejected; the carried lane is derived. Completion/reopening and rescheduling use existing backend guards. A plain status change is distinct from planning a task for today.
+- Shared create/edit and detail interfaces retain their existing TEMPO-003 IDs and are referenced from TodaySurface. Landing/auth remain TEMPO-001/002. Former 003 IDs F32-F39 for the extracted board modules are superseded here; do not reuse those retired IDs.
+- Global CSS stays in app/styles/dashboard-1.css through globals.css. Calendar/board selectors are feature scoped; shared badge primitives retain their own styling.
+
+### Verification
+
+All frontend TS/TSX/CSS files in src/ must stay strictly below 500 lines including comments. scripts/check-ui-structure.mjs enforces this plus query-free presentation sections. npm run typecheck, npm test and npm run build are the compile, regression and production gates. Live visual verification is a separate check.
+
+The npm run lint command uses TypeScript unused-local/parameter diagnostics, the existing explicit-any check and frontend structure checks. ESLint is not installed or claimed by this command.
 
 ## Global styles
 

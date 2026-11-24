@@ -19,7 +19,7 @@ export function DayFocus({
 }: {
   model: ReturnType<typeof useDayViewModel>;
 }) {
-  const { tasks, day, name, focus, focusSaving, onFocus, props, summary, focusExpanded, setFocusExpanded, today, options, activeFocus } = model;
+  const { day, focusSaving, onFocus, props, summary, focusExpanded, setFocusExpanded, activeFocus } = model;
   return (
     <details
       aria-labelledby="focus-heading"
@@ -76,7 +76,7 @@ export function DayFocus({
               .join(" · ")
           : "Choose one task to give your attention to."}
       </p>
-      <div className="dashboard-focus-actions mt-3 flex flex-wrap items-center gap-2">
+      <div className="dashboard-focus-actions mt-3 flex flex-wrap items-center justify-end gap-2">
         <div className="min-w-0 flex-1">
           <TaskSelect
             label={activeFocus ? "Change main focus" : "Choose main focus"}

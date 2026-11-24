@@ -56,7 +56,6 @@ export async function submitTaskForm(
     repeatCount,
     steps,
     stepTitle,
-    error,
     setError,
     setErrors,
     requestIdRef,

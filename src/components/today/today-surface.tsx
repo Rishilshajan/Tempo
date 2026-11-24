@@ -14,19 +14,18 @@ import { MyTasksBoard } from "@/components/tasks/my-tasks-board";
 import { TaskDetailSheet } from "@/components/tasks/task-detail-sheet";
 import { Button } from "@/components/ui/button";
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
+Popover,
+PopoverContent,
+PopoverTrigger,
 } from "@/components/ui/popover";
-import { CalendarDays, ChevronDown, Plus, Settings2 } from "lucide-react";
+import { CalendarDays } from "lucide-react";
 import Link from "next/link";
 import { FirstTimeEmptyState } from "./first-time-empty-state";
 import { TodayDashboard } from "./today-dashboard";
 import {
-  WorkspaceAccount,
-  WorkspaceUserButton,
-  mobileNavigation,
-  navigation,
+WorkspaceUserButton,
+mobileNavigation,
+navigation
 } from "./today-shell-config";
 import { useTodaySurface } from "./use-today-surface";
 import { WorkspaceSearch } from "./workspace-search";
@@ -90,8 +89,8 @@ export function TodaySurface(input: Parameters<typeof useTodaySurface>[0]) {
                   />
                 }
               >
-                {selectedDomain?.name ?? "Domains"}
-                <ChevronDown size={14} aria-hidden="true" />
+                Domains
+
               </PopoverTrigger>
               <PopoverContent
                 align="start"
@@ -126,51 +125,26 @@ export function TodaySurface(input: Parameters<typeof useTodaySurface>[0]) {
                     openCreateDomain();
                   }}
                 >
-                  <Plus size={14} aria-hidden="true" />
+
                   Create domain
                 </Button>
               </PopoverContent>
             </Popover>
+            <Button variant="ghost" className="min-h-10 text-muted-foreground" onClick={() => { setSettingsSection("domains"); onViewChange("settings"); }}>Settings</Button>
           </nav>
           <WorkspaceSearch
             enabled={notificationsEnabled}
             onTask={setDetailId}
             onDomain={selectDomain}
           />
-          <div className="flex shrink-0 items-center gap-2 sm:gap-5 lg:gap-3">
+          <div className="flex shrink-0 items-center gap-4 sm:gap-5 lg:gap-5">
             <Button
               className="hidden min-h-10 gap-2 lg:inline-flex"
               onClick={openCreateTask}
             >
-              <Plus size={16} aria-hidden="true" />
+
               Create task
             </Button>
-            <div className="hidden lg:block">
-              <Popover>
-                <PopoverTrigger
-                  render={
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="size-10"
-                      aria-label="Workspace settings"
-                    />
-                  }
-                >
-                  <Settings2 size={18} aria-hidden="true" />
-                </PopoverTrigger>
-                <PopoverContent align="end">
-                  <Button
-                    variant="ghost"
-                    className="min-h-10 w-full justify-start"
-                    onClick={() => onViewChange("settings")}
-                  >
-                    Settings
-                  </Button>
-                  <WorkspaceAccount />
-                </PopoverContent>
-              </Popover>
-            </div>
             <span className="hidden items-center gap-2 text-xs text-muted-foreground sm:inline-flex lg:hidden">
               <CalendarDays size={14} aria-hidden="true" />
               {todayLabel}

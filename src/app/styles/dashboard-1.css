@@ -15,11 +15,11 @@
   html:has(.dashboard-shell), body:has(.dashboard-shell) { overflow: hidden; }
   .dashboard-shell { position: fixed; inset: 0; height: 100dvh; min-height: 0; overflow: hidden; }
   .dashboard-shell > div { height: 100%; min-height: 0; display: flex; flex-direction: column; }
-  .dashboard-header { flex-shrink: 0; gap: 16px; min-height: 68px; }
+  .dashboard-header { flex-shrink: 0; justify-content: flex-start; gap: 24px; min-height: 68px; }
   .dashboard-header > a { flex-shrink: 0; }
   .dashboard-header > nav { min-width: 0; }
   .dashboard-header > nav button { font-size: 13px; }
-  .dashboard-header > .relative { flex: 1; max-width: 420px; min-width: 80px; }
+  .dashboard-header > .relative { margin-left: auto; flex: 0 0 auto; }
   .dashboard-shell #today-content { flex: 1; min-height: 0; max-width: 1800px; margin-inline: auto; padding-block: 12px; overflow: auto; }
   .dashboard-shell #today-content[data-workspace-view="today"] { overflow: hidden; }
   #today-content[data-workspace-view="today"] > div { height: 100%; min-height: 0; }
@@ -103,7 +103,7 @@
 
 .dashboard-task-row[data-task-state="completed"] { background: var(--muted); }
 
-.dashboard-row-actions button { width: 36px; height: 36px; min-height: 36px; padding: 0; border-radius: 8px; }
+.dashboard-row-actions button, .dashboard-row-complete { width: auto; height: auto; min-height: 36px; padding: 6px 10px; border-radius: 8px; }
 
 @media (min-width: 1024px) { .dashboard-header > .relative { max-width: 300px; } }
 
@@ -111,9 +111,11 @@
 
 /* TEMPO-003: mobile task titles use the full card width; actions have their own row. */
 
-.dashboard-task-meta { display: flex; flex-wrap: wrap; gap: 0 6px; }
-
-@media (min-width: 1024px) { .dashboard-task-meta > span + span::before { content: "·"; margin-right: 6px; } }
+/* Shared daily, review and completed task badges at every viewport size. */
+.dashboard-task-meta { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; }
+.dashboard-task-meta > span { flex: 0 1 auto; min-width: 0; max-width: 100%; padding: 3px 8px; border-radius: 999px; background: var(--secondary); font-size: 10px; line-height: 1.5; white-space: normal; overflow-wrap: anywhere; }
+.dashboard-task-meta > .dashboard-meta-overdue { background: #fae7e2; color: #924330; }
+.dashboard-task-meta > .dashboard-meta-progress { background: #fff0c9; color: #765319; }
 
 @media (max-width: 1023px) {
   .dashboard-task-row { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 10px; padding: 12px; }
@@ -121,10 +123,6 @@
   .dashboard-task-copy > button { font-size: 14px; line-height: 1.5; }
   .dashboard-task-row > .dashboard-row-complete { grid-column: 1; grid-row: 2; }
   .dashboard-row-actions { grid-column: 2; grid-row: 2; justify-content: flex-end; margin-left: 0; }
-  .dashboard-task-meta { gap: 5px; margin-top: 8px; }
-  .dashboard-task-meta > span { padding: 3px 8px; border-radius: 999px; background: var(--secondary); font-size: 10px; line-height: 1.5; }
-  .dashboard-task-meta > .dashboard-meta-overdue { background: #fae7e2; color: #924330; }
-  .dashboard-task-meta > .dashboard-meta-progress { background: #fff0c9; color: #765319; }
   .dashboard-focus-actions > div:first-child { flex-basis: 100%; width: 100%; }
   .dashboard-focus-actions > button { margin-top: 2px; }
   .dashboard-shell #today-content { padding-inline: 12px; }
@@ -141,6 +139,64 @@
 @media (max-width: 1023px) {
   .dashboard-stat-pills { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
   .dashboard-stat-pill { justify-content: center; }
-  .dashboard-task-meta { display: flex; flex-wrap: wrap; gap: 5px; }
-  .dashboard-task-meta > span { flex: 0 1 auto; min-width: 0; max-width: 100%; white-space: normal; overflow-wrap: anywhere; }
 }
+
+/* Text actions stay below the task content instead of squeezing its title. */
+.dashboard-task-row { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 10px; }
+.dashboard-task-copy { grid-column: 1 / -1; grid-row: 1; width: 100%; }
+.dashboard-row-complete { grid-column: 1; grid-row: 2; }
+.dashboard-row-actions { grid-column: 2; grid-row: 2; justify-content: flex-end; }
+
+.dashboard-row-actions { grid-column: 1 / -1; justify-content: flex-end; }
+.dashboard-row-actions button[data-icon-action] { width: 36px; padding: 0; }
+
+/* Header search expands in place; only matching results appear below it. */
+@media (min-width: 1024px) {
+  .dashboard-header > nav { margin-left: 16px; padding-right: 16px; gap: 8px; }
+  .dashboard-header > .workspace-search { min-width: 0; flex-shrink: 1; }
+  .workspace-search-field { max-width: 100%; }
+}
+
+/* Mobile daily overview: compact controls, visible filters and no floating obstruction. */
+@media (max-width: 1023px) {
+  .dashboard-shell #today-content { padding-top: 14px; }
+  .dashboard-header:has(.workspace-search[data-search-open="true"]) { margin-bottom: 66px; }
+  .dashboard-greeting-row { gap: 10px; }
+  .dashboard-greeting h1 { font-size: 20px; line-height: 1.3; }
+  .dashboard-greeting p { margin-top: 4px; }
+  .dashboard-stat-pill { padding: 5px 8px; font-size: 11px; }
+  .dashboard-date-controls button { min-height: 36px; }
+  .dashboard-day-heading { padding-bottom: 10px; }
+  .dashboard-columns > *, .dashboard-work-column > * { margin-top: 12px; }
+  .dashboard-focus { padding: 12px; }
+  .dashboard-focus-toggle { gap: 4px 8px; min-height: 24px; }
+  .dashboard-focus-toggle h2 { font-size: 10px; }
+  .dashboard-focus-toggle > span { font-size: 12px; line-height: 1.5; }
+  .dashboard-mobile-tabs { padding: 3px; }
+  .dashboard-mobile-tabs button { min-height: 36px; font-size: 12px; }
+  .dashboard-task-panel { padding: 12px; }
+  .dashboard-task-panel > div[aria-label="Priority task filters"] { flex-wrap: nowrap; overflow-x: auto; overflow-y: hidden; gap: 5px; margin-block: 10px; overscroll-behavior-x: contain; }
+  .dashboard-task-panel > div[aria-label="Priority task filters"] button { min-height: 32px; flex-shrink: 0; white-space: nowrap; padding-inline: 10px; font-size: 10px; }
+}
+
+/* Keep only the clearance needed for the fixed mobile navigation. */
+@media (max-width: 1023px) {
+  .dashboard-shell #today-content { padding-bottom: calc(68px + env(safe-area-inset-bottom)); }
+  .dashboard-task-empty { min-height: 0; padding-block: 16px; }
+  .dashboard-task-empty > span { margin-bottom: 8px; }
+  .dashboard-task-scroll > details { margin-top: 10px; padding-top: 6px; }
+}
+
+/* My Tasks keeps each Kanban lane readable regardless of collapsed neighbors. */
+.my-tasks-workspace [aria-label="Task view"] button[aria-pressed="true"] { background: var(--primary); color: var(--primary-foreground); }
+.my-tasks-workspace #board-filters { padding: 12px; }
+.my-tasks-workspace #board-filters > button { min-height: 32px; }
+.my-tasks-workspace #board-filters [data-slot="select-trigger"] { min-height: 40px; }
+
+/* Calendar: aligned agenda and soft date selection. */
+.my-tasks-calendar .task-calendar-cell[data-selected-single="true"] { background: var(--secondary); color: var(--foreground); box-shadow: inset 0 0 0 2px var(--primary); }
+.my-tasks-calendar .task-calendar-cell[data-selected-single="true"] .task-calendar-date { background: var(--primary); color: var(--primary-foreground); }
+.my-tasks-calendar [data-slot="calendar"] { overflow: hidden; border: 1px solid var(--border); border-radius: 10px; }
+.my-tasks-calendar .calendar-agenda-scroll article { align-items: flex-start; }
+.my-tasks-calendar .calendar-agenda-scroll article > div { flex-basis: 100%; }
+.my-tasks-calendar .calendar-agenda-scroll article > div:last-child { width: 100%; padding-left: 0; }

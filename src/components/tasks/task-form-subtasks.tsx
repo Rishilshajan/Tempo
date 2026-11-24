@@ -26,7 +26,7 @@ export function TaskFormSubtasks({
 }: {
   model: ReturnType<typeof useTaskFormState>;
 }) {
-  const { title, dueDate, steps, stepTitle, setStepTitle, errors, today, addStep, updateSteps, moveStep } = model;
+  const { steps, stepTitle, setStepTitle, errors, today, addStep, updateSteps, moveStep } = model;
   return (
     <>
       <div className="space-y-2 border-t border-border pt-4">

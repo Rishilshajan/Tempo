@@ -9,7 +9,8 @@
     "typecheck": "next typegen && tsc --noEmit && tsc --project convex/tsconfig.json --noEmit",
     "test": "node scripts/run-checks.mjs",
     "ci": "npm run typecheck && npm test",
-    "deploy:vercel": "node scripts/deploy-vercel.mjs"
+    "deploy:vercel": "node scripts/deploy-vercel.mjs",
+    "lint": "tsc --noEmit --noUnusedLocals --noUnusedParameters && node scripts/check-typescript-any.mjs && node scripts/check-ui-structure.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.8.0",

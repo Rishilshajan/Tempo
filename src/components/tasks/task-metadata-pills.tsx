@@ -1,3 +1,8 @@
+/**
+ * TEMPO-004 - Shared domain, schedule, effort, subtask and thread badges.
+ * Used by: BoardCard; CompactBoardRow; DayTaskRow. Shared consumers remain supported.
+ * Code map: src/components/code-map.md.
+ */
 "use client";
 import { Clock3, ListChecks, GitBranch } from "lucide-react";
 import {
@@ -7,10 +12,16 @@ import {
 import { formatMinutes } from "@/lib/today-model";
 import type { TaskRecord } from "./task-list";
 import { TaskPill } from "./task-status";
+/**
+ * TEMPO-004-F20 - TaskDomainPill
+ * Purpose: Renders the domain name and appearance using existing shared branding.
+ * Used by: TaskMetadataPills.
+ * Trigger: The metadata group renders its domain badge.
+ */
 export function TaskDomainPill({ task }: { task: Pick<TaskRecord, "domain"> }) {
   return (
     <span
-      className="inline-flex min-w-0 items-center gap-1 overflow-hidden rounded-full px-2 py-1 [&>span]:truncate"
+      className="inline-flex h-6 min-w-0 max-w-full items-center gap-1 overflow-hidden rounded-full px-2 text-[10px] leading-4 [&>span]:truncate"
       style={{
         color: task.domain
           ? domainColors.find((color) => color.id === task.domain?.color)?.value
@@ -25,13 +36,21 @@ export function TaskDomainPill({ task }: { task: Pick<TaskRecord, "domain"> }) {
   );
 }
 
+/**
+ * TEMPO-004-F21 - TaskMetadataPills
+ * Purpose: Composes optional metadata badges in a consistent wrapping order.
+ * Used by: BoardCard; CompactBoardRow; DayTaskRow.
+ * Trigger: The caller renders, recomputes or handles its associated interaction.
+ */
 export function TaskMetadataPills({
   task,
   carried = false,
+  overdue = false,
   onOpen,
 }: {
   task: TaskRecord;
   carried?: boolean;
+  overdue?: boolean;
   onOpen: () => void;
 }) {
   return (
@@ -65,7 +84,7 @@ export function TaskMetadataPills({
             task.subtasks.filter((step) => step.completedAt !== undefined)
               .length
           }
-          /{task.subtasks.length} steps
+          /{task.subtasks.length} subtasks
         </TaskPill>
       )}
       {!!task.threadCount && (
@@ -75,9 +94,10 @@ export function TaskMetadataPills({
           className="inline-flex min-h-6 items-center gap-1 rounded-full bg-violet-100 px-2 text-[10px] text-violet-900"
         >
           <GitBranch className="size-3" />
-          Thread
+          {task.threadCount} {task.threadCount === 1 ? "thread" : "threads"}
         </button>
       )}
+      {overdue && <TaskPill tone="overdue">Overdue</TaskPill>}
       {carried && (
         <TaskPill tone="carried">
           Carried{task.rollForwardCount ? ` ×${task.rollForwardCount}` : ""} ·{" "}
@@ -87,6 +107,12 @@ export function TaskMetadataPills({
     </>
   );
 }
+/**
+ * TEMPO-004-F22 - shortBoardDate
+ * Purpose: Formats a stored calendar date for a badge or filter label.
+ * Used by: TaskMetadataPills.
+ * Trigger: Flexible due-date or carried-date metadata renders.
+ */
 function shortBoardDate(value: string) {
   return new Intl.DateTimeFormat("en-GB", {
     day: "numeric",

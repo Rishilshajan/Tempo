@@ -56,7 +56,7 @@ export function useDayViewModel({
         : task.domainId === domainFilter),
   );
   const summary = summarizeDay(scopedTasks, day);
-  const [focusExpanded, setFocusExpanded] = useState(true);
+  const [focusExpanded, setFocusExpanded] = useState(false);
   const [mobileTab, setMobileTab] = useState<"tasks" | "schedule">("tasks");
   const [group, setGroup] = useState("all");
   const prioritiesHeading = useRef<HTMLHeadingElement>(null);

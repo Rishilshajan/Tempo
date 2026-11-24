@@ -1,23 +1,30 @@
+/**
+ * TEMPO-004 - Shared status controls and badge tone definitions.
+ * Used by: BoardCard; CompactBoardRow; DayTaskRow; TaskList. Shared consumers remain supported.
+ * Code map: src/components/code-map.md.
+ */
 "use client";
+import { ChevronDown } from "lucide-react";
+
 import { ActionTooltip } from "@/components/ui/tooltip";
 
-import { useState, type ReactNode } from "react";
-import { ChevronDown, Circle, CircleCheck, CircleDot } from "lucide-react";
-import { ConvexError } from "convex/values";
-import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuRadioGroup,
-  DropdownMenuRadioItem,
-  DropdownMenuTrigger,
+DropdownMenu,
+DropdownMenuContent,
+DropdownMenuRadioGroup,
+DropdownMenuRadioItem,
+DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { ConvexError } from "convex/values";
+import { Circle,CircleCheck,CircleDot } from "lucide-react";
+import { useState,type ReactNode } from "react";
+import { toast } from "sonner";
 import type {
-  TaskRecord,
-  SetTaskCompleted,
-  SetTaskProgress,
+SetTaskCompleted,
+SetTaskProgress,
+TaskRecord,
 } from "./task-list";
 
 export const taskTones = {
@@ -38,6 +45,12 @@ export const allocationTones = {
   carried: "bg-violet-700 text-white",
 } as const;
 
+/**
+ * TEMPO-004-F23 - TaskPill
+ * Purpose: Applies the shared badge component and semantic tone.
+ * Used by: BoardCard; CompactBoardRow; DayTaskRow; TaskList.
+ * Trigger: The caller renders, recomputes or handles its associated interaction.
+ */
 export function TaskPill({
   tone = "neutral",
   children,
@@ -79,6 +92,12 @@ const statusInk = {
   completed: "text-emerald-800 dark:text-emerald-200",
 };
 
+/**
+ * TEMPO-004-F24 - TaskStatusSelect
+ * Purpose: Provides the single Not started/In progress/Completed dropdown.
+ * Used by: BoardCard; CompactBoardRow; DayTaskRow; TaskList.
+ * Trigger: The caller renders, recomputes or handles its associated interaction.
+ */
 export function TaskStatusSelect({
   task,
   disabled,
@@ -100,8 +119,13 @@ export function TaskStatusSelect({
       ? "completed"
       : (task.progress ?? "not_started");
   const selected = statuses.find((item) => item.value === value)!;
-  const Icon = selected.icon;
-  async function change(next: string | null) {
+  /**
+ * TEMPO-004-F25 - change
+ * Purpose: Persists the selected task status with busy, error and recurrence handling.
+ * Used by: TaskStatusSelect.
+ * Trigger: The status dropdown selects a different value.
+ */
+async function change(next: string | null) {
     if (saving || disabled || !next || next === value) return;
     if (
       next !== "completed" &&
@@ -156,9 +180,10 @@ export function TaskStatusSelect({
           }
         >
           <span className="inline-flex items-center gap-1.5">
-            <Icon className={`size-3 ${statusInk[value]}`} aria-hidden="true" />
+
             {!compact && selected.label}
           </span>
+
           {!compact && <ChevronDown className="size-3" aria-hidden="true" />}
         </DropdownMenuTrigger>
       </ActionTooltip>

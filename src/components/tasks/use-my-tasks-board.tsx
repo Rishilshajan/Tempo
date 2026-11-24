@@ -1,5 +1,6 @@
 /**
- * TEMPO-003 - useMyTasksBoard: state and actions owned once per mounted view.
+ * TEMPO-004 - My Tasks state, clock, filters and drag mutations.
+ * Used by: MyTasksBoard. Shared consumers remain supported.
  * Code map: src/components/code-map.md.
  */
 "use client";
@@ -32,11 +33,12 @@ import {
 import { type Props } from "./board-config";
 import { detailError } from "./detail-shared";
 import { type TaskRecord } from "./task-list";
+
 /**
- * TEMPO-003-F33 - useMyTasksBoard
- * Purpose: Owns existing board filters, drag actions and local view state.
- * Used by: See src/components/code-map.md for direct callers.
- * Trigger: The owning view renders or its associated interaction runs.
+ * TEMPO-004-F02 - useMyTasksBoard
+ * Purpose: Owns one board state model, clock, sensors and existing move/reschedule mutations.
+ * Used by: MyTasksBoard.
+ * Trigger: The caller renders, recomputes or handles its associated interaction.
  */
 export function useMyTasksBoard({
   selectedDomainId,
@@ -86,7 +88,13 @@ export function useMyTasksBoard({
   const reschedule = useMutation(api.tasks.reschedule);
   const [now, setNow] = useState<number | null>(null);
   useEffect(() => {
-    const update = () => setNow(Date.now());
+    /**
+ * TEMPO-004-F03 - update
+ * Purpose: Updates local filter or clock state in its owning hook.
+ * Used by: useMyTasksBoard clock effect.
+ * Trigger: Mount and every 60 seconds; cleared on unmount.
+ */
+const update = () => setNow(Date.now());
     const initial = setTimeout(update, 0);
     const timer = setInterval(update, 60000);
     return () => {
@@ -100,7 +108,13 @@ export function useMyTasksBoard({
       coordinateGetter: sortableKeyboardCoordinates,
     }),
   );
-  const update = (key: keyof BoardFilters, value: string) => {
+  /**
+ * TEMPO-004-F04 - update
+ * Purpose: Updates local filter or clock state in its owning hook.
+ * Used by: MyTasksBoard domain/date/priority/deadline/sort controls.
+ * Trigger: A filter control or active-filter chip changes.
+ */
+const update = (key: keyof BoardFilters, value: string) => {
     if (key === "domain") onDomainChange?.(value);
     setFilters((previous) => ({ ...previous, [key]: value }));
     setHideCompleted(false);
@@ -122,9 +136,21 @@ export function useMyTasksBoard({
       task.completedAt < window.end
     );
   });
-  const laneRows = (lane: Lane) =>
+  /**
+ * TEMPO-004-F05 - laneRows
+ * Purpose: Selects visible tasks for one workflow lane.
+ * Used by: MyTasksBoard; drop.
+ * Trigger: A lane renders or a drag operation computes neighbors.
+ */
+const laneRows = (lane: Lane) =>
     visible.filter((task) => taskLane(task, clock) === lane);
-  async function saveMove(
+  /**
+ * TEMPO-004-F06 - saveMove
+ * Purpose: Persists a guarded lane move and neighbor ordering.
+ * Used by: drop; existing board move callbacks.
+ * Trigger: A supported lane move is requested.
+ */
+async function saveMove(
     task: TaskRecord,
     to: Lane,
     beforeId?: Id<"tasks">,
@@ -148,7 +174,13 @@ export function useMyTasksBoard({
       setSaving(false);
     }
   }
-  function drop(event: DragEndEvent) {
+  /**
+ * TEMPO-004-F07 - drop
+ * Purpose: Resolves a drag target, guards invalid moves and delegates persistence.
+ * Used by: useMyTasksBoard.
+ * Trigger: DndContext emits onDragEnd.
+ */
+function drop(event: DragEndEvent) {
     setDragging(null);
     if (!event.over || event.active.id === event.over.id || saving) return;
     const task = tasks.find((task) => task._id === event.active.id);

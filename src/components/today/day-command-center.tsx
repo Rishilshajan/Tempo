@@ -17,7 +17,7 @@ import { useDayViewModel } from "./use-day-view-model";
  */
 export function DayCommandCenter(input: Parameters<typeof useDayViewModel>[0]) {
   const model = useDayViewModel(input);
-  const { tasks, day, now, focus, subtasks, loadingMore, props, scopedTasks, mobileTab, setMobileTab } = model;
+  const { day, now, subtasks, loadingMore, props, scopedTasks, mobileTab, setMobileTab } = model;
   return (
     <div
       className="dashboard-command min-w-0 space-y-4"

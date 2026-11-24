@@ -32,4 +32,12 @@ for (const file of [
   const source = await readFile(path.join("src/components/today", file), "utf8");
   assert.doesNotMatch(source, /\b(?:useQuery|usePaginatedQuery|useMutation)\s*\(/, `${file} must receive data/actions from its owner`);
 }
-console.log(`PASS: ${files.length} frontend source files are below 500 lines; Today sections share their data/action owners.`);
+for (const file of [
+  "my-tasks-board.tsx", "board-cards.tsx", "my-tasks-calendar.tsx",
+  "task-metadata-pills.tsx",
+]) {
+  const source = await readFile(path.join("src/components/tasks", file), "utf8");
+  assert.match(source, /TEMPO-004/, `${file} must identify its My Tasks ownership`);
+  assert.doesNotMatch(source, /\b(?:useQuery|usePaginatedQuery|useMutation)\s*\(/, `${file} must receive data/actions from its owner`);
+}
+console.log(`PASS: ${files.length} frontend source files are below 500 lines; Today and My Tasks sections share their data/action owners.`);

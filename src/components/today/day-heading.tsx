@@ -16,7 +16,7 @@ export function DayHeading({
 }: {
   model: ReturnType<typeof useDayViewModel>;
 }) {
-  const { day, navigation, summary, dateLabel, total, greeting } = model;
+  const { navigation, summary, dateLabel, total, greeting } = model;
   return (
     <section
       aria-labelledby="day-heading"

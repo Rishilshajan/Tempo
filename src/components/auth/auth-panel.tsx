@@ -23,6 +23,9 @@ const authAppearance = {
   ...clerkAppearance,
   elements: {
     ...clerkAppearance.elements,
+    // The shared page header already displays the Tempo logo.
+    logoBox: { display: "none" },
+    logoImage: { display: "none" },
     // Keep input borders and focus outlines clear of the Clerk card boundary.
     cardBox: { ...clerkAppearance.elements.cardBox, overflow: "visible" },
     card: { ...clerkAppearance.elements.card, padding: "2px" },
