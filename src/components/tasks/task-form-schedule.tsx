@@ -1,5 +1,6 @@
 /**
- * TEMPO-003 - TaskFormSchedule: existing form fields sharing one state owner.
+ * TEMPO-005 - Schedule, timezone and duration fields.
+ * Used by: TaskForm.
  * Code map: src/components/code-map.md.
  */
 "use client";
@@ -10,11 +11,12 @@ import { CalendarDays, Clock3 } from "lucide-react";
 import { DateField } from "./task-form-date-field";
 import { TaskSelect } from "./task-select";
 import type { useTaskFormState } from "./use-task-form-state";
+
 /**
- * TEMPO-003-F27 - TaskFormSchedule
- * Purpose: Provides the existing TaskFormSchedule behavior for its owning view.
- * Used by: See src/components/code-map.md for direct callers.
- * Trigger: The owning view renders or its associated interaction runs.
+ * TEMPO-005-F16 - TaskFormSchedule
+ * Purpose: Renders flexible/fixed dates, times and estimated effort.
+ * Used by: TaskForm.
+ * Trigger: Schedule or estimate fields render/change.
  */
 export function TaskFormSchedule({
   model,
@@ -22,6 +24,9 @@ export function TaskFormSchedule({
   model: ReturnType<typeof useTaskFormState>;
 }) {
   const { allowOverlap, setAllowOverlap, scheduleType, setScheduleType, timezone, startDate, setStartDate, endDate, setEndDate, startTime, setStartTime, endTime, setEndTime, dueDate, setDueDate, duration, setDuration, customHours, setCustomHours, customMinutes, setCustomMinutes, repeat, setError, errors, setErrors, today, currentTime, changeValue, changeDuration } = model;
+  const scheduleIssue = errors.schedule ?? model.dateIssues.find((issue) => issue.path[0] === "schedule")?.message;
+  const endIssue = !!scheduleIssue && /end|finish/i.test(scheduleIssue);
+  const timeIssue = !!scheduleIssue && /time|slot|hour|duration/i.test(scheduleIssue);
   return (
     <>
       <div className="space-y-3 border-t border-border pt-4">
@@ -60,6 +65,7 @@ export function TaskFormSchedule({
           <div className="grid grid-cols-2 gap-3">
             <DateField
               label="Start date"
+              error={!timeIssue && !endIssue ? scheduleIssue : undefined}
               type="date"
               value={startDate}
               onChange={(value) => {
@@ -81,6 +87,7 @@ export function TaskFormSchedule({
             />
             <DateField
               label="Start time"
+              error={timeIssue && !endIssue ? scheduleIssue : undefined}
               type="time"
               value={startTime}
               onChange={changeValue(setStartTime)}
@@ -93,6 +100,7 @@ export function TaskFormSchedule({
             />
             <DateField
               label="End date"
+              error={!timeIssue && endIssue ? scheduleIssue : undefined}
               type="date"
               value={endDate}
               onChange={changeValue(setEndDate)}
@@ -101,6 +109,7 @@ export function TaskFormSchedule({
             />
             <DateField
               label="End time"
+              error={timeIssue && endIssue ? scheduleIssue : undefined}
               type="time"
               value={endTime}
               onChange={changeValue(setEndTime)}
@@ -111,6 +120,8 @@ export function TaskFormSchedule({
         ) : (
           <DateField
             label="Due date (Optional)"
+            field="due-date"
+            error={scheduleIssue}
             type="date"
             value={dueDate}
             onChange={changeValue(setDueDate)}
@@ -151,11 +162,7 @@ export function TaskFormSchedule({
             ? "No fixed time slot is reserved."
             : "Your chosen time window is saved as entered."}
         </p>
-        {errors.schedule && (
-          <p role="alert" className="text-xs text-destructive">
-            {errors.schedule}
-          </p>
-        )}
+
       </div>
       <div className="grid grid-cols-[100px_minmax(0,1fr)] items-center gap-3">
         <span className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -179,11 +186,14 @@ export function TaskFormSchedule({
           ]}
         />
       </div>
+      {duration === "custom" && (
       <div className="grid grid-cols-2 gap-3">
         <label className="flex min-w-0 flex-col gap-1.5 text-xs">
           Hours
           <Input
             aria-label="Estimated hours"
+            aria-invalid={!!errors.estimatedMinutes}
+            aria-describedby={errors.estimatedMinutes ? "task-estimate-error" : undefined}
             type="number"
             min={0}
             max={24}
@@ -201,6 +211,8 @@ export function TaskFormSchedule({
           Minutes
           <Input
             aria-label="Estimated minutes"
+            aria-invalid={!!errors.estimatedMinutes}
+            aria-describedby={errors.estimatedMinutes ? "task-estimate-error" : undefined}
             type="number"
             min={0}
             max={59}
@@ -215,8 +227,9 @@ export function TaskFormSchedule({
           />
         </label>
       </div>
+      )}
       {errors.estimatedMinutes && (
-        <p role="alert" className="text-xs text-destructive">
+        <p id="task-estimate-error" role="alert" className="text-xs text-destructive">
           {errors.estimatedMinutes}
         </p>
       )}

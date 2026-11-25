@@ -4,7 +4,7 @@ Current implementation map for landing, authentication and the Today dashboard. 
 
 ## Conventions
 
-- TEMPO-001: landing/public branding. TEMPO-002: authentication. TEMPO-003: Today and its reused task interfaces. TEMPO-004: My Tasks and shared board/calendar helpers.
+- TEMPO-001: landing/public branding. TEMPO-002: authentication. TEMPO-003: Today and its reused task interfaces. TEMPO-004: My Tasks and shared board/calendar helpers. TEMPO-005: task creation and shared editing.
 - File headers describe ownership; function comments use stable IDs plus purpose, caller reference and trigger. Inline callbacks inherit the owning function description.
 - TEMPO-003-F10 is retired (removed allocation interaction). Do not reuse it.
 - Frontend source files in src/ must be strictly below 500 lines, including comments. Backend/generated files, dependencies and build output are outside this UI contract.
@@ -84,19 +84,9 @@ Current implementation map for landing, authentication and the Today dashboard. 
 | src/components/today/use-day-view-model.tsx | useDayViewModel (TEMPO-003-F18) |
 | src/components/today/use-today-surface.tsx | useTodaySurface (TEMPO-003-F22) |
 | src/components/today/workspace-search.tsx | WorkspaceSearch (TEMPO-003-F13) |
-| src/components/tasks/create-task-sheet.tsx | CreateTaskSheet (TEMPO-003-F31) |
 | src/components/tasks/detail-shared.tsx | detailError; detailTime; DetailEmpty; ConfirmDelete; DetailRow (TEMPO-003-F40) |
-| src/components/tasks/submit-task-form.ts | submitTaskForm (TEMPO-003-F25) |
 | src/components/tasks/task-detail-workspace.tsx | TaskDetailWorkspace (TEMPO-003-F41) |
-| src/components/tasks/task-form-basics.tsx | TaskFormBasics (TEMPO-003-F26) |
-| src/components/tasks/task-form-date-field.tsx | DateField (TEMPO-003-F30) |
-| src/components/tasks/task-form-recurrence.tsx | TaskFormRecurrence (TEMPO-003-F29) |
-| src/components/tasks/task-form-schedule.tsx | TaskFormSchedule (TEMPO-003-F27) |
-| src/components/tasks/task-form-subtasks.tsx | TaskFormSubtasks (TEMPO-003-F28) |
-| src/components/tasks/task-form-types.ts | Shared types/configuration or compatibility entry |
-| src/components/tasks/task-form.tsx | TaskForm (TEMPO-003-F23) |
 | src/components/tasks/use-task-detail-workspace.tsx | useTaskDetailWorkspace (TEMPO-003-F42) |
-| src/components/tasks/use-task-form-state.tsx | useTaskFormState (TEMPO-003-F24) |
 
 ## TEMPO-004 - My Tasks
 
@@ -178,7 +168,7 @@ Every named function/helper below has the same source ID. Anonymous JSX, effect,
 - Existing Button, Badge, Select, DatePicker, Calendar, Popover, DropdownMenu and ActionTooltip remain the shared primitives. No replacement component library or fetching layer was added.
 - TaskMetadataPills is shared with Today (TEMPO-003). TaskStatusSelect and TaskRescheduleCalendar preserve existing validation, permissions and mutation paths. Calendar agenda reuses CompactBoardRow; List does not have a separate completion checkbox.
 - Dragging to Rolled Forward is rejected; the carried lane is derived. Completion/reopening and rescheduling use existing backend guards. A plain status change is distinct from planning a task for today.
-- Shared create/edit and detail interfaces retain their existing TEMPO-003 IDs and are referenced from TodaySurface. Landing/auth remain TEMPO-001/002. Former 003 IDs F32-F39 for the extracted board modules are superseded here; do not reuse those retired IDs.
+- Shared create/edit interfaces use TEMPO-005; task detail presentation retains its TEMPO-003 IDs and is referenced from TodaySurface. Landing/auth remain TEMPO-001/002. Former 003 IDs F32-F39 for the extracted board modules are superseded here; do not reuse those retired IDs.
 - Global CSS stays in app/styles/dashboard-1.css through globals.css. Calendar/board selectors are feature scoped; shared badge primitives retain their own styling.
 
 ### Verification
@@ -186,6 +176,79 @@ Every named function/helper below has the same source ID. Anonymous JSX, effect,
 All frontend TS/TSX/CSS files in src/ must stay strictly below 500 lines including comments. scripts/check-ui-structure.mjs enforces this plus query-free presentation sections. npm run typecheck, npm test and npm run build are the compile, regression and production gates. Live visual verification is a separate check.
 
 The npm run lint command uses TypeScript unused-local/parameter diagnostics, the existing explicit-any check and frontend structure checks. ESLint is not installed or claimed by this command.
+
+## TEMPO-005 - Task creation and shared editing
+
+The existing right-side sheet is retained. CreateTaskSheet -> TaskForm -> one useTaskFormState draft -> Basics/Schedule/Subtasks/Recurrence. submitTaskForm validates and calls the parent-owned callback; it does not introduce a second task mutation. EditTaskSheet reuses this flow with existing update and domain-query adapters.
+
+### Modules and exports
+
+| File | Responsibility | Used by |
+| --- | --- | --- |
+| src/components/tasks/create-task-sheet.tsx | Create/edit sheet shell, focus target and saving dismissal guard | TodaySurface; EditTaskSheet |
+| src/components/tasks/task-form.tsx | Shared form composition, scrolling body and action footer | CreateTaskSheet |
+| src/components/tasks/use-task-form-state.tsx | Single draft-state owner and derived validation | TaskForm |
+| src/components/tasks/submit-task-form.ts | Validated submission through parent-owned persistence | TaskForm.onSubmit |
+| src/components/tasks/task-form-basics.tsx | Title, description, domain, priority and edit scope fields | TaskForm |
+| src/components/tasks/task-form-schedule.tsx | Schedule, timezone and duration fields | TaskForm |
+| src/components/tasks/task-form-subtasks.tsx | Subtask drafts, dates, ordering and limits | TaskForm |
+| src/components/tasks/task-form-recurrence.tsx | Repeat cadence and termination fields | TaskForm |
+| src/components/tasks/task-form-date-field.tsx | Shared date/time field adapter | TaskFormSchedule |
+| src/components/tasks/task-form-types.ts | Shared Props and Step type contracts | CreateTaskSheet; useTaskFormState; submitTaskForm |
+| src/components/tasks/edit-task-sheet.tsx | Edit adapter using the shared creation form | TaskDetailWorkspace |
+
+Props defines the parent callback/prefill/availability contract; Step defines stable subtask draft keys. Both are types only. Existing Button, Input, Textarea, Select, Sheet, DatePicker, TimePicker and DropdownMenu primitives are reused. Shared TaskSelect/PriorityLabel retain TEMPO-004 IDs; validation and recurrence utilities remain shared dependencies.
+
+### Functions
+
+Anonymous JSX/effect/array callbacks inherit the owning function description.
+
+| Reference | Function / file | Purpose | Used by | Trigger |
+| --- | --- | --- | --- | --- |
+| TEMPO-005-F01 | CreateTaskSheet - src/components/tasks/create-task-sheet.tsx | Renders the shared sheet and guards dismissal while saving. | TodaySurface; EditTaskSheet | Create task is opened or an edit sheet is mounted. |
+| TEMPO-005-F02 | TaskForm - src/components/tasks/task-form.tsx | Composes one draft model and delegates submission. | CreateTaskSheet | The sheet opens; remains mounted until close. |
+| TEMPO-005-F03 | useTaskFormState - src/components/tasks/use-task-form-state.tsx | Owns draft fields, prefills, clock, errors and subtask actions. | TaskForm | The form mounts, a field changes or its clock refreshes. |
+| TEMPO-005-F04 | timeOf - src/components/tasks/use-task-form-state.tsx | Formats a timestamp in the selected task timezone. | useTaskFormState; submitTaskForm | Time prefills or DST consistency checks run. |
+| TEMPO-005-F05 | refresh - src/components/tasks/use-task-form-state.tsx | Refreshes the validation clock. | useTaskFormState effect | Every 30 seconds or window focus; effect cleans up. |
+| TEMPO-005-F06 | timestamp - src/components/tasks/use-task-form-state.tsx | Validates date/time syntax and resolves timezone timestamps. | useTaskFormState | Draft schedule values are recomputed. |
+| TEMPO-005-F07 | issuesForRepeat - src/components/tasks/use-task-form-state.tsx | Builds a candidate schedule and computes create/edit date issues. | useTaskFormState; TaskFormRecurrence | Date, recurrence, subtask or edit-scope state changes. |
+| TEMPO-005-F08 | notifyValidation - src/components/tasks/use-task-form-state.tsx | Shows the existing validation toast. | submitTaskForm; TaskFormRecurrence | Validation rejects input. |
+| TEMPO-005-F09 | changeValue - src/components/tasks/use-task-form-state.tsx | Builds a field setter that clears prior errors. | TaskFormSchedule; TaskFormRecurrence | A bound field changes. |
+| TEMPO-005-F10 | changeDuration - src/components/tasks/use-task-form-state.tsx | Selects a preset/custom estimate and synchronizes duration fields. | TaskFormSchedule | The estimated-duration dropdown changes. |
+| TEMPO-005-F11 | addStep - src/components/tasks/use-task-form-state.tsx | Appends a nonempty subtask draft up to the limit. | TaskFormSubtasks | Add or Enter is used on the subtask input. |
+| TEMPO-005-F12 | updateSteps - src/components/tasks/use-task-form-state.tsx | Updates subtask draft state and clears prior errors. | TaskFormSubtasks; addStep; moveStep | Subtask text, date, order or membership changes. |
+| TEMPO-005-F13 | moveStep - src/components/tasks/use-task-form-state.tsx | Reorders neighboring draft subtasks without persistence. | TaskFormSubtasks | A subtask move-up or move-down action is clicked. |
+| TEMPO-005-F14 | submitTaskForm - src/components/tasks/submit-task-form.ts | Validates input, reuses an idempotency key and calls the parent save callback. | TaskForm.onSubmit | The user submits with the create/save action or Enter. |
+| TEMPO-005-F15 | TaskFormBasics - src/components/tasks/task-form-basics.tsx | Renders basic fields and recurring-edit scope controls. | TaskForm | The shared form renders or its draft changes. |
+| TEMPO-005-F16 | TaskFormSchedule - src/components/tasks/task-form-schedule.tsx | Renders flexible/fixed dates, times and estimated effort. | TaskForm | Schedule or estimate fields render/change. |
+| TEMPO-005-F17 | TaskFormSubtasks - src/components/tasks/task-form-subtasks.tsx | Renders bounded subtask rows and add/reorder/remove controls. | TaskForm | Subtask drafts render or change. |
+| TEMPO-005-F18 | TaskFormRecurrence - src/components/tasks/task-form-recurrence.tsx | Renders recurrence cadence, days and termination options. | TaskForm | Repeat selection or repeat settings change. |
+| TEMPO-005-F19 | DateField - src/components/tasks/task-form-date-field.tsx | Adapts DatePicker or TimePicker with the current value and validity state. | TaskFormSchedule | A schedule date/time field renders. |
+| TEMPO-005-F20 | EditTaskSheet - src/components/tasks/edit-task-sheet.tsx | Loads editable domains and adapts updateTask to the shared form. | TaskDetailWorkspace | The user opens task editing. |
+
+### Implemented desktop/mobile refinements - 2026-11-24
+
+The sheet design, scrolling body and fixed footer are retained. Custom Hours/Minutes appear only for Custom estimate. New fixed drafts use the next future quarter-hour and a one-hour elapsed duration, rolling dates across midnight; explicitly selected future dates start at 09:00, and edit/timeline values remain unchanged. Custom + Week preview includes selected weekdays, matching submission.
+
+Validation is shown near schedule/repeat/subtask fields and submission focuses the first invalid control. DateField associates its local error with the field group and the actual DatePicker/TimePicker trigger. Subtask-date messages are shown and associated per row. Unsaved draft dismissal via Cancel, X, Escape or outside click requests confirmation; saving remains protected, and successful saves close directly. The draft is not persisted across page reloads. No broad desktop/mobile redesign or new fetching layer was introduced.
+
+| File | Additional ownership |
+| --- | --- |
+| src/lib/task-time-defaults.ts | Pure default timestamp helper; called by useTaskFormState. |
+| src/components/tasks/task-form-validation.ts | Pure issue-to-control mapping and scheduled first-error focus; called by submitTaskForm. |
+
+| Reference | Function | Used by | Trigger |
+| --- | --- | --- | --- |
+| TEMPO-005-F21 | taskTimeDefaults | useTaskFormState | New draft initializes fixed-time defaults. |
+| TEMPO-005-F24 | taskIssueSelector | focusTaskIssue | A validation issue is mapped to its associated control. |
+| TEMPO-005-F25 | focusTaskIssue | submitTaskForm | A validation/save error is rendered, then the control is revealed and focused. |
+| TEMPO-005-F30 | requestOpenChange | CreateTaskSheet header and TaskForm | Cancel, X or successful submit requests close; dirty dismissals ask confirmation. |
+
+### Complexity and verification
+
+Draft rendering/validation scales with loaded domains and subtasks: approximately O(d + s), with s capped at 30. Timezone conversion samples a fixed number of offsets. Submission maps/validates the bounded draft; persistence/network latency is separate and has not been measured. Current field changes rerender the parent draft, but no evidence here justifies a new fetching layer or broad memoization.
+
+This migration supersedes the task-form TEMPO-003 IDs F23-F31; those IDs are retired. The implemented refinements above preserve existing validation and persistence paths. All frontend TS/TSX/CSS files remain subject to the strict under-500-lines check. Verification uses npm run lint, npm run typecheck, npm test and npm run build. check-task-validation.mjs covers future defaults/DST, first-error focus targeting and real schedule-section rendering for No estimate/preset/Custom.
 
 ## Global styles
 
@@ -198,3 +261,23 @@ app/globals.css stays the single global entry point. Its ordered imports in app/
 - npm run build and npm run typecheck: frontend/Convex compile checks. Browser visual verification is distinct from these offline checks.
 
 Historical completion uses current completedAt, not immutable snapshots. Planning carried work preserves original deadlines. Backend schema and query behavior are unchanged by this structural cleanup.
+
+## Shared backend notification scheduling
+
+This backend dependency serves Today, My Tasks and TEMPO-005 task creation/editing. It is recorded here in the single code map; it does not change their UI feature IDs.
+
+| File / entry | Responsibility | Trigger |
+| --- | --- | --- |
+| convex/notificationScheduling.ts: syncTaskNotifications | Refreshes a versioned task schedule; invalidates obsolete callbacks. | Task create/edit/reschedule/status/subtask changes, recurrence generation and roll-forward. |
+| convex/notificationScheduling.ts: syncOwnerNotifications | Refreshes daily work and queues a bounded owner rebuild. | Notification preference/device changes and account bootstrap. |
+| convex/notificationScheduling.ts: syncOwnerDailyNotifications | Refreshes the owner daily notification schedule. | Owner setup and completed roll-forward batches. |
+| convex/notificationScheduling.ts: wake | Checks current task/preferences and emits eligible reminders, then arms the next callback. | A task/owner schedule reaches its due time. |
+| convex/notificationScheduling.ts: rebuildOwner / bootstrapOwners | Rebuilds open-task schedules in bounded pages; force mode repairs changes made while disabled. | Initial migration, preference changes, explicit rollout/re-enable repair. |
+| convex/notificationScheduling.ts: reconcile / runMaintenance | Repairs indexed overdue schedules and invokes roll-forward maintenance. | Hourly cron, gated by TEMPO_BACKGROUND_JOBS_ENABLED. |
+| convex/notificationPlan.ts | Computes task reminder thresholds and next daily wake without database reads. | Scheduled wake calculation. |
+| convex/notificationDelivery.ts | Deduplicates inbox entries and schedules immediate/quiet-hour push delivery. | An eligible reminder is emitted. |
+| convex/notificationPush.ts / notifications.ts: deliveryDevices | Rejects obsolete task generations/preferences and resolves eligible push devices. | A queued push executes; explicit test push retains its own path. |
+| convex/schema.ts | Stores indexed notificationSchedules and account migration version. | Schedule mutations and indexed recovery. |
+| scripts/check-notification-scheduling.mjs / check-notifications.mjs | Verifies timing, lifecycle guards, quiet hours, bootstrap, indexed recovery and disabled zero-read behavior. | npm test. |
+
+Mutation integrations live in convex/tasks.ts, taskDetails.ts, taskRecurrence.ts, series.ts and rollForward.ts. Rollout instructions and the one-time forced bootstrap are in DEPLOY.md. Historical usage totals do not reset after optimization; compare equal post-deployment measurement windows.

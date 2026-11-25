@@ -1,3 +1,8 @@
+/**
+ * TEMPO-005 - Edit adapter using the shared creation form.
+ * Used by: TaskDetailWorkspace.
+ * Code map: src/components/code-map.md.
+ */
 "use client";
 import { useState } from "react";
 import { useMutation, usePaginatedQuery } from "convex/react";
@@ -7,6 +12,12 @@ import type { Id } from "../../../convex/_generated/dataModel";
 import { CreateTaskSheet } from "./create-task-sheet";
 import type { TaskRecord } from "./task-list";
 
+/**
+ * TEMPO-005-F20 - EditTaskSheet
+ * Purpose: Loads editable domains and adapts updateTask to the shared form.
+ * Used by: TaskDetailWorkspace.
+ * Trigger: The user opens task editing.
+ */
 export function EditTaskSheet({
   task,
   onClose,

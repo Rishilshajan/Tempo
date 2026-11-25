@@ -31,6 +31,8 @@ export function DatePicker({
   placeholder = "Pick a date",
   className,
   ariaLabel,
+  ariaInvalid,
+  ariaDescribedBy,
   disabled,
   required = false,
   minDate,
@@ -42,6 +44,8 @@ export function DatePicker({
   placeholder?: string;
   className?: string;
   ariaLabel?: string;
+  ariaInvalid?: boolean;
+  ariaDescribedBy?: string;
   disabled?: boolean;
   required?: boolean;
   minDate?: string;
@@ -84,7 +88,8 @@ export function DatePicker({
             type="button"
             variant="outline"
             aria-label={ariaLabel}
-            aria-invalid={outsideBounds || undefined}
+            aria-invalid={ariaInvalid || outsideBounds || undefined}
+            aria-describedby={ariaDescribedBy}
             disabled={disabled}
             className={cn(
               "w-full justify-start gap-2 font-normal",

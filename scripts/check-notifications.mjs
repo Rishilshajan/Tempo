@@ -2,6 +2,10 @@ import assert from "node:assert/strict";
 import { build } from "esbuild";
 import { context, db } from "./check-task-handlers.mjs";
 
+// Background scans are explicitly enabled only within this isolated worker test.
+const previousBackgroundJobs = process.env.TEMPO_BACKGROUND_JOBS_ENABLED;
+process.env.TEMPO_BACKGROUND_JOBS_ENABLED = "true";
+
 const compiled = await build({
   entryPoints: ["convex/notifications.ts"],
   bundle: true,
@@ -195,3 +199,6 @@ assert.deepEqual(
   [{ taskId: deadline, body: "Submit the report" }],
 );
 console.log("PASS: saved channel and trigger toggles gate delivery from the stored due date and title.");
+
+if (previousBackgroundJobs === undefined) delete process.env.TEMPO_BACKGROUND_JOBS_ENABLED;
+else process.env.TEMPO_BACKGROUND_JOBS_ENABLED = previousBackgroundJobs;

@@ -1,3 +1,4 @@
+import { syncTaskNotifications } from "./notificationScheduling";
 import type { MutationCtx } from "./_generated/server";
 import type { Doc } from "./_generated/dataModel";
 import {
@@ -176,5 +177,6 @@ export async function createNextOccurrence(
     { previousTaskId: task._id },
   );
   await ctx.db.patch(task._id, { nextOccurrenceId: nextId });
+  await syncTaskNotifications(ctx, nextId);
   return nextId;
 }

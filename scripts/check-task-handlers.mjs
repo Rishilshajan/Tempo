@@ -58,7 +58,8 @@ const db = {
         );
         return clauses;
       },
-      gte(key,value){conditions.push(row=>row[key]>=value);return clauses;},
+      gte(key,value){conditions.push(row=>key.split(".").reduce((value, part) => value?.[part], row)>=value);return clauses;},
+      lt(key,value){conditions.push(row=>key.split(".").reduce((value, part) => value?.[part], row)<value);return clauses;},
       lte(key, value) {
         conditions.push((row) => row[key] <= value);
         return clauses;
@@ -120,7 +121,7 @@ const db = {
 };
 const context = (owner) => ({
   db,
-  scheduler: {runAfter:async()=>null},
+  scheduler: {runAfter:async()=>null, runAt:async()=>null, cancel:async()=>{}},
   auth: {
     getUserIdentity: async () => (owner ? { tokenIdentifier: owner } : null),
   },

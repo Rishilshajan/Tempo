@@ -1,5 +1,6 @@
 /**
- * TEMPO-003 - Existing task form validation and submit action; no new persistence path.
+ * TEMPO-005 - Validated submission through parent-owned persistence.
+ * Used by: TaskForm.onSubmit.
  * Code map: src/components/code-map.md.
  */
 "use client";
@@ -12,11 +13,13 @@ import {
 import { ConvexError } from "convex/values";
 import { toast } from "sonner";
 import type { useTaskFormState } from "./use-task-form-state";
+import { focusTaskIssue } from "./task-form-validation";
+
 /**
- * TEMPO-003-F25 - submitTaskForm
- * Purpose: Validates and submits the existing task form without a second mutation path.
- * Used by: See src/components/code-map.md for direct callers.
- * Trigger: The owning view renders or its associated interaction runs.
+ * TEMPO-005-F14 - submitTaskForm
+ * Purpose: Validates input, reuses an idempotency key and calls the parent save callback.
+ * Used by: TaskForm.onSubmit.
+ * Trigger: The user submits with the create/save action or Enter.
  */
 export async function submitTaskForm(
   event: React.FormEvent<HTMLFormElement>,
@@ -65,6 +68,7 @@ export async function submitTaskForm(
   } = model;
 
   event.preventDefault();
+  const form = event.currentTarget;
   if (!canSubmit || inFlightRef.current) return;
   if (duration !== "none") {
     const estimate = durationInputSchema.safeParse({
@@ -75,6 +79,7 @@ export async function submitTaskForm(
       const message = estimate.error.issues[0].message;
       setErrors({ estimatedMinutes: message });
       notifyValidation(message);
+      focusTaskIssue(form, { path: ["estimatedMinutes", ...estimate.error.issues[0].path], message });
       return;
     }
   }
@@ -99,6 +104,7 @@ export async function submitTaskForm(
     const message = "Choose valid dates and times in your timezone.";
     setErrors({ schedule: message });
     notifyValidation(message);
+    focusTaskIssue(form, { path: ["schedule"], message });
     return;
   }
   const allSteps = [
@@ -180,6 +186,7 @@ export async function submitTaskForm(
       ),
     );
     notifyValidation(parsed.error.issues[0].message);
+    focusTaskIssue(form, parsed.error.issues[0]);
     return;
   }
   setErrors({});
@@ -196,6 +203,7 @@ export async function submitTaskForm(
         : "We couldn't save this task. Your changes are still here; please try again.";
     setError(message);
     toast.error(message, { id: "task-save-error" });
+    focusTaskIssue(form, { path: ["form"], message });
   } finally {
     inFlightRef.current = false;
     setSaving(false);

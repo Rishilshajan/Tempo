@@ -1,9 +1,11 @@
 /**
- * TEMPO-003 - Existing create/edit drawer; delegates form state and sections.
+ * TEMPO-005 - Create/edit sheet shell, focus target and saving dismissal guard.
+ * Used by: TodaySurface; EditTaskSheet.
  * Code map: src/components/code-map.md.
  */
 "use client";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import {
   Sheet,
   SheetContent,
@@ -15,21 +17,41 @@ import { ListPlus, X } from "lucide-react";
 import { useRef, useState } from "react";
 import { TaskForm } from "./task-form";
 import type { Props } from "./task-form-types";
+
 /**
- * TEMPO-003-F31 - CreateTaskSheet
- * Purpose: Provides the existing CreateTaskSheet behavior for its owning view.
- * Used by: See src/components/code-map.md for direct callers.
- * Trigger: The owning view renders or its associated interaction runs.
+ * TEMPO-005-F01 - CreateTaskSheet
+ * Purpose: Renders the shared sheet and guards dismissal while saving.
+ * Used by: TodaySurface; EditTaskSheet.
+ * Trigger: Create task is opened or an edit sheet is mounted.
  */
 export function CreateTaskSheet(props: Props) {
   const [saving, setSaving] = useState(false);
   const inFlightRef = useRef(false);
+  const [dirty, setDirty] = useState(false);
+  const [confirmDiscard, setConfirmDiscard] = useState(false);
+  /**
+   * TEMPO-005-F30 - requestOpenChange
+   * Purpose: Confirms dirty dismissal; successful saves close directly.
+   * Used by: Header X and TaskForm Cancel/save callback.
+   * Trigger: A close action or successful submission requests dismissal.
+   */
+  const requestOpenChange = (open: boolean) => {
+    if (!open && dirty && !inFlightRef.current) {
+      setConfirmDiscard(true);
+      return;
+    }
+    setDirty(false);
+    props.onOpenChange(open);
+  };
   return (
     <Sheet
       open={props.open}
       onOpenChange={(open, details) => {
         if (inFlightRef.current) details.cancel();
-        else props.onOpenChange(open);
+        else if (!open && dirty) {
+          details.cancel();
+          setConfirmDiscard(true);
+        } else requestOpenChange(open);
       }}
     >
       <SheetContent
@@ -56,7 +78,7 @@ export function CreateTaskSheet(props: Props) {
             }
             disabled={saving}
             className="absolute right-3 top-3 size-9"
-            onClick={() => props.onOpenChange(false)}
+            onClick={() => requestOpenChange(false)}
           >
             <X aria-hidden="true" />
           </Button>
@@ -64,11 +86,29 @@ export function CreateTaskSheet(props: Props) {
         {props.open && (
           <TaskForm
             {...props}
+            onOpenChange={requestOpenChange}
+            onDirtyChange={setDirty}
             saving={saving}
             setSaving={setSaving}
             inFlightRef={inFlightRef}
           />
         )}
+        <Dialog open={confirmDiscard} onOpenChange={setConfirmDiscard}>
+          <DialogContent showCloseButton={false}>
+            <DialogHeader>
+              <DialogTitle>Discard unsaved changes?</DialogTitle>
+              <DialogDescription>Your task has not been saved. Keep editing to preserve your changes.</DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button variant="secondary" onClick={() => setConfirmDiscard(false)}>Keep editing</Button>
+              <Button variant="destructive" onClick={() => {
+                setConfirmDiscard(false);
+                setDirty(false);
+                props.onOpenChange(false);
+              }}>Discard changes</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </SheetContent>
     </Sheet>
   );

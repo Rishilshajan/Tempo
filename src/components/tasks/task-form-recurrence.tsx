@@ -1,5 +1,6 @@
 /**
- * TEMPO-003 - TaskFormRecurrence: existing form fields sharing one state owner.
+ * TEMPO-005 - Repeat cadence and termination fields.
+ * Used by: TaskForm.
  * Code map: src/components/code-map.md.
  */
 "use client";
@@ -7,14 +8,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Repeat2 } from "lucide-react";
 import { toast } from "sonner";
+import { useId } from "react";
 import { DateField } from "./task-form-date-field";
 import { TaskSelect } from "./task-select";
 import type { useTaskFormState } from "./use-task-form-state";
+
 /**
- * TEMPO-003-F29 - TaskFormRecurrence
- * Purpose: Provides the existing TaskFormRecurrence behavior for its owning view.
- * Used by: See src/components/code-map.md for direct callers.
- * Trigger: The owning view renders or its associated interaction runs.
+ * TEMPO-005-F18 - TaskFormRecurrence
+ * Purpose: Renders recurrence cadence, days and termination options.
+ * Used by: TaskForm.
+ * Trigger: Repeat selection or repeat settings change.
  */
 export function TaskFormRecurrence({
   model,
@@ -22,8 +25,12 @@ export function TaskFormRecurrence({
   model: ReturnType<typeof useTaskFormState>;
 }) {
   const { editingTask, editScope, repeatDays, setRepeatDays, monthlyMissing, setMonthlyMissing, repeat, setRepeat, repeatInterval, setRepeatInterval, repeatUnit, setRepeatUnit, repeatEnd, setRepeatEnd, repeatEndDate, setRepeatEndDate, repeatCount, setRepeatCount, setError, setErrors, firstDate, minimumRepeatEnd, issuesForRepeat, notifyValidation, changeValue } = model;
+  const errorId = useId();
+  const recurrenceIssue = model.errors.recurrence
+    || model.dateIssues.find((issue) => issue.path[0] === "recurrence")?.message;
+  const endDateIssue = recurrenceIssue && /end date/i.test(recurrenceIssue) ? recurrenceIssue : undefined;
   return (
-    <>
+    <div role="group" aria-label="Recurrence settings" data-validation-field="recurrence" aria-invalid={!!recurrenceIssue || undefined} aria-describedby={recurrenceIssue && !endDateIssue ? errorId : undefined}>
       {editingTask?.recurrence && editScope === "this" ? (
         <p className="border-t border-border pt-3 text-xs text-muted-foreground">
           Repeat pattern unchanged. Choose “This and future occurrences” above
@@ -167,6 +174,7 @@ export function TaskFormRecurrence({
                   onChange={changeValue(setRepeatEndDate)}
                   minDate={minimumRepeatEnd}
                   required
+                  error={endDateIssue}
                 />
               )}
               {repeatEnd === "count" && (
@@ -194,6 +202,9 @@ export function TaskFormRecurrence({
           )}
         </>
       )}
-    </>
+      {recurrenceIssue && !endDateIssue && (
+        <p id={errorId} role="alert" className="mt-2 text-xs text-destructive">{recurrenceIssue}</p>
+      )}
+    </div>
   );
 }

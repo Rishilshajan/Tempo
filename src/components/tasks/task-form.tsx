@@ -1,25 +1,41 @@
 /**
- * TEMPO-003 - TaskForm: composes reused presentation and a single state hook.
+ * TEMPO-005 - Shared form composition, scrolling body and action footer.
+ * Used by: CreateTaskSheet.
  * Code map: src/components/code-map.md.
  */
 "use client";
 import { Button } from "@/components/ui/button";
 import { Check, LoaderCircle } from "lucide-react";
+import { useEffect, useRef } from "react";
 import { submitTaskForm } from "./submit-task-form";
 import { TaskFormBasics } from "./task-form-basics";
 import { TaskFormRecurrence } from "./task-form-recurrence";
 import { TaskFormSchedule } from "./task-form-schedule";
 import { TaskFormSubtasks } from "./task-form-subtasks";
 import { useTaskFormState } from "./use-task-form-state";
+
 /**
- * TEMPO-003-F23 - TaskForm
- * Purpose: Composes the shared create/edit form sections with one draft-state hook.
- * Used by: See src/components/code-map.md for direct callers.
- * Trigger: The owning view renders or its associated interaction runs.
+ * TEMPO-005-F02 - TaskForm
+ * Purpose: Composes one draft model and delegates submission.
+ * Used by: CreateTaskSheet.
+ * Trigger: The sheet opens; remains mounted until close.
  */
 export function TaskForm(input: Parameters<typeof useTaskFormState>[0]) {
   const model = useTaskFormState(input);
-  const { canSubmit, onOpenChange, saving, editingTask, title, error, setError, errors, setErrors, dateIssues } = model;
+  const { canSubmit, onOpenChange, saving, editingTask, title, error, setError, setErrors } = model;
+  const snapshot = JSON.stringify([
+    model.title, model.description, model.domainId, model.priority, model.scheduleType,
+    model.startDate, model.endDate, model.startTime, model.endTime, model.dueDate,
+    model.duration, model.customHours, model.customMinutes, model.repeat,
+    model.repeatInterval, model.repeatUnit, model.repeatDays, model.repeatEnd,
+    model.repeatEndDate, model.repeatCount, model.monthlyMissing, model.allowOverlap,
+    model.editScope, model.steps, model.stepTitle,
+  ]);
+  const initialSnapshot = useRef(snapshot);
+  const onDirtyChange = input.onDirtyChange;
+  useEffect(() => {
+    onDirtyChange?.(snapshot !== initialSnapshot.current);
+  }, [snapshot, onDirtyChange]);
   return (
     <form
       onSubmit={(event) => submitTaskForm(event, model)}
@@ -39,18 +55,6 @@ export function TaskForm(input: Parameters<typeof useTaskFormState>[0]) {
         <TaskFormSchedule model={model} />
         <TaskFormSubtasks model={model} />
         <TaskFormRecurrence model={model} />
-        {dateIssues.length > 0 && (
-          <ul aria-live="polite" className="space-y-1 text-xs text-destructive">
-            {dateIssues.map((issue, index) => (
-              <li key={index}>{issue.message}</li>
-            ))}
-          </ul>
-        )}
-        {errors.recurrence && (
-          <p role="alert" className="text-xs text-destructive">
-            {errors.recurrence}
-          </p>
-        )}
         {!canSubmit && (
           <p role="status" className="text-xs text-muted-foreground">
             Waiting for your secure workspace connection.
@@ -59,6 +63,8 @@ export function TaskForm(input: Parameters<typeof useTaskFormState>[0]) {
         {error && (
           <p
             role="alert"
+            data-validation-summary
+            tabIndex={-1}
             className="rounded-lg bg-destructive/10 p-3 text-sm text-destructive"
           >
             {error}

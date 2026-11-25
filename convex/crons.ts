@@ -1,13 +1,14 @@
-import { cronJobs } from "convex/server";
+import { cronJobs, makeFunctionReference } from "convex/server";
 import { internal } from "./_generated/api";
 
 const crons = cronJobs();
-crons.interval("tempo-notifications", { minutes: 1 }, internal.notifications.processBatch, {});
+crons.interval("tempo-notification-recovery", { hours: 1 },
+  makeFunctionReference<"mutation", Record<string, never>>("notificationScheduling:reconcile"), {});
 // Local midnight is different for each task. Catch up safely after any missed run.
 crons.interval(
   "tempo-roll-forward",
-  { minutes: 15 },
-  internal.rollForward.processBatch,
+  { hours: 1 },
+  makeFunctionReference<"mutation", Record<string, never>>("notificationScheduling:runMaintenance"),
   {},
 );
 crons.interval(

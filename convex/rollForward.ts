@@ -1,3 +1,4 @@
+import { syncTaskNotifications, syncOwnerDailyNotifications } from "./notificationScheduling";
 import { v } from "convex/values";
 import { internalMutation } from "./_generated/server";
 import { internal } from "./_generated/api";
@@ -19,6 +20,7 @@ export const processBatch = internalMutation({
       .withIndex("by_status", (q) => q.eq("status", "open"))
       .paginate({ cursor: args.cursor ?? null, numItems: 100 });
     let rolled = 0;
+    const changedOwners = new Set<string>();
     for (const task of result.page) {
       if (task.seriesId) continue;
       let patch;
@@ -41,8 +43,12 @@ export const processBatch = internalMutation({
           afterScheduledDate: patch.workDate,
         },
       );
+      await syncTaskNotifications(ctx, task._id);
+      changedOwners.add(task.ownerId);
       rolled++;
     }
+    for (const ownerId of changedOwners)
+      await syncOwnerDailyNotifications(ctx, ownerId);
     if (!result.isDone)
       await ctx.scheduler.runAfter(0, internal.rollForward.processBatch, {
         cursor: result.continueCursor,

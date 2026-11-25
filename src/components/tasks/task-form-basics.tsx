@@ -1,5 +1,6 @@
 /**
- * TEMPO-003 - TaskFormBasics: existing form fields sharing one state owner.
+ * TEMPO-005 - Title, description, domain, priority and edit scope fields.
+ * Used by: TaskForm.
  * Code map: src/components/code-map.md.
  */
 "use client";
@@ -12,11 +13,12 @@ import { localDateKey } from "@/lib/validation/task";
 import { Flag, Layers } from "lucide-react";
 import { priorities, PriorityLabel, TaskSelect } from "./task-select";
 import type { useTaskFormState } from "./use-task-form-state";
+
 /**
- * TEMPO-003-F26 - TaskFormBasics
- * Purpose: Provides the existing TaskFormBasics behavior for its owning view.
- * Used by: See src/components/code-map.md for direct callers.
- * Trigger: The owning view renders or its associated interaction runs.
+ * TEMPO-005-F15 - TaskFormBasics
+ * Purpose: Renders basic fields and recurring-edit scope controls.
+ * Used by: TaskForm.
+ * Trigger: The shared form renders or its draft changes.
  */
 export function TaskFormBasics({
   model,

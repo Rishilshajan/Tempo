@@ -1,3 +1,4 @@
+import { syncTaskNotifications } from "./notificationScheduling";
 import { startSeries } from "./series";
 import {
   paginationOptsValidator,
@@ -84,6 +85,7 @@ export const remove = mutation({
       throw new ConvexError("This task is unavailable.");
     await ctx.db.delete(id);
     await ctx.scheduler.runAfter(0, internal.tasks.cleanupDeletedTask, { id });
+    await syncTaskNotifications(ctx, id);
     return null;
   },
 });
@@ -191,6 +193,7 @@ export const reschedule = mutation({
       dueChanged ? "Task due date updated." : "Task rescheduled.",
       { previousSchedule: task.schedule, schedule: args.schedule },
     );
+    await syncTaskNotifications(ctx, args.id);
     return null;
   },
 });
@@ -332,6 +335,7 @@ export const create = mutation({
     await recordActivity(ctx, id, user, "task_created", "Task created.");
     const seriesTask = await ctx.db.get(id);
     if (seriesTask?.recurrence) await startSeries(ctx, seriesTask);
+    await syncTaskNotifications(ctx, id);
     return id;
   },
 });
@@ -395,6 +399,7 @@ export async function applyTaskProgress(
       after: progress,
     },
   );
+  await syncTaskNotifications(ctx, id);
   return null;
 }
 
@@ -449,8 +454,11 @@ export async function applyTaskCompleted(
       args.completed ? "task_completed" : "task_reopened",
       args.completed ? "Task completed." : "Task reopened.",
     );
-    if (args.completed && task.status !== "completed")
+    if (args.completed && task.status !== "completed") {
+      await syncTaskNotifications(ctx, args.id);
       return (await createNextOccurrence(ctx, task)) ?? null;
+    }
   }
+  await syncTaskNotifications(ctx, args.id);
   return null;
 }

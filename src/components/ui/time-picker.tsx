@@ -42,6 +42,8 @@ export function TimePicker({
   placeholder = "Time",
   className,
   ariaLabel,
+  ariaInvalid,
+  ariaDescribedBy,
   required = false,
   minTime,
 }: {
@@ -50,6 +52,8 @@ export function TimePicker({
   placeholder?: string;
   className?: string;
   ariaLabel?: string;
+  ariaInvalid?: boolean;
+  ariaDescribedBy?: string;
   required?: boolean;
   minTime?: string;
 }) {
@@ -71,8 +75,9 @@ export function TimePicker({
             variant="outline"
             aria-label={ariaLabel}
             aria-invalid={
-              (!!value && !!minTime && value < minTime) || undefined
+              ariaInvalid || (!!value && !!minTime && value < minTime) || undefined
             }
+            aria-describedby={ariaDescribedBy}
             className={cn(
               "w-full min-w-0 justify-start gap-2 font-normal",
               !value && "text-muted-foreground",

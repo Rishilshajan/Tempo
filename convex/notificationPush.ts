@@ -10,6 +10,8 @@ export const send = internalAction({
     ownerId: v.string(), title: v.string(), body: v.string(), key: v.string(),
     taskId: v.optional(v.id("tasks")),
     digestSettings: v.optional(v.string()),
+    notificationGeneration: v.optional(v.number()),
+    notificationPreferences: v.optional(v.string()),
     endpoint: v.optional(v.string()),
     expiresAt: v.optional(v.number()),
     attempt: v.optional(v.number()),
@@ -25,6 +27,8 @@ export const send = internalAction({
     if (!publicKey || !privateKey || !subject) return null;
     const devices = await ctx.runQuery(internal.notifications.deliveryDevices, {
       ownerId, taskId, ...(digestSettings === undefined ? {} : { digestSettings }),
+      ...(args.notificationGeneration === undefined ? {} : { notificationGeneration: args.notificationGeneration }),
+      ...(args.notificationPreferences === undefined ? {} : { notificationPreferences: args.notificationPreferences }),
     });
     const payload = JSON.stringify({ title, body, tag: key, taskId });
     await Promise.all(devices.filter(device => !target || device.endpoint === target).map(async ({ endpoint, auth, p256dh }) => {

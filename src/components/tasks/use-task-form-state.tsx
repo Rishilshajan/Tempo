@@ -1,8 +1,10 @@
 /**
- * TEMPO-003 - useTaskFormState: state and actions owned once per mounted view.
+ * TEMPO-005 - Single draft-state owner and derived validation.
+ * Used by: TaskForm.
  * Code map: src/components/code-map.md.
  */
 "use client";
+import { taskTimeDefaults } from "@/lib/task-time-defaults";
 import { zonedTimestamp } from "@/lib/validation/recurrence";
 import {
   editTaskDateIssues,
@@ -12,11 +14,12 @@ import {
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import type { Props, Step } from "./task-form-types";
+
 /**
- * TEMPO-003-F24 - useTaskFormState
- * Purpose: Owns create/edit form fields, date checks and subtask draft state.
- * Used by: See src/components/code-map.md for direct callers.
- * Trigger: The owning view renders or its associated interaction runs.
+ * TEMPO-005-F03 - useTaskFormState
+ * Purpose: Owns draft fields, prefills, clock, errors and subtask actions.
+ * Used by: TaskForm.
+ * Trigger: The form mounts, a field changes or its clock refreshes.
  */
 export function useTaskFormState({
   domains,
@@ -42,18 +45,6 @@ export function useTaskFormState({
   const [allowOverlap, setAllowOverlap] = useState(
     editingTask?.allowOverlap ?? false,
   );
-  const [repeatDays, setRepeatDays] = useState<number[]>(
-    editingTask?.recurrence?.weekdays ?? [
-      new Date(
-        (editingTask?.schedule.type === "fixed"
-          ? localDateKey(
-              new Date(editingTask.schedule.startAt),
-              editingTask.timezone,
-            )
-          : (initialDate ?? localDateKey())) + "T12:00:00Z",
-      ).getUTCDay(),
-    ],
-  );
   const [monthlyMissing, setMonthlyMissing] = useState(
     editingTask?.recurrence?.monthlyMissing ?? "last_day",
   );
@@ -75,21 +66,30 @@ export function useTaskFormState({
     () =>
       editingTask?.timezone ?? Intl.DateTimeFormat().resolvedOptions().timeZone,
   );
+  const [fixedDefaults] = useState(() =>
+    taskTimeDefaults(Date.now(), timezone, initialDate, initialStartAt),
+  );
+  // Weekly selection derives its first weekday from the current schedule.
+  const [repeatDays, setRepeatDays] = useState<number[]>(
+    editingTask?.recurrence?.weekdays ?? [],
+  );
   const [startDate, setStartDate] = useState(() =>
     editingTask?.schedule.type === "fixed"
       ? localDateKey(new Date(editingTask.schedule.startAt), timezone)
-      : initialStartAt === undefined
-        ? (initialDate ?? localDateKey())
-        : localDateKey(new Date(initialStartAt)),
+      : localDateKey(new Date(fixedDefaults.startAt), timezone),
   );
   const [endDate, setEndDate] = useState(() =>
     editingTask?.schedule.type === "fixed"
       ? localDateKey(new Date(editingTask.schedule.endAt), timezone)
-      : initialStartAt === undefined
-        ? (initialDate ?? localDateKey())
-        : localDateKey(new Date(initialStartAt + 3600000)),
+      : localDateKey(new Date(fixedDefaults.endAt), timezone),
   );
-  const timeOf = (at: number) =>
+  /**
+ * TEMPO-005-F04 - timeOf
+ * Purpose: Formats a timestamp in the selected task timezone.
+ * Used by: useTaskFormState; submitTaskForm.
+ * Trigger: Time prefills or DST consistency checks run.
+ */
+const timeOf = (at: number) =>
     new Intl.DateTimeFormat("en-GB", {
       timeZone: timezone,
       hour: "2-digit",
@@ -99,16 +99,12 @@ export function useTaskFormState({
   const [startTime, setStartTime] = useState(() =>
     editingTask?.schedule.type === "fixed"
       ? timeOf(editingTask.schedule.startAt)
-      : initialStartAt === undefined
-        ? "09:00"
-        : timeOf(initialStartAt),
+      : timeOf(fixedDefaults.startAt),
   );
   const [endTime, setEndTime] = useState(() =>
     editingTask?.schedule.type === "fixed"
       ? timeOf(editingTask.schedule.endAt)
-      : initialStartAt === undefined
-        ? "10:00"
-        : timeOf(initialStartAt + 3600000),
+      : timeOf(fixedDefaults.endAt),
   );
   const [dueDate, setDueDate] = useState(
     editingTask?.schedule.type === "flexible"
@@ -165,7 +161,13 @@ export function useTaskFormState({
   const requestIdRef = useRef<string | null>(null);
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
-    const refresh = () => setNow(Date.now());
+    /**
+ * TEMPO-005-F05 - refresh
+ * Purpose: Refreshes the validation clock.
+ * Used by: useTaskFormState effect.
+ * Trigger: Every 30 seconds or window focus; effect cleans up.
+ */
+const refresh = () => setNow(Date.now());
     const timer = setInterval(refresh, 30000);
     window.addEventListener("focus", refresh);
     return () => {
@@ -177,7 +179,13 @@ export function useTaskFormState({
   const currentTime = timeOf(now);
   const firstDate = (scheduleType === "fixed" ? startDate : dueDate) || today;
   const minimumRepeatEnd = firstDate > today ? firstDate : today;
-  function timestamp(date: string, time: string, preferred?: number) {
+  /**
+ * TEMPO-005-F06 - timestamp
+ * Purpose: Validates date/time syntax and resolves timezone timestamps.
+ * Used by: useTaskFormState.
+ * Trigger: Draft schedule values are recomputed.
+ */
+function timestamp(date: string, time: string, preferred?: number) {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || !/^\d{2}:\d{2}$/.test(time))
       return NaN;
     return zonedTimestamp(date, time, timezone, preferred);
@@ -187,18 +195,22 @@ export function useTaskFormState({
     startTime,
     editingTask?.schedule.type === "fixed"
       ? editingTask.schedule.startAt
-      : initialStartAt,
+      : (initialStartAt ?? fixedDefaults.startAt),
   );
   const selectedEndAt = timestamp(
     endDate,
     endTime,
     editingTask?.schedule.type === "fixed"
       ? editingTask.schedule.endAt
-      : initialStartAt === undefined
-        ? undefined
-        : initialStartAt + 3600000,
+      : fixedDefaults.endAt,
   );
-  function issuesForRepeat(repeatValue = repeat) {
+  /**
+ * TEMPO-005-F07 - issuesForRepeat
+ * Purpose: Builds a candidate schedule and computes create/edit date issues.
+ * Used by: useTaskFormState; TaskFormRecurrence.
+ * Trigger: Date, recurrence, subtask or edit-scope state changes.
+ */
+function issuesForRepeat(repeatValue = repeat) {
     const candidate: Parameters<typeof taskDateIssues>[0] = {
       timezone,
       schedule:
@@ -215,7 +227,7 @@ export function useTaskFormState({
           : repeatValue === "none"
             ? undefined
             : {
-                ...(repeatValue === "weekly" && repeatDays.length
+                ...((repeatValue === "weekly" || (repeatValue === "custom" && repeatUnit === "week")) && repeatDays.length
                   ? { weekdays: repeatDays }
                   : {}),
                 frequency: repeatValue,
@@ -252,10 +264,22 @@ export function useTaskFormState({
   }
   const dateIssues = issuesForRepeat();
 
-  function notifyValidation(message: string) {
+  /**
+ * TEMPO-005-F08 - notifyValidation
+ * Purpose: Shows the existing validation toast.
+ * Used by: submitTaskForm; TaskFormRecurrence.
+ * Trigger: Validation rejects input.
+ */
+function notifyValidation(message: string) {
     toast.error(message, { id: "task-validation" });
   }
-  function changeValue(setter: (value: string) => void) {
+  /**
+ * TEMPO-005-F09 - changeValue
+ * Purpose: Builds a field setter that clears prior errors.
+ * Used by: TaskFormSchedule; TaskFormRecurrence.
+ * Trigger: A bound field changes.
+ */
+function changeValue(setter: (value: string) => void) {
     return (value: string) => {
       setErrors({});
       setError(null);
@@ -263,7 +287,13 @@ export function useTaskFormState({
     };
   }
 
-  function changeDuration(value: string) {
+  /**
+ * TEMPO-005-F10 - changeDuration
+ * Purpose: Selects a preset/custom estimate and synchronizes duration fields.
+ * Used by: TaskFormSchedule.
+ * Trigger: The estimated-duration dropdown changes.
+ */
+function changeDuration(value: string) {
     setErrors({});
     setError(null);
     setDuration(value);
@@ -276,7 +306,13 @@ export function useTaskFormState({
     }
   }
 
-  function addStep() {
+  /**
+ * TEMPO-005-F11 - addStep
+ * Purpose: Appends a nonempty subtask draft up to the limit.
+ * Used by: TaskFormSubtasks.
+ * Trigger: Add or Enter is used on the subtask input.
+ */
+function addStep() {
     if (!stepTitle.trim() || steps.length >= 30) return;
     updateSteps((previous) => [
       ...previous,
@@ -284,12 +320,24 @@ export function useTaskFormState({
     ]);
     setStepTitle("");
   }
-  function updateSteps(update: (previous: Step[]) => Step[]) {
+  /**
+ * TEMPO-005-F12 - updateSteps
+ * Purpose: Updates subtask draft state and clears prior errors.
+ * Used by: TaskFormSubtasks; addStep; moveStep.
+ * Trigger: Subtask text, date, order or membership changes.
+ */
+function updateSteps(update: (previous: Step[]) => Step[]) {
     setErrors({});
     setError(null);
     setSteps(update);
   }
-  function moveStep(index: number, direction: number) {
+  /**
+ * TEMPO-005-F13 - moveStep
+ * Purpose: Reorders neighboring draft subtasks without persistence.
+ * Used by: TaskFormSubtasks.
+ * Trigger: A subtask move-up or move-down action is clicked.
+ */
+function moveStep(index: number, direction: number) {
     updateSteps((previous) => {
       const next = [...previous];
       [next[index], next[index + direction]] = [

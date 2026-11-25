@@ -1,10 +1,13 @@
+import { makeFunctionReference } from "convex/server";
 import { ConvexError, v, type Infer } from "convex/values";
 import { query, mutation, internalMutation, internalQuery, type QueryCtx, type MutationCtx } from "./_generated/server";
 import { domainColor, domainIcon } from "./domainFields";
 import { internal } from "./_generated/api";
 import type { Doc } from "./_generated/dataModel";
-import { DEFAULT_NOTIFICATION_PREFERENCES, notificationPreferences, pushPlatform, type NotificationPreferences } from "./notificationFields";
+import { DEFAULT_NOTIFICATION_PREFERENCES, notificationPreferences, pushPlatform } from "./notificationFields";
 import { shiftDate, zonedTimestamp } from "../src/lib/validation/recurrence";
+import { addReminder, localTime, quietSettings, type Reminder } from "./notificationDelivery";
+import { backgroundJobsEnabled, syncOwnerNotifications } from "./notificationScheduling";
 import { subtaskSnapshot } from "./taskDetailHelpers";
 
 const minute = 60_000;
@@ -32,9 +35,11 @@ export const ensurePreferences = mutation({
   handler: async (ctx, { timezone }) => {
     const ownerId = await requireOwner(ctx);
     validateZone(timezone);
-    if (!(await account(ctx, ownerId))) await ctx.db.insert("notificationAccounts", {
+    const existing = await account(ctx, ownerId);
+    if (!existing) await ctx.db.insert("notificationAccounts", {
       ownerId, preferences: { ...DEFAULT_NOTIFICATION_PREFERENCES, timezone },
     });
+    if (existing?.notificationScheduleVersion !== 1) await syncOwnerNotifications(ctx, ownerId);
     return null;
   },
 });
@@ -53,6 +58,7 @@ export const savePreferences = mutation({
     const row = await account(ctx, ownerId);
     if (row) await ctx.db.patch(row._id, { preferences: value });
     else await ctx.db.insert("notificationAccounts", { ownerId, preferences: value });
+    await syncOwnerNotifications(ctx, ownerId);
     return null;
   },
 });
@@ -146,6 +152,8 @@ export const registerPush = mutation({
     }
     if (prior) await ctx.db.patch(prior._id, { ...args, ownerId });
     else await ctx.db.insert("pushSubscriptions", { ...args, ownerId });
+    await syncOwnerNotifications(ctx, ownerId);
+    if (prior && prior.ownerId !== ownerId) await syncOwnerNotifications(ctx, prior.ownerId);
     return null;
   },
 });
@@ -154,7 +162,10 @@ export const unregisterPush = mutation({
   handler: async (ctx, { endpoint }) => {
     const ownerId = await requireOwner(ctx);
     const prior = await byEndpoint(ctx, endpoint);
-    if (prior?.ownerId === ownerId) await ctx.db.delete(prior._id);
+    if (prior?.ownerId === ownerId) {
+      await ctx.db.delete(prior._id);
+      await syncOwnerNotifications(ctx, ownerId);
+    }
     return null;
   },
 });
@@ -197,12 +208,22 @@ export const sendTestPush = mutation({
   },
 });
 export const deliveryDevices = internalQuery({
-  args: { ownerId: v.string(), digestSettings: v.optional(v.string()), taskId: v.optional(v.id("tasks")) },
+  args: { ownerId: v.string(), digestSettings: v.optional(v.string()), taskId: v.optional(v.id("tasks")), notificationGeneration: v.optional(v.number()), notificationPreferences: v.optional(v.string()) },
   returns: v.array(v.object(subscription)),
-  handler: async (ctx, { ownerId, digestSettings, taskId }) => {
+  handler: async (ctx, { ownerId, digestSettings, taskId, notificationGeneration, notificationPreferences: expectedPreferences }) => {
     if (taskId) {
       const task = await ctx.db.get(taskId);
       if (!task || task.ownerId !== ownerId || task.status !== "open" || task.recurrenceCancelled) return [];
+    }
+    if (notificationGeneration !== undefined) {
+      if (!taskId) return [];
+      const schedule = await ctx.db.query("notificationSchedules")
+        .withIndex("by_key", q => q.eq("key", "task:" + taskId)).unique();
+      if (!schedule || schedule.ownerId !== ownerId || schedule.generation !== notificationGeneration) return [];
+    }
+    if (expectedPreferences !== undefined) {
+      const row = await account(ctx, ownerId);
+      if (!row || JSON.stringify(row.preferences) !== expectedPreferences) return [];
     }
     if (digestSettings !== undefined) {
       const row = await account(ctx, ownerId);
@@ -220,72 +241,19 @@ export const expirePush = internalMutation({
   },
 });
 
-function localTime(now: number, timezone: string) {
-  const parts = Object.fromEntries(new Intl.DateTimeFormat("en-CA", {
-    timeZone: timezone, year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hourCycle: "h23",
-  }).formatToParts(now).map(x => [x.type, x.value]));
-  const date = [parts.year, parts.month, parts.day].join("-");
-  return { date, time: [parts.hour, parts.minute].join(":"), weekday: new Date(date).getUTCDay() };
-}
-function quietWindow(p: NotificationPreferences, now: number) {
-  if (!p.quietEnabled || p.quietStart === p.quietEnd) return null;
-  const { date, time, weekday } = localTime(now, p.timezone);
-  const overnight = p.quietStart > p.quietEnd;
-  const active = p.quietDays.includes(overnight && time < p.quietEnd ? (weekday + 6) % 7 : weekday);
-  if (!active || !(overnight ? time >= p.quietStart || time < p.quietEnd : time >= p.quietStart && time < p.quietEnd)) return null;
-  const endDate = overnight && time >= p.quietStart ? shiftDate(date, 1) : date;
-  return { endDate, endTime: p.quietEnd };
-}
-function quietSettings(p: NotificationPreferences) {
-  return JSON.stringify([p.quietEnabled, p.quietPolicy, p.timezone, p.quietStart, p.quietEnd, [...p.quietDays].sort()]);
-}
-
-type Reminder = { key: string; title: string; body: string; taskId?: Doc<"tasks">["_id"]; expiresAt?: number; pushBody?: string };
-async function addReminder(ctx: MutationCtx, row: Doc<"notificationAccounts">, reminder: Reminder, now: number, canPush: boolean, createdAt: number) {
-  const { ownerId, preferences: p } = row;
-  if (await ctx.db.query("notifications").withIndex("by_owner_key", q => q.eq("ownerId", ownerId).eq("key", reminder.key)).unique()) return 0;
-  const { expiresAt, pushBody, ...entry } = reminder;
-  await ctx.db.insert("notifications", {
-    ...entry, ownerId, createdAt, visible: p.inApp, read: false,
-  });
-  if (canPush) {
-    const quiet = quietWindow(p, now);
-    if (!quiet) await ctx.scheduler.runAfter(0, internal.notificationPush.send, {
-      ownerId, title: reminder.title, body: pushBody ?? reminder.body, key: reminder.key,
-      ...(expiresAt === undefined ? {} : { expiresAt }),
-      ...(reminder.taskId ? { taskId: reminder.taskId } : {}),
-    });
-    else if (p.quietPolicy === "digest") {
-      const digestSettings = quietSettings(p);
-      const key = ["digest", quiet.endDate, digestSettings].join(":");
-      if (!(await ctx.db.query("notifications").withIndex("by_owner_key", q => q.eq("ownerId", ownerId).eq("key", key)).unique())) {
-        await ctx.db.insert("notifications", {
-          ownerId, key, title: "Tempo reminders", body: "", createdAt: Date.now(), visible: false, read: true,
-        });
-        const end = zonedTimestamp(quiet.endDate, quiet.endTime, p.timezone);
-        await ctx.scheduler.runAt(Math.max(now + minute, end ?? now + 60 * minute), internal.notificationPush.send, {
-          ownerId, title: "Tempo reminders", body: "You have reminders from quiet hours.", key,
-          digestSettings,
-        });
-      }
-    }
-  }
-  return p.inApp ? 1 : 0;
-}
-
+// Compatibility entry for already queued cron calls. New crons only reconcile due jobs.
 export const processBatch = internalMutation({
   args: { cursor: v.optional(v.string()), now: v.optional(v.number()) }, returns: v.null(),
-  handler: async (ctx, args) => {
-    const now = args.now ?? Date.now();
-    const page = await ctx.db.query("notificationAccounts").paginate({ cursor: args.cursor ?? null, numItems: 50 });
-    for (const row of page.page) await ctx.scheduler.runAfter(0, internal.notifications.processOwner, { ownerId: row.ownerId, now });
-    if (!page.isDone) await ctx.scheduler.runAfter(0, internal.notifications.processBatch, { cursor: page.continueCursor, now });
+  handler: async ctx => {
+    if (backgroundJobsEnabled()) await ctx.scheduler.runAfter(0,
+      makeFunctionReference<"mutation", Record<string, never>>("notificationScheduling:bootstrapOwners"), {});
     return null;
   },
 });
 export const processOwner = internalMutation({
   args: { ownerId: v.string(), now: v.number(), cursor: v.optional(v.string()) }, returns: v.null(),
   handler: async (ctx, { ownerId, now, cursor }) => {
+    if (!backgroundJobsEnabled()) return null;
     const row = await account(ctx, ownerId);
     if (!row) return null;
     const p = row.preferences;

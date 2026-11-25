@@ -1,5 +1,6 @@
 /**
- * TEMPO-003 - TaskFormSubtasks: existing form fields sharing one state owner.
+ * TEMPO-005 - Subtask drafts, dates, ordering and limits.
+ * Used by: TaskForm.
  * Code map: src/components/code-map.md.
  */
 "use client";
@@ -15,11 +16,12 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { ArrowDown, ArrowUp, MoreHorizontal, Plus, Trash2 } from "lucide-react";
 import type { useTaskFormState } from "./use-task-form-state";
+
 /**
- * TEMPO-003-F28 - TaskFormSubtasks
- * Purpose: Provides the existing TaskFormSubtasks behavior for its owning view.
- * Used by: See src/components/code-map.md for direct callers.
- * Trigger: The owning view renders or its associated interaction runs.
+ * TEMPO-005-F17 - TaskFormSubtasks
+ * Purpose: Renders bounded subtask rows and add/reorder/remove controls.
+ * Used by: TaskForm.
+ * Trigger: Subtask drafts render or change.
  */
 export function TaskFormSubtasks({
   model,
@@ -27,6 +29,9 @@ export function TaskFormSubtasks({
   model: ReturnType<typeof useTaskFormState>;
 }) {
   const { steps, stepTitle, setStepTitle, errors, today, addStep, updateSteps, moveStep } = model;
+  const dateIssues = new Map(model.dateIssues
+    .filter((issue) => issue.path[0] === "subtasks" && typeof issue.path[1] === "number")
+    .map((issue) => [issue.path[1] as number, issue.message]));
   return (
     <>
       <div className="space-y-2 border-t border-border pt-4">
@@ -73,6 +78,8 @@ export function TaskFormSubtasks({
                   <DatePicker
                     minDate={today}
                     ariaLabel={`Subtask ${index + 1} date (Optional)`}
+                    ariaInvalid={dateIssues.has(index)}
+                    ariaDescribedBy={dateIssues.has(index) ? `subtask-date-error-${step.key}` : undefined}
                     placeholder="Add date"
                     className="!w-auto max-w-36 justify-start border-transparent bg-muted/40 text-xs"
                     value={step.dueDate}
@@ -86,6 +93,9 @@ export function TaskFormSubtasks({
                       )
                     }
                   />
+                  {dateIssues.has(index) && (
+                    <p id={`subtask-date-error-${step.key}`} role="alert" className="mt-1 text-xs text-destructive">{dateIssues.get(index)}</p>
+                  )}
                 </div>
                 <div className="col-start-2 row-start-1 sm:col-start-3">
                   <DropdownMenu>

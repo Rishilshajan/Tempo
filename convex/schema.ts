@@ -17,7 +17,19 @@ export default defineSchema({
     clearedThrough: v.optional(v.number()),
     unreadCount: v.optional(v.number()),
     latestNotificationAt: v.optional(v.number()),
-  }).index("by_owner", ["ownerId"]),
+    notificationScheduleVersion: v.optional(v.number()),
+  }).index("by_owner", ["ownerId"])
+    .index("by_notificationScheduleVersion", ["notificationScheduleVersion"]),
+  notificationSchedules: defineTable({
+    key: v.string(),
+    ownerId: v.string(),
+    taskId: v.optional(v.id("tasks")),
+    kind: v.union(v.literal("task"), v.literal("owner")),
+    revision: v.number(),
+    generation: v.number(),
+    nextRunAt: v.optional(v.number()),
+  }).index("by_key", ["key"])
+    .index("by_nextRunAt", ["nextRunAt"]),
   notifications: defineTable({
     ownerId: v.string(),
     key: v.string(),

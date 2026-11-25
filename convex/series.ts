@@ -1,3 +1,4 @@
+import { syncTaskNotifications } from "./notificationScheduling";
 import { v } from "convex/values";
 import { internalMutation, type MutationCtx } from "./_generated/server";
 import type { Doc } from "./_generated/dataModel";
@@ -178,6 +179,7 @@ export const generate = internalMutation({
           "task_created",
           "Recurring session created.",
         );
+        await syncTaskNotifications(ctx, id);
       }
       ordinal++;
     }
@@ -222,8 +224,10 @@ export const retire = internalMutation({
       )
       .paginate({ cursor: args.cursor ?? null, numItems: 50 });
     for (const task of page.page)
-      if (task._id !== args.except && task.status !== "completed")
+      if (task._id !== args.except && task.status !== "completed") {
         await ctx.db.patch(task._id, { recurrenceCancelled: true });
+        await syncTaskNotifications(ctx, task._id);
+      }
     if (!page.isDone)
       await ctx.scheduler.runAfter(0, internal.series.retire, {
         ...args,
@@ -275,6 +279,7 @@ export const retireLegacy = internalMutation({
         recurrenceCancelled: true,
         recurrenceManaged: true,
       });
+    await syncTaskNotifications(ctx, task._id);
     if (task.nextOccurrenceId)
       await ctx.scheduler.runAfter(0, internal.series.retireLegacy, {
         id: task.nextOccurrenceId,

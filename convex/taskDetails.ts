@@ -1,3 +1,4 @@
+import { syncTaskNotifications } from "./notificationScheduling";
 import { updateSeries } from "./series";
 import {
   paginationOptsValidator,
@@ -87,6 +88,7 @@ async function updateMetadataValues(
     domainId: Id<"domains"> | null;
     estimatedMinutes: number | null;
   },
+  refreshNotifications = true,
 ) {
   const { task, user } = await ownedTask(ctx, args.id);
   const parsed = taskMetadataSchema.safeParse(args);
@@ -133,8 +135,10 @@ async function updateMetadataValues(
           },
     );
   }
-  if (changed)
+  if (changed) {
     await ctx.db.patch(task._id, { ...values, updatedAt: Date.now() });
+    if (refreshNotifications) await syncTaskNotifications(ctx, task._id);
+  }
   return null;
 }
 
@@ -196,7 +200,7 @@ export const updateTask = mutation({
       priority: data.priority,
       domainId: args.domainId ?? null,
       estimatedMinutes: data.estimatedMinutes ?? null,
-    });
+    }, false);
     const rows = await normalizeSubtasks(ctx, task);
     const retained = new Set<Id<"subtasks">>();
     for (const [position, input] of data.subtasks.entries()) {
@@ -310,6 +314,7 @@ export const updateTask = mutation({
         "schedule_changed",
         "Task repeat settings updated.",
       );
+    await syncTaskNotifications(ctx, task._id);
     return null;
   },
 });
@@ -355,6 +360,7 @@ export const addSubtask = mutation({
       `Subtask added: ${data.title}`,
       { subtaskId: id },
     );
+    await syncTaskNotifications(ctx, task._id);
     return id;
   },
 });
@@ -406,6 +412,7 @@ export const updateSubtask = mutation({
           : {}),
       },
     );
+    await syncTaskNotifications(ctx, task._id);
     return null;
   },
 });
@@ -431,6 +438,7 @@ export const deleteSubtask = mutation({
       `Subtask deleted: ${step.title}`,
       { subtaskId: step._id },
     );
+    await syncTaskNotifications(ctx, task._id);
     return null;
   },
 });
