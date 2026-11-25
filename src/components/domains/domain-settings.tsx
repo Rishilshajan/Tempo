@@ -21,7 +21,6 @@ import {
   Check,
   GripVertical,
   Pencil,
-  Plus,
   Trash2,
   Layers,
 } from "lucide-react";
@@ -33,6 +32,9 @@ import type { Id } from "../../../convex/_generated/dataModel";
 type Props = {
   domains: DomainSummary[] | undefined;
   loading: boolean;
+  hasMore?: boolean;
+  loadingMore?: boolean;
+  onLoadMore?: () => void;
   onReorder?: (ids: Id<"domains">[]) => Promise<void>;
   onCreate: () => void;
   onEdit: (domain: DomainSummary) => void;
@@ -111,6 +113,9 @@ function DomainRow({
 export function DomainSettings({
   domains,
   loading,
+  hasMore,
+  loadingMore,
+  onLoadMore,
   onReorder,
   onCreate,
   onEdit,
@@ -126,7 +131,7 @@ export function DomainSettings({
   const rows = pending ?? domains ?? [];
   const busy = pending !== null;
   async function move({ active, over }: DragEndEvent) {
-    if (!over || active.id === over.id || busy || loading || !onReorder) return;
+    if (!over || active.id === over.id || busy || loading || hasMore || !onReorder) return;
     const from = rows.findIndex((d) => d._id === active.id),
       to = rows.findIndex((d) => d._id === over.id);
     if (from < 0 || to < 0) return;
@@ -169,13 +174,12 @@ export function DomainSettings({
             </p>
           </div>
           <Button onClick={onCreate} className="gap-2">
-            <Plus size={16} />
-            Create Domain
+            Create domain
           </Button>
         </div>
         <div className="flex items-center justify-between gap-3 bg-muted/40 px-4 py-3 text-xs text-muted-foreground">
           <span>
-            Used in your sidebar, mobile navigation, and domain menus.
+            Your domain order is shared across Tempo.
           </span>
           <span
             role="status"
@@ -213,7 +217,7 @@ export function DomainSettings({
                   <DomainRow
                     key={domain._id}
                     domain={domain}
-                    disabled={busy || !onReorder}
+                    disabled={busy || loading || !!hasMore || !onReorder}
                     onEdit={onEdit}
                     onDelete={onDelete}
                   />
@@ -230,6 +234,7 @@ export function DomainSettings({
             </p>
           </div>
         )}
+        {hasMore && <div className="border-t border-border p-4"><Button variant="outline" disabled={loadingMore} onClick={onLoadMore}>{loadingMore ? "Loading…" : "Load more domains"}</Button><p className="mt-2 text-xs text-muted-foreground">Load all domains to reorder them.</p></div>}
       </section>
     </div>
   );

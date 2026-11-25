@@ -20,6 +20,9 @@ PopoverTrigger,
 } from "@/components/ui/popover";
 import { CalendarDays } from "lucide-react";
 import Link from "next/link";
+import { useSyncExternalStore } from "react";
+const mobileSnapshot = () => window.innerWidth < 1024;
+const subscribeViewport = (notify: () => void) => { window.addEventListener("resize", notify); return () => window.removeEventListener("resize", notify); };
 import { FirstTimeEmptyState } from "./first-time-empty-state";
 import { TodayDashboard } from "./today-dashboard";
 import {
@@ -36,8 +39,43 @@ import { WorkspaceSearch } from "./workspace-search";
  * Trigger: The owning view renders or its associated interaction runs.
  */
 export function TodaySurface(input: Parameters<typeof useTodaySurface>[0]) {
+  const mobile = useSyncExternalStore(subscribeViewport, mobileSnapshot, () => false);
   const model = useTodaySurface(input);
   const { todayContent, notificationsEnabled, todayLabel, taskView, selectedDomainId, onViewChange, onSelectDomain, tasks, hasAnyTasks, hasMoreTasks, onCreateTask, onSetTaskCompleted, onSetTaskProgress, domains, canCreateDomain, onCreateDomain, onUpdateDomain, onDeleteDomain, onReorderDomains, hasMoreDomains, onLoadMoreDomains, loadingMoreDomains, domainsOpen, setDomainsOpen, inAppDraft, setInAppDraft, settingsSection, setSettingsSection, domainSheetOpen, setDomainSheetOpen, editingDomain, deletingDomain, setDeletingDomain, taskSheetOpen, setTaskSheetOpen, taskPrefill, setTaskPrefill, setDashboardDate, detailId, setDetailId, selectedDomain, openCreateTask, openCreateDomain, editDomain, selectDomain, domainNavigation } = model;
+  const domainMenu = <>
+                <Button
+                  variant="ghost"
+                  className="min-h-10 w-full justify-start px-2 lg:min-h-8"
+                  onClick={() => {
+                    setDomainsOpen(false);
+                    onViewChange("all");
+                  }}
+                >
+                  All domains
+                </Button>
+                {domainNavigation}
+                {hasMoreDomains && (
+                  <Button
+                    variant="ghost"
+                    className="min-h-10"
+                    disabled={loadingMoreDomains}
+                    onClick={onLoadMoreDomains}
+                  >
+                    {loadingMoreDomains ? "Loading…" : "Load more domains"}
+                  </Button>
+                )}
+                <Button
+                  variant="outline"
+                  className="min-h-10 w-full gap-2 lg:min-h-8"
+                  onClick={() => {
+                    setDomainsOpen(false);
+                    openCreateDomain();
+                  }}
+                >
+
+                  Create domain
+                </Button>
+  </>;
   return (
     <div className="dashboard-shell min-h-svh bg-background text-foreground">
       <a
@@ -80,7 +118,7 @@ export function TodaySurface(input: Parameters<typeof useTodaySurface>[0]) {
                 </Button>
               );
             })}
-            <Popover open={domainsOpen} onOpenChange={setDomainsOpen}>
+            <Popover open={domainsOpen && !mobile} onOpenChange={setDomainsOpen}>
               <PopoverTrigger
                 render={
                   <Button
@@ -94,40 +132,9 @@ export function TodaySurface(input: Parameters<typeof useTodaySurface>[0]) {
               </PopoverTrigger>
               <PopoverContent
                 align="start"
-                className="max-h-[70dvh] overflow-y-auto"
+                className="max-h-[70dvh] gap-1 overflow-y-auto p-2"
               >
-                <Button
-                  variant="ghost"
-                  className="min-h-10 w-full justify-start"
-                  onClick={() => {
-                    setDomainsOpen(false);
-                    onViewChange("all");
-                  }}
-                >
-                  All domains
-                </Button>
-                {domainNavigation}
-                {hasMoreDomains && (
-                  <Button
-                    variant="ghost"
-                    className="min-h-10"
-                    disabled={loadingMoreDomains}
-                    onClick={onLoadMoreDomains}
-                  >
-                    {loadingMoreDomains ? "Loading…" : "Load more domains"}
-                  </Button>
-                )}
-                <Button
-                  variant="outline"
-                  className="min-h-10 w-full gap-2"
-                  onClick={() => {
-                    setDomainsOpen(false);
-                    openCreateDomain();
-                  }}
-                >
-
-                  Create domain
-                </Button>
+                {domainMenu}
               </PopoverContent>
             </Popover>
             <Button variant="ghost" className="min-h-10 text-muted-foreground" onClick={() => { setSettingsSection("domains"); onViewChange("settings"); }}>Settings</Button>
@@ -205,7 +212,10 @@ export function TodaySurface(input: Parameters<typeof useTodaySurface>[0]) {
               ) : (
                 <DomainSettings
                   domains={domains}
-                  loading={!!hasMoreDomains}
+                  loading={domains === undefined}
+                  hasMore={hasMoreDomains}
+                  loadingMore={loadingMoreDomains}
+                  onLoadMore={onLoadMoreDomains}
                   onReorder={onReorderDomains}
                   onCreate={openCreateDomain}
                   onEdit={editDomain}
@@ -271,7 +281,7 @@ export function TodaySurface(input: Parameters<typeof useTodaySurface>[0]) {
 
       <nav
         aria-label="Mobile workspace navigation"
-        className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-3 border-t border-border bg-background pb-[env(safe-area-inset-bottom)] lg:hidden"
+        className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-4 border-t border-border bg-background pb-[env(safe-area-inset-bottom)] lg:hidden"
       >
         {mobileNavigation.map(({ label, icon: Icon, current }) => {
           const view = current
@@ -279,13 +289,22 @@ export function TodaySurface(input: Parameters<typeof useTodaySurface>[0]) {
             : label === "Settings"
               ? "settings"
               : "all";
+          if (label === "Domains") return (
+            <Popover key={label} open={domainsOpen && mobile} onOpenChange={setDomainsOpen}>
+              <PopoverTrigger render={<button type="button" aria-label="Domains" className={`flex min-h-14 flex-col items-center justify-center gap-1 px-1 text-xs font-medium focus-visible:outline-2 focus-visible:outline-primary ${domainsOpen || taskView === "domain" ? "text-primary" : "text-muted-foreground"}`} />}>
+                <Icon size={18} aria-hidden="true" />Domains
+              </PopoverTrigger>
+              <PopoverContent side="top" align="center" positionerClassName="!fixed !inset-x-0 !top-auto !bottom-[calc(3.5rem+env(safe-area-inset-bottom)+0.5rem)] !w-full !transform-none flex justify-center" className="max-h-[65dvh] w-[min(22rem,calc(100vw-2rem))] gap-1 overflow-y-auto p-2">{domainMenu}</PopoverContent>
+            </Popover>
+          );
           const active =
-            taskView === view || (view === "all" && taskView === "domain");
+            !domainsOpen && taskView === view;
           return (
             <button
               key={label}
               type="button"
               onClick={() => {
+                setDomainsOpen(false);
                 if (view === "settings") setSettingsSection("domains");
                 if (taskView !== view) onViewChange(view);
               }}

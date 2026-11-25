@@ -102,10 +102,6 @@ export function useTodaySurface({
       domains={domains}
       selectedId={selectedDomain?._id}
       onSelect={selectDomain}
-      onEdit={editDomain}
-      onDelete={(domain) => {
-        setDeletingDomain(domain);
-      }}
     />
   ) : (
     <p role="status" className="px-3 text-xs text-muted-foreground">

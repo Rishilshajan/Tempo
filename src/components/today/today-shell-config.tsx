@@ -11,7 +11,7 @@ import {
   type TaskRecord,
 } from "@/components/tasks/task-list";
 import { type CreateTaskValues } from "@/lib/validation/task";
-import { CircleCheck, Settings2, Sun } from "lucide-react";
+import { CircleCheck, Layers, Settings2, Sun } from "lucide-react";
 import dynamic from "next/dynamic";
 import { type ReactNode } from "react";
 import type { Id } from "../../../convex/_generated/dataModel";
@@ -43,7 +43,8 @@ export const navigation = [
 ];
 export const mobileNavigation = [
   { label: "Today", icon: Sun, current: true },
-  { label: "Tasks", icon: CircleCheck, current: false },
+  { label: "My Tasks", icon: CircleCheck, current: false },
+  { label: "Domains", icon: Layers, current: false },
   { label: "Settings", icon: Settings2, current: false },
 ];
 export type TodaySurfaceProps = {

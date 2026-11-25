@@ -4,7 +4,7 @@ Current implementation map for landing, authentication and the Today dashboard. 
 
 ## Conventions
 
-- TEMPO-001: landing/public branding. TEMPO-002: authentication. TEMPO-003: Today and its reused task interfaces. TEMPO-004: My Tasks and shared board/calendar helpers. TEMPO-005: task creation and shared editing.
+- TEMPO-001: landing/public branding. TEMPO-002: authentication. TEMPO-003: Today and its reused task interfaces. TEMPO-004: My Tasks and shared board/calendar helpers. TEMPO-005: task creation and shared editing. TEMPO-006: domain creation, navigation and management.
 - File headers describe ownership; function comments use stable IDs plus purpose, caller reference and trigger. Inline callbacks inherit the owning function description.
 - TEMPO-003-F10 is retired (removed allocation interaction). Do not reuse it.
 - Frontend source files in src/ must be strictly below 500 lines, including comments. Backend/generated files, dependencies and build output are outside this UI contract.
@@ -281,3 +281,27 @@ This backend dependency serves Today, My Tasks and TEMPO-005 task creation/editi
 | scripts/check-notification-scheduling.mjs / check-notifications.mjs | Verifies timing, lifecycle guards, quiet hours, bootstrap, indexed recovery and disabled zero-read behavior. | npm test. |
 
 Mutation integrations live in convex/tasks.ts, taskDetails.ts, taskRecurrence.ts, series.ts and rollForward.ts. Rollout instructions and the one-time forced bootstrap are in DEPLOY.md. Historical usage totals do not reset after optimization; compare equal post-deployment measurement windows.
+
+## TEMPO-006 - Domains
+
+Navigation selects tasks; Settings owns management. Desktop and mobile share All domains, domain links and Create domain. Mobile navigation is Today / My Tasks / Domains / Settings. A selected domain opens its filtered My Tasks view. Deleting keeps tasks in Uncategorized.
+
+| ID | Function / file | Purpose and trigger |
+| --- | --- | --- |
+| TEMPO-006-F01 | DomainNavigation — src/components/domains/domain-navigation.tsx | Renders selectable domains, selected feedback, long-name titles and empty state; runs when the chooser renders or a domain is selected. |
+| TEMPO-006-F02 | CreateDomainSheet — src/components/domains/create-domain-sheet.tsx | Owns create/edit overlay and saving/discard guards; triggered by Create domain or Settings Edit. |
+| TEMPO-006-F03 | requestClose — same file | Requests dirty confirmation for X/Cancel; Escape/outside dismissal uses the same guard. Successful save closes directly. |
+| TEMPO-006-F04 | DomainForm / submit — same file | Edits name/purpose/appearance and validates/persists once; triggered by input changes and form submit. Failed saves retain the draft. |
+| TEMPO-006-F05 | DomainSettings / move — src/components/domains/domain-settings.tsx | Shows management rows and persists drag/keyboard order; requires all pages loaded before reorder. Load more exposes remaining domains. |
+| TEMPO-006-F06 | DomainRow — same file | Renders drag handle, domain details and Settings-only Edit/Delete controls. |
+| TEMPO-006-F07 | DeleteDomainDialog / remove — src/components/domains/delete-domain-dialog.tsx | Confirms deletion, guards duplicate submission and preserves errors; triggered by Settings Delete then confirmation. |
+| TEMPO-006-F08 | DomainLabel / DomainBadge — src/components/domains/domain-appearance.tsx | Shared icon/color/name presentation and live preview; runs on render. |
+| TEMPO-006-F09 | selectDomain / openCreateDomain / editDomain — src/components/today/use-today-surface.tsx | Routes selection, starts an empty draft or loads an existing domain from Settings. |
+| TEMPO-006-F10 | TodaySurface / domainMenu — src/components/today/today-surface.tsx | Shares chooser contents between desktop and mobile, with responsive popover ownership and paginated loading. |
+| TEMPO-006-F11 | mobileNavigation — src/components/today/today-shell-config.tsx | Defines the four mobile navigation entries consumed by TodaySurface. |
+| TEMPO-006-F12 | mobileSnapshot / subscribeViewport — src/components/today/today-surface.tsx | Reads and subscribes to the 1024px breakpoint so only the visible navigation owns the open chooser; runs on hydration and viewport resize, with subscription cleanup. |
+| TEMPO-006-F13 | PopoverContent — src/components/ui/popover.tsx | Shared popup primitive; optional positionerClassName centers the mobile domain chooser above the safe-area-aware bottom navigation. Desktop retains anchor positioning. |
+
+Latest layout refinement: both domain menus use compact outer padding and section gaps; mobile rows retain 40px minimum height, desktop domain rows use 32px. Mobile menu is centered across the viewport rather than aligned to the Domains tab.
+
+Shared dependencies: src/lib/validation/domain.ts validates inputs; convex/domains.ts owns authenticated list/create/update/remove/reorder operations. Backend behavior is unchanged. Existing scripts/check-domain-validation.mjs and check-domain-settings.mjs verify validation, owner isolation, ordering and task-preserving deletion. All affected frontend source files remain below 500 lines.

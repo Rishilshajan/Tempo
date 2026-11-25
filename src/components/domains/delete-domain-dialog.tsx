@@ -96,9 +96,7 @@ export function DeleteDomainDialog({
           >
             {saving ? (
               <LoaderCircle className="animate-spin" aria-hidden="true" />
-            ) : (
-              <Trash2 aria-hidden="true" />
-            )}
+            ) : null}
             {saving ? "Deleting…" : "Delete Domain"}
           </Button>
         </DialogFooter>

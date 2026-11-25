@@ -4,6 +4,7 @@ import { useRef, useState, type FormEvent } from "react";
 import { ConvexError } from "convex/values";
 import { BriefcaseBusiness, Check, LoaderCircle, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -44,12 +45,20 @@ export function CreateDomainSheet({
 }: Props) {
   const [saving, setSaving] = useState(false);
   const inFlightRef = useRef(false);
+  const dirtyRef = useRef(false);
+  const [confirmDiscard, setConfirmDiscard] = useState(false);
+  function requestClose() {
+    if (inFlightRef.current) return;
+    if (dirtyRef.current) setConfirmDiscard(true);
+    else onOpenChange(false);
+  }
 
   return (
     <Sheet
       open={open}
       onOpenChange={(next, details) => {
         if (inFlightRef.current) details.cancel();
+        else if (!next && dirtyRef.current) { details.cancel(); setConfirmDiscard(true); }
         else onOpenChange(next);
       }}
     >
@@ -79,7 +88,7 @@ export function CreateDomainSheet({
             }
             disabled={saving}
             className="absolute right-3 top-3 min-h-11 min-w-11"
-            onClick={() => onOpenChange(false)}
+            onClick={requestClose}
           >
             <X aria-hidden="true" />
           </Button>
@@ -91,10 +100,21 @@ export function CreateDomainSheet({
             setSaving={setSaving}
             inFlightRef={inFlightRef}
             onCreate={onCreate}
-            onClose={() => onOpenChange(false)}
+            onClose={() => { dirtyRef.current = false; onOpenChange(false); }}
+            onCancel={requestClose}
+            dirtyRef={dirtyRef}
             initialValues={initialValues}
           />
         )}
+        <Dialog open={confirmDiscard} onOpenChange={setConfirmDiscard}>
+          <DialogContent showCloseButton={false}>
+            <DialogHeader><DialogTitle>Discard unsaved changes?</DialogTitle><DialogDescription>Your domain changes have not been saved.</DialogDescription></DialogHeader>
+            <DialogFooter>
+              <Button variant="secondary" onClick={() => setConfirmDiscard(false)}>Keep editing</Button>
+              <Button variant="destructive" onClick={() => { dirtyRef.current = false; setConfirmDiscard(false); onOpenChange(false); }}>Discard changes</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </SheetContent>
     </Sheet>
   );
@@ -107,6 +127,8 @@ function DomainForm({
   inFlightRef,
   onCreate,
   onClose,
+  onCancel,
+  dirtyRef,
   initialValues,
 }: {
   canSubmit: boolean;
@@ -115,6 +137,8 @@ function DomainForm({
   inFlightRef: React.RefObject<boolean>;
   onCreate: Props["onCreate"];
   onClose: () => void;
+  onCancel: () => void;
+  dirtyRef: React.RefObject<boolean>;
   initialValues?: Props["initialValues"];
 }) {
   const [name, setName] = useState(initialValues?.name ?? "");
@@ -172,6 +196,7 @@ function DomainForm({
   return (
     <form
       onSubmit={submit}
+      onChange={() => { dirtyRef.current = true; }}
       className="flex min-h-0 flex-1 flex-col"
       aria-busy={saving}
     >
@@ -306,7 +331,7 @@ function DomainForm({
           </p>
           <div className="flex min-w-0 flex-wrap items-center gap-2">
             <DomainBadge name={name} color={color} icon={icon} />
-            <span className="shrink-0 whitespace-nowrap text-[11px] leading-4 text-muted-foreground">
+            <span className="text-[11px] leading-4 text-muted-foreground">
               Shown on cards &amp; task headers
             </span>
           </div>
@@ -332,7 +357,7 @@ function DomainForm({
           variant="ghost"
           disabled={saving}
           className="min-h-11 px-3"
-          onClick={onClose}
+          onClick={onCancel}
         >
           Cancel
         </Button>
@@ -343,9 +368,7 @@ function DomainForm({
         >
           {saving ? (
             <LoaderCircle className="size-4 animate-spin" aria-hidden="true" />
-          ) : (
-            <Check className="size-4" aria-hidden="true" />
-          )}
+          ) : null}
           {saving
             ? "Saving…"
             : initialValues
